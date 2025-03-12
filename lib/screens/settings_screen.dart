@@ -21,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  final List<String> _languages = ['English', 'Spanish', 'French', 'Arabic', 'Hindi'];
+  final List<String> _languages = ['English', 'Spanish', 'French', 'Arabic', 'Urdu'];
 
   @override
   void initState() {
