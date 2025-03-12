@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../models/blood_request_model.dart';
+import '../utils/theme_helper.dart';
 
 class BloodRequestScreen extends StatefulWidget {
   const BloodRequestScreen({Key? key}) : super(key: key);
@@ -111,7 +112,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -130,13 +131,13 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Request Submitted',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppConstants.darkTextColor,
+                color: context.textColor,
               ),
             ),
           ],
@@ -144,16 +145,20 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Your blood request has been submitted successfully.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.4),
+              style: TextStyle(
+                fontSize: 16, 
+                height: 1.4,
+                color: context.textColor,
+              ),
             ),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FA),
+                color: context.isDarkMode ? Colors.grey[850] : const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -183,11 +188,11 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Potential donors will be notified. You will receive a notification when a donor accepts your request.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppConstants.lightTextColor,
+                color: context.secondaryTextColor,
                 height: 1.4,
               ),
             ),
@@ -250,15 +255,17 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
             Text(
               title,
               style: TextStyle(
-                color: Colors.grey[600],
                 fontSize: 12,
+                color: context.secondaryTextColor,
+                fontWeight: FontWeight.w500,
               ),
             ),
             Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
                 fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
               ),
             ),
           ],
@@ -481,50 +488,45 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: AppConstants.primaryColor,
-        elevation: 0,
-        title: const Text(
-          'Blood Requests',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
-          tabs: const [
-            Tab(
-              icon: Icon(Icons.list_alt),
-              text: 'All Requests',
+      backgroundColor: context.backgroundColor,
+      appBar: const CustomAppBar(
+        title: 'Request Blood',
+        showBackButton: true,
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            // Tab bar
+            Container(
+              color: context.appBarColor,
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: AppConstants.primaryColor,
+                labelColor: AppConstants.primaryColor,
+                unselectedLabelColor: context.secondaryTextColor,
+                tabs: const [
+                  Tab(text: 'New Request'),
+                  Tab(text: 'Request for Someone'),
+                ],
+              ),
             ),
-            Tab(
-              icon: Icon(Icons.add_circle_outline),
-              text: 'Create Request',
+            
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // New request form
+                  _buildRequestForm(forSelf: true),
+                  
+                  // Request for someone else form
+                  _buildRequestForm(forSelf: false),
+                ],
+              ),
             ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // Tab 1: List of Blood Requests
-          _buildBloodRequestsList(),
-          
-          // Tab 2: Blood Request Form
-          _buildBloodRequestForm(),
-        ],
       ),
     );
   }
@@ -848,29 +850,377 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
   }
   
   // Build the blood request form
-  Widget _buildBloodRequestForm() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SingleChildScrollView(
+  Widget _buildRequestForm({required bool forSelf}) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Form header
+            Card(
+              color: context.cardColor,
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      forSelf ? 'Request for Yourself' : 'Request for Someone Else',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: context.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please provide accurate information to help find donors quickly.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: context.secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Blood type selection
+            Text(
+              'Blood Type Required',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              height: 70,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.05),
-                    spreadRadius: 1,
+                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
                     blurRadius: 10,
-                    offset: const Offset(0, 5),
+                    offset: const Offset(0, 2),
                   ),
                 ],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+              ),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _bloodTypes.length,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemBuilder: (context, index) {
+                  final bloodType = _bloodTypes[index];
+                  final isSelected = bloodType == _selectedBloodType;
+                  
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedBloodType = bloodType;
+                      });
+                    },
+                    child: Container(
+                      width: 60,
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppConstants.primaryColor
+                            : context.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          bloodType,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : context.textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Urgency selection
+            Text(
+              'Urgency',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: _urgencyTypes.map((urgency) {
+                final isSelected = urgency == _selectedUrgency;
+                final isUrgent = urgency == 'Urgent';
+                
+                return Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedUrgency = urgency;
+                      });
+                    },
+                    child: Container(
+                      height: 50,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isUrgent
+                                ? AppConstants.errorColor.withOpacity(0.1)
+                                : AppConstants.primaryColor.withOpacity(0.1))
+                            : context.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? (isUrgent
+                                  ? AppConstants.errorColor
+                                  : AppConstants.primaryColor)
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isUrgent ? Icons.priority_high : Icons.access_time,
+                              color: isSelected
+                                  ? (isUrgent
+                                      ? AppConstants.errorColor
+                                      : AppConstants.primaryColor)
+                                  : context.secondaryTextColor,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              urgency,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? (isUrgent
+                                        ? AppConstants.errorColor
+                                        : AppConstants.primaryColor)
+                                    : context.textColor,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Hospital/Location field
+            Text(
+              'Hospital/Location',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _hospitalController,
+                style: TextStyle(color: context.textColor),
+                decoration: InputDecoration(
+                  hintText: 'Enter hospital name or location',
+                  hintStyle: TextStyle(color: context.secondaryTextColor),
+                  prefixIcon: Icon(
+                    Icons.location_on_outlined,
+                    color: context.secondaryTextColor,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the hospital or location';
+                  }
+                  return null;
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            
+            // Contact Information section
+            Text(
+              'Contact Information',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Name field
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _nameController,
+                style: TextStyle(color: context.textColor),
+                decoration: InputDecoration(
+                  hintText: 'Full Name',
+                  hintStyle: TextStyle(color: context.secondaryTextColor),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: context.secondaryTextColor,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            
+            // Phone field
+            Container(
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _phoneController,
+                style: TextStyle(color: context.textColor),
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Contact Number',
+                  hintStyle: TextStyle(color: context.secondaryTextColor),
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: context.secondaryTextColor,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your contact number';
+                  }
+                  return null;
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            
+            // Additional Notes
+            Text(
+              'Additional Notes (Optional)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _notesController,
+                style: TextStyle(color: context.textColor),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'E.g., Patient details, specific requirements',
+                  hintStyle: TextStyle(color: context.secondaryTextColor),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(bottom: 40),
+                    child: Icon(
+                      Icons.note_alt_outlined,
+                      color: context.secondaryTextColor,
+                    ),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Notice box
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.isDarkMode ? Colors.amber.withOpacity(0.1) : Colors.amber[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber[400]!),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,317 +1228,51 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppConstants.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.amber.withOpacity(0.2),
+                          shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.volunteer_activism,
-                          color: AppConstants.primaryColor,
-                          size: 28,
+                          Icons.info_outline,
+                          color: Colors.amber,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Create Blood Request',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.darkTextColor,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Please complete the form below to submit your blood request',
-                              style: TextStyle(
-                                color: AppConstants.lightTextColor,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Important Information',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                          fontSize: 15,
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'By submitting this form, you agree to share your contact information with potential donors. Blood availability cannot be guaranteed and depends on donor response.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: context.textColor,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
             ),
             
-            // Form for blood request
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4, bottom: 16),
-                      child: Text(
-                        'Personal Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppConstants.darkTextColor,
-                        ),
-                      ),
-                    ),
-                    
-                    _buildFormField(
-                      controller: _nameController,
-                      label: 'Full Name',
-                      icon: Icons.person_outline,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    _buildFormField(
-                      controller: _phoneController,
-                      label: 'Contact Number',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your contact number';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4, top: 10, bottom: 16),
-                      child: Text(
-                        'Request Details',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppConstants.darkTextColor,
-                        ),
-                      ),
-                    ),
-                    
-                    _buildBloodTypeDropdown(),
-                    
-                    _buildFormField(
-                      controller: _hospitalController,
-                      label: 'Hospital/Location',
-                      icon: Icons.location_on_outlined,
-                      hintText: 'Enter hospital name or location',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter the hospital or location';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4, bottom: 16),
-                      child: Text(
-                        'Urgency Level',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: AppConstants.darkTextColor,
-                        ),
-                      ),
-                    ),
-                    
-                    Row(
-                      children: _urgencyTypes.map((type) {
-                        final isSelected = _selectedUrgency == type;
-                        final color = type == 'Urgent'
-                            ? AppConstants.errorColor
-                            : AppConstants.primaryColor;
-                        
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedUrgency = type;
-                              });
-                            },
-                            child: Container(
-                              margin: EdgeInsets.only(right: type == 'Normal' ? 8 : 0),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? color.withOpacity(0.1)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? color
-                                      : Colors.grey.withOpacity(0.2),
-                                  width: 1.5,
-                                ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: color.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          spreadRadius: 1,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? color.withOpacity(0.2)
-                                          : Colors.grey.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      type == 'Urgent'
-                                          ? Icons.priority_high
-                                          : Icons.access_time,
-                                      color: isSelected
-                                          ? color
-                                          : Colors.grey[400],
-                                      size: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    type,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? color
-                                          : Colors.grey[600],
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    _buildFormField(
-                      controller: _notesController,
-                      label: 'Additional Notes',
-                      icon: Icons.note_alt_outlined,
-                      hintText: 'E.g., Patient details, specific requirements',
-                      maxLines: 3,
-                      validator: (value) => null, // Optional field
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    SizedBox(
-                      width: double.infinity,
-                      child: _isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : ElevatedButton(
-                              onPressed: _submitRequest,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppConstants.primaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'SUBMIT REQUEST',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.amber[50],
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.amber.withOpacity(0.1),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.amber[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.info_outline,
-                                  color: Colors.amber,
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Important Information',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amber,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'By submitting this form, you agree to share your contact information with potential donors. Blood availability cannot be guaranteed and depends on donor response.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            const SizedBox(height: 30),
+            
+            // Submit button
+            CustomButton(
+              text: 'SUBMIT REQUEST',
+              isLoading: _isLoading,
+              onPressed: _submitRequest,
             ),
+            
+            const SizedBox(height: 24),
           ],
         ),
       ),

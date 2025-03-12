@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/home_menu_card.dart';
 import '../widgets/blood_type_badge.dart';
+import '../utils/theme_helper.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -14,11 +15,9 @@ class HomeScreen extends StatelessWidget {
     final currentUser = appProvider.currentUser;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Theme.of(context).appBarTheme.backgroundColor 
-            : AppConstants.primaryColor,
+        backgroundColor: context.appBarColor,
         elevation: 0,
         title: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -314,11 +313,12 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Urgent Blood Requests',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: context.textColor,
                         ),
                       ),
                       const Spacer(),
@@ -327,7 +327,7 @@ class HomeScreen extends StatelessWidget {
                           // View all requests
                           Navigator.pushNamed(context, '/blood_requests_list');
                         },
-                        child: const Text('View All'),
+                        child: Text('View All', style: TextStyle(color: AppConstants.primaryColor)),
                       ),
                     ],
                   ),
@@ -349,161 +349,129 @@ class HomeScreen extends StatelessWidget {
                           final request = urgentRequests[index];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 3,
+                            elevation: 2,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppConstants.radiusM),
                             ),
+                            color: context.cardColor,
+                            shadowColor: context.isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
                             child: InkWell(
                               onTap: () {
                                 Navigator.pushNamed(context, '/blood_requests_list');
                               },
                               borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topRight,
-                                    end: Alignment.bottomLeft,
-                                    colors: [
-                                      Colors.white,
-                                      Colors.red.shade50,
-                                    ],
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.red.withOpacity(0.3),
-                                                  blurRadius: 10,
-                                                  spreadRadius: 1,
-                                                ),
-                                              ],
-                                            ),
-                                            child: BloodTypeBadge(
-                                              bloodType: request.bloodType,
-                                              size: 50,
-                                            ),
+                              splashColor: Colors.red.withOpacity(0.1),
+                              highlightColor: Colors.red.withOpacity(0.05),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    // Blood Type Badge
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.red.withOpacity(0.3),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
                                           ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Urgent: ${request.requesterName}',
-                                                        style: const TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 16,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: AppConstants.errorColor.withOpacity(0.1),
-                                                        borderRadius: BorderRadius.circular(16),
-                                                        border: Border.all(
-                                                          color: AppConstants.errorColor.withOpacity(0.5),
-                                                          width: 1,
-                                                        ),
-                                                      ),
-                                                      child: Text(
-                                                        request.bloodType,
-                                                        style: const TextStyle(
-                                                          color: AppConstants.errorColor,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  request.location.split(',').first,
-                                                  style: const TextStyle(
-                                                    color: AppConstants.lightTextColor,
-                                                    fontSize: 14,
+                                        ],
+                                      ),
+                                      child: BloodTypeBadge(
+                                        bloodType: request.bloodType,
+                                        size: 45,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    // Request Info
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  'Urgent: ${request.requesterName}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: context.textColor,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.location_on,
-                                                      size: 14,
-                                                      color: AppConstants.lightTextColor,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        request.location.contains(',') 
-                                                            ? request.location.split(',').skip(1).join(',').trim() 
-                                                            : request.location,
-                                                        style: const TextStyle(
-                                                          color: AppConstants.lightTextColor,
-                                                          fontSize: 12,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
+                                              ),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
                                                 ),
-                                              ],
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  border: Border.all(
+                                                    color: Colors.red.withOpacity(0.5),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Urgent',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            request.location,
+                                            style: TextStyle(
+                                              color: context.secondaryTextColor,
+                                              fontSize: 14,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.access_time,
+                                                size: 14,
+                                                color: context.secondaryTextColor,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${_getTimeAgo(request.requestDate)} • ',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: context.secondaryTextColor,
+                                                ),
+                                              ),
+                                              Icon(
+                                                Icons.location_on,
+                                                size: 14,
+                                                color: context.secondaryTextColor,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                request.location.split(',').first,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: context.secondaryTextColor,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      const Divider(height: 1),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              request.notes,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              // Handle donation response
-                                              Navigator.pushNamed(context, '/blood_requests_list');
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: AppConstants.primaryColor,
-                                              foregroundColor: Colors.white,
-                                              elevation: 2,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                                              ),
-                                            ),
-                                            child: const Text('Respond'),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -521,14 +489,14 @@ class HomeScreen extends StatelessWidget {
                             Icon(
                               Icons.bloodtype_outlined,
                               size: 64,
-                              color: Colors.grey[400],
+                              color: context.isDarkMode ? Colors.grey[600] : Colors.grey[400],
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'No urgent blood requests at the moment',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey[600],
+                                color: context.secondaryTextColor,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -543,5 +511,20 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getTimeAgo(DateTime requestDate) {
+    final now = DateTime.now();
+    final difference = now.difference(requestDate);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
   }
 } 

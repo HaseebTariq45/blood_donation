@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/blood_type_badge.dart';
 import '../models/donation_model.dart';
+import '../utils/theme_helper.dart';
 
 class DonationHistoryScreen extends StatefulWidget {
   const DonationHistoryScreen({Key? key}) : super(key: key);
@@ -51,8 +52,10 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.backgroundColor,
       appBar: const CustomAppBar(
         title: 'Donation History',
       ),
@@ -77,12 +80,12 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                       labelStyle: TextStyle(
                         color: _filterStatus == status
                             ? Colors.white
-                            : AppConstants.darkTextColor,
+                            : context.textColor,
                         fontWeight: _filterStatus == status
                             ? FontWeight.w600
                             : FontWeight.normal,
                       ),
-                      backgroundColor: Colors.grey[100],
+                      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                       selectedColor: AppConstants.primaryColor,
                       onSelected: (selected) {
                         _applyFilter(status);
@@ -147,6 +150,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                       return Card(
                         elevation: 1,
                         margin: const EdgeInsets.only(bottom: 16),
+                        color: context.cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -180,7 +184,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                                   Text(
                                     _formatDate(donation.date),
                                     style: TextStyle(
-                                      color: AppConstants.lightTextColor,
+                                      color: context.secondaryTextColor,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -216,16 +220,17 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                                       children: [
                                         Text(
                                           donation.centerName,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
+                                            color: context.textColor,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           donation.address,
                                           style: TextStyle(
-                                            color: AppConstants.lightTextColor,
+                                            color: context.secondaryTextColor,
                                             fontSize: 14,
                                           ),
                                         ),
@@ -237,12 +242,13 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                               const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       '1 Unit (450ml)',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
+                                        color: context.textColor,
                                       ),
                                     ),
                                   ),
@@ -280,7 +286,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                                         Text(
                                           'Verified',
                                           style: TextStyle(
-                                            color: Colors.green[700],
+                                            color: context.isDarkMode ? Colors.green[400] : Colors.green[700],
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
                                           ),
@@ -309,7 +315,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
           Icon(
             Icons.water_drop_outlined,
             size: 80,
-            color: Colors.grey[400],
+            color: context.isDarkMode ? Colors.grey[600] : Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
@@ -317,7 +323,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: context.textColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -325,7 +331,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             'Your donation history will appear here',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: context.secondaryTextColor,
             ),
           ),
           const SizedBox(height: 24),
@@ -336,9 +342,14 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             icon: const Icon(Icons.add),
             label: const Text('Donate Now'),
             style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.primaryColor,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 horizontal: 32,
                 vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
@@ -353,11 +364,11 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
       width: 150,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: context.isDarkMode ? color.withOpacity(0.15) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: context.isDarkMode ? Colors.black12 : color.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -381,7 +392,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
+                    color: context.secondaryTextColor,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

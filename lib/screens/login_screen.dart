@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_button.dart';
+import '../utils/theme_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -49,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.backgroundColor,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.paddingL),
@@ -101,115 +102,245 @@ class _LoginScreenState extends State<LoginScreen> {
               // Login Form
               FadeInUp(
                 duration: const Duration(milliseconds: 600),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                child: Builder(
+                  builder: (context) => Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: context.textColor,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Please sign in to continue',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppConstants.lightTextColor,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please sign in to continue',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: context.secondaryTextColor,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                      // Email Field
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Please enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      // Password Field
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                        const SizedBox(height: 30),
+                        // Email Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode ? 
+                                  Colors.black12 : 
+                                  Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
+                          ),
+                          child: TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              labelStyle: TextStyle(
+                                color: context.secondaryTextColor,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: context.isDarkMode ? 
+                                  AppConstants.primaryColor.withOpacity(0.8) : 
+                                  AppConstants.primaryColor,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: context.isDarkMode ? 
+                                    Colors.grey.withOpacity(0.2) : 
+                                    Colors.grey.withOpacity(0.1),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppConstants.primaryColor.withOpacity(0.5),
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.red.withOpacity(0.5),
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.red.withOpacity(0.5),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: context.cardColor,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
+                            keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(color: context.textColor),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              }
+                              if (!value.contains('@')) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
                             },
                           ),
                         ),
-                        obscureText: _obscurePassword,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 15),
-                      // Forgot Password Link
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // Navigate to forgot password screen
-                          },
-                          child: const Text('Forgot Password?'),
+                        const SizedBox(height: 20),
+                        // Password Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode ? 
+                                  Colors.black12 : 
+                                  Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
+                          ),
+                          child: TextFormField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: TextStyle(
+                                color: context.secondaryTextColor,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: context.isDarkMode ? 
+                                  AppConstants.primaryColor.withOpacity(0.8) : 
+                                  AppConstants.primaryColor,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: context.secondaryTextColor,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: context.isDarkMode ? 
+                                    Colors.grey.withOpacity(0.2) : 
+                                    Colors.grey.withOpacity(0.1),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppConstants.primaryColor.withOpacity(0.5),
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.red.withOpacity(0.5),
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.red.withOpacity(0.5),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: context.cardColor,
+                            ),
+                            obscureText: _obscurePassword,
+                            style: TextStyle(color: context.textColor),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                      // Login Button
-                      CustomButton(
-                        text: 'LOGIN',
-                        onPressed: _login,
-                        isLoading: _isLoading,
-                      ),
-                      const SizedBox(height: 30),
-                      // Register Link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Don't have an account? ",
-                            style: TextStyle(
-                              color: AppConstants.lightTextColor,
+                        const SizedBox(height: 15),
+                        // Forgot Password Link
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              // Navigate to forgot password screen
+                            },
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: context.isDarkMode ? 
+                                  AppConstants.primaryColor.withOpacity(0.9) : 
+                                  AppConstants.primaryColor,
+                              ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              // Navigate to register screen
-                              Navigator.of(context).pushNamed('/signup');
-                            },
-                            child: const Text('Register Now'),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 30),
+                        // Login Button
+                        CustomButton(
+                          text: 'LOGIN',
+                          onPressed: _login,
+                          isLoading: _isLoading,
+                        ),
+                        const SizedBox(height: 30),
+                        // Register Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account? ",
+                              style: TextStyle(
+                                color: context.secondaryTextColor,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                // Navigate to register screen
+                                Navigator.of(context).pushNamed('/signup');
+                              },
+                              child: Text(
+                                'Register Now',
+                                style: TextStyle(
+                                  color: context.isDarkMode ? 
+                                    AppConstants.primaryColor.withOpacity(0.9) : 
+                                    AppConstants.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

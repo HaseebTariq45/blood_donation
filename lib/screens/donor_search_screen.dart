@@ -98,7 +98,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.backgroundColor,
       appBar: const CustomAppBar(
         title: 'Find Blood Donors',
       ),
@@ -108,14 +108,14 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
           Container(
             padding: const EdgeInsets.all(AppConstants.paddingL),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardColor,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(25),
                 bottomRight: Radius.circular(25),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 15,
                   offset: const Offset(0, 5),
@@ -125,14 +125,14 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 4.0, bottom: 12.0),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4.0, bottom: 12.0),
                   child: Text(
                     'Search for donors',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: AppConstants.darkTextColor,
+                      color: context.textColor,
                     ),
                   ),
                 ),
@@ -141,7 +141,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
                         spreadRadius: 1,
                         blurRadius: 10,
                         offset: const Offset(0, 2),
@@ -150,10 +150,11 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                   ),
                   child: TextField(
                     controller: _searchController,
+                    style: TextStyle(color: context.textColor),
                     decoration: InputDecoration(
                       hintText: 'Search donors by name or location',
                       hintStyle: TextStyle(
-                        color: Colors.grey[400],
+                        color: context.secondaryTextColor,
                         fontSize: 14,
                       ),
                       prefixIcon: Icon(
@@ -161,7 +162,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                         color: AppConstants.primaryColor.withOpacity(0.7),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.cardColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none,
@@ -171,9 +172,9 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                       ),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.clear,
-                                color: Colors.grey,
+                                color: context.secondaryTextColor,
                                 size: 20,
                               ),
                               onPressed: () {
@@ -198,171 +199,202 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                     ),
                   ),
                 ),
-                // Filter Options
+                // Filter Section
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     // Blood Type Dropdown
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Blood Type',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: context.textColor,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            hint: Text(
-                              'Blood Group',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: context.cardColor,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                                width: 1,
                               ),
                             ),
-                            icon: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: AppConstants.primaryColor.withOpacity(0.7),
-                            ),
-                            value: _selectedBloodType,
-                            isExpanded: true,
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: null,
-                                child: Text(
-                                  'All Types',
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedBloodType,
+                                isExpanded: true,
+                                hint: Text(
+                                  'All Blood Types',
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: context.secondaryTextColor,
                                     fontSize: 14,
                                   ),
                                 ),
-                              ),
-                              ..._bloodTypes.map((type) {
-                                return DropdownMenuItem<String>(
-                                  value: type,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 18,
-                                        height: 18,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppConstants.primaryColor,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            type,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.bold,
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: context.isDarkMode 
+                                    ? AppConstants.primaryColor.withOpacity(0.7) 
+                                    : Colors.grey[400],
+                                ),
+                                style: TextStyle(
+                                  color: context.textColor,
+                                  fontSize: 14,
+                                ),
+                                items: [
+                                  DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text(
+                                      'All Blood Types',
+                                      style: TextStyle(color: context.textColor),
+                                    ),
+                                  ),
+                                  ..._bloodTypes.map((type) {
+                                    return DropdownMenuItem<String>(
+                                      value: type,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 18,
+                                            height: 18,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: AppConstants.primaryColor,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                type,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            type,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: context.textColor,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        type,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedBloodType = value;
-                              });
-                              _updateFilteredDonors();
-                            },
-                            dropdownColor: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
+                                    );
+                                  }).toList(),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedBloodType = value;
+                                  });
+                                  _updateFilteredDonors();
+                                },
+                                dropdownColor: context.cardColor,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     // Location Dropdown
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Location',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: context.textColor,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            hint: Text(
-                              'Location',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: context.cardColor,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                                width: 1,
                               ),
                             ),
-                            icon: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: AppConstants.primaryColor.withOpacity(0.7),
-                            ),
-                            value: _selectedLocation,
-                            isExpanded: true,
-                            items: _locations.map((location) {
-                              return DropdownMenuItem<String>(
-                                value: location,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      location == 'Any Location' ? Icons.place_outlined : Icons.place,
-                                      size: 16,
-                                      color: location == 'Any Location' 
-                                          ? Colors.grey[400]
-                                          : AppConstants.primaryColor.withOpacity(0.7),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      location,
-                                      style: TextStyle(
-                                        fontWeight: location == 'Any Location' ? FontWeight.normal : FontWeight.w500,
-                                        fontSize: 14,
-                                        color: location == 'Any Location' ? Colors.grey[600] : Colors.black87,
-                                      ),
-                                    ),
-                                  ],
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedLocation,
+                                isExpanded: true,
+                                hint: Text(
+                                  'Any Location',
+                                  style: TextStyle(
+                                    color: context.secondaryTextColor,
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedLocation = value;
-                              });
-                              _updateFilteredDonors();
-                            },
-                            dropdownColor: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: context.isDarkMode 
+                                    ? AppConstants.primaryColor.withOpacity(0.7) 
+                                    : Colors.grey[400],
+                                ),
+                                style: TextStyle(
+                                  color: context.textColor,
+                                  fontSize: 14,
+                                ),
+                                items: _locations.map((location) {
+                                  return DropdownMenuItem<String>(
+                                    value: location == 'Any Location' ? null : location,
+                                    child: Text(
+                                      location,
+                                      style: TextStyle(color: context.textColor),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedLocation = value;
+                                  });
+                                  _updateFilteredDonors();
+                                },
+                                dropdownColor: context.cardColor,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 // Available Toggle
                 GestureDetector(
                   onTap: () {
@@ -372,77 +404,41 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                     _updateFilteredDonors();
                   },
                   child: Container(
-                    width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      vertical: 15,
-                      horizontal: 20,
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      border: _onlyAvailable
-                          ? Border.all(color: AppConstants.primaryColor, width: 1.5)
-                          : null,
+                      color: _onlyAvailable 
+                          ? AppConstants.primaryColor.withOpacity(0.1)
+                          : context.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _onlyAvailable 
+                            ? AppConstants.primaryColor
+                            : context.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _onlyAvailable
+                        Text(
+                          'Show only available donors',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            color: _onlyAvailable 
                                 ? AppConstants.primaryColor
-                                : Colors.grey[200],
+                                : context.textColor,
                           ),
-                          child: _onlyAvailable
-                              ? const Center(
-                                  child: Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Available Donors Only',
-                              style: TextStyle(
-                                color: _onlyAvailable
-                                    ? AppConstants.primaryColor
-                                    : Colors.black87,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Show donors who are ready to donate',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
                         ),
                         const Spacer(),
                         Icon(
                           Icons.person_outline,
                           color: _onlyAvailable
                               ? AppConstants.primaryColor
-                              : Colors.grey[400],
+                              : context.secondaryTextColor,
                           size: 20,
                         ),
                       ],
@@ -460,21 +456,25 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
               children: [
                 Text(
                   'Found ${_filteredDonors.length} donors',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: AppConstants.darkTextColor,
+                    color: context.textColor,
                   ),
                 ),
                 if (_filteredDonors.isNotEmpty)
                   Row(
                     children: [
-                      Icon(Icons.sort, size: 16, color: Colors.grey[600]),
+                      Icon(
+                        Icons.sort, 
+                        size: 16, 
+                        color: context.secondaryTextColor
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Sort by',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: context.secondaryTextColor,
                           fontSize: 14,
                         ),
                       ),
@@ -523,76 +523,65 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   }
 
   Widget _buildEmptyState() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.search_off_rounded,
-                size: 70,
-                color: Colors.grey[400],
-              ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bloodtype_outlined,
+            size: 80,
+            color: context.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No donors found',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: context.textColor,
             ),
-            const SizedBox(height: 24),
-            Text(
-              'No donors found',
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Try changing your filters or search for different criteria',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
+                color: context.secondaryTextColor,
+                fontSize: 14,
               ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Try adjusting your filters or search with different keywords',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _searchController.clear();
+                _selectedBloodType = null;
+                _selectedLocation = null;
+                _onlyAvailable = false;
+              });
+              _updateFilteredDonors();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Reset Filters',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _searchController.clear();
-                  _selectedBloodType = null;
-                  _selectedLocation = null;
-                  _onlyAvailable = false;
-                });
-                _updateFilteredDonors();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Reset Filters',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -600,11 +589,11 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   Widget _buildDonorCard(UserModel donor) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.07),
+            color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.07),
             blurRadius: 15,
             spreadRadius: 1,
             offset: const Offset(0, 8),
@@ -635,7 +624,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.2),
                                   blurRadius: 8,
                                   spreadRadius: 1,
                                   offset: const Offset(0, 2),
@@ -646,130 +635,134 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                               radius: 32,
                               backgroundColor: AppConstants.accentColor,
                               backgroundImage: donor.imageUrl.isNotEmpty
-                                  ? NetworkImage(donor.imageUrl)
+                                  ? AssetImage(donor.imageUrl)
                                   : null,
                               child: donor.imageUrl.isEmpty
-                                  ? const Icon(
-                                      Icons.person,
-                                      color: AppConstants.primaryColor,
-                                      size: 32,
+                                  ? Text(
+                                      donor.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppConstants.primaryColor,
+                                      ),
                                     )
                                   : null,
                             ),
                           ),
                           Positioned(
-                            right: 0,
                             bottom: 0,
+                            right: 0,
                             child: Container(
-                              width: 18,
-                              height: 18,
+                              padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: donor.isAvailableToDonate
-                                    ? AppConstants.successColor
-                                    : Colors.orange,
+                                color: context.cardColor,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: (donor.isAvailableToDonate
-                                            ? AppConstants.successColor
-                                            : Colors.orange)
-                                        .withOpacity(0.3),
+                                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.2),
                                     blurRadius: 4,
                                     spreadRadius: 1,
                                   ),
                                 ],
+                              ),
+                              child: Icon(
+                                donor.isAvailableToDonate
+                                    ? Icons.check_circle
+                                    : Icons.access_time_rounded,
+                                color: donor.isAvailableToDonate
+                                    ? AppConstants.successColor
+                                    : Colors.orange,
+                                size: 18,
                               ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(width: 16),
-                      // Donor Details
+                      // Donor Information
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               donor.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 17,
+                                fontSize: 16,
+                                color: context.textColor,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
+                            Text(
+                              donor.address,
+                              style: TextStyle(
+                                color: context.secondaryTextColor,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  size: 16,
-                                  color: AppConstants.lightTextColor,
+                                Icon(Icons.calendar_today_outlined, 
+                                  size: 14, 
+                                  color: context.secondaryTextColor,
                                 ),
                                 const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    donor.address,
-                                    style: const TextStyle(
-                                      color: AppConstants.lightTextColor,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  'Last donation: ${donor.lastDonationDate.day}/${donor.lastDonationDate.month}/${donor.lastDonationDate.year}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.secondaryTextColor,
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            // Availability Status with Label
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
+                            // Availability Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: donor.isAvailableToDonate
+                                    ? AppConstants.successColor.withOpacity(0.1)
+                                    : Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: donor.isAvailableToDonate
+                                      ? AppConstants.successColor.withOpacity(0.3)
+                                      : Colors.orange.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    donor.isAvailableToDonate
+                                        ? Icons.check_circle_outline
+                                        : Icons.schedule,
+                                    size: 14,
                                     color: donor.isAvailableToDonate
-                                        ? AppConstants.successColor.withOpacity(0.1)
-                                        : Colors.orange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
+                                        ? AppConstants.successColor
+                                        : Colors.orange,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    donor.isAvailableToDonate ? 'Available' : 'Busy',
+                                    style: TextStyle(
                                       color: donor.isAvailableToDonate
-                                          ? AppConstants.successColor.withOpacity(0.3)
-                                          : Colors.orange.withOpacity(0.3),
-                                      width: 1,
+                                          ? AppConstants.successColor
+                                          : Colors.orange,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        donor.isAvailableToDonate
-                                            ? Icons.check_circle_outline
-                                            : Icons.schedule,
-                                        size: 14,
-                                        color: donor.isAvailableToDonate
-                                            ? AppConstants.successColor
-                                            : Colors.orange,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        donor.isAvailableToDonate ? 'Available' : 'Busy',
-                                        style: TextStyle(
-                                          color: donor.isAvailableToDonate
-                                              ? AppConstants.successColor
-                                              : Colors.orange,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -778,11 +771,11 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppConstants.primaryColor.withOpacity(0.2),
+                              color: context.isDarkMode ? Colors.black12 : AppConstants.primaryColor.withOpacity(0.2),
                               blurRadius: 8,
                               spreadRadius: 1,
                             ),
@@ -796,108 +789,52 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                  Divider(height: 1, thickness: 1, color: context.isDarkMode ? Colors.grey[800] : const Color(0xFFF5F5F5)),
                   const SizedBox(height: 16),
                   // Contact Buttons with Visual Enhancements
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Expanded(
-                        child: _buildContactButton(
-                          text: 'Call Now',
-                          icon: Icons.call_rounded,
-                          color: const Color(0xFF4CAF50),
+                        child: TextButton.icon(
                           onPressed: () {
-                            // Implement call functionality
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Calling ${donor.name}'),
-                                backgroundColor: AppConstants.successColor,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                margin: const EdgeInsets.all(10),
-                              ),
-                            );
+                            // Contact the donor
                           },
+                          icon: const Icon(
+                            Icons.phone_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('Call'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppConstants.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: context.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      ),
                       Expanded(
-                        child: _buildContactButton(
-                          text: 'Message',
-                          icon: Icons.chat_rounded,
-                          color: AppConstants.primaryColor,
-                          outlined: false,
+                        child: TextButton.icon(
                           onPressed: () {
-                            // Implement message functionality
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Messaging ${donor.name}'),
-                                backgroundColor: AppConstants.primaryColor,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                margin: const EdgeInsets.all(10),
-                              ),
-                            );
+                            // Message the donor
                           },
+                          icon: const Icon(
+                            Icons.message_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('Message'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppConstants.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildContactButton({
-    required String text,
-    required IconData icon,
-    required Color color,
-    bool outlined = true,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        splashColor: color.withOpacity(0.1),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: outlined ? Colors.transparent : color,
-            borderRadius: BorderRadius.circular(12),
-            border: outlined
-                ? Border.all(color: color, width: 1.5)
-                : null,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: outlined ? color : Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: outlined ? color : Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
             ),
           ),
         ),

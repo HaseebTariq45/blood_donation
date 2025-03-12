@@ -101,11 +101,9 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
         : allBloodRequests.where((req) => req.urgency == _selectedFilter).toList();
     
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Theme.of(context).appBarTheme.backgroundColor 
-            : AppConstants.primaryColor,
+        backgroundColor: context.appBarColor,
         elevation: 0,
         title: const Text(
           'Blood Requests',
@@ -262,18 +260,19 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             spreadRadius: 1,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -284,29 +283,25 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
             child: Icon(
               icon,
               color: color,
-              size: 24,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: color,
-                ),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: context.textColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              color: context.secondaryTextColor,
+            ),
           ),
         ],
       ),
@@ -370,202 +365,196 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
   }
   
   Widget _buildRequestCard(BloodRequestModel request) {
-    return Builder(
-      builder: (context) => Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: context.isDarkMode
-                ? null
-                : LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      Colors.white,
-                      request.urgency == 'Urgent' ? Colors.red.shade50 : Colors.blue.shade50,
-                    ],
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 2,
+      color: context.cardColor,
+      surfaceTintColor: context.cardColor,
+      shadowColor: context.isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
+      child: InkWell(
+        onTap: () {
+          // View request details
+        },
+        borderRadius: BorderRadius.circular(12),
+        splashColor: (request.urgency == 'Urgent' 
+            ? Colors.red.withOpacity(0.1) 
+            : AppConstants.primaryColor.withOpacity(0.1)),
+        highlightColor: (request.urgency == 'Urgent' 
+            ? Colors.red.withOpacity(0.05) 
+            : AppConstants.primaryColor.withOpacity(0.05)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: (request.urgency == 'Urgent' 
+                              ? Colors.red 
+                              : AppConstants.primaryColor).withOpacity(0.3),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: BloodTypeBadge(
+                      bloodType: request.bloodType,
+                      size: 50,
+                    ),
                   ),
-            color: context.isDarkMode
-                ? (request.urgency == 'Urgent' 
-                    ? Colors.red.shade900.withOpacity(0.2) 
-                    : Colors.blue.shade900.withOpacity(0.1))
-                : null,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: (request.urgency == 'Urgent' 
-                                ? Colors.red 
-                                : AppConstants.primaryColor).withOpacity(0.3),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: BloodTypeBadge(
-                        bloodType: request.bloodType,
-                        size: 50,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  request.urgency == 'Urgent' ? 'Urgent: ${request.requesterName}' : request.requesterName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                request.urgency == 'Urgent' ? 'Urgent: ${request.requesterName}' : request.requesterName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: context.textColor,
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: request.urgency == 'Urgent'
-                                      ? AppConstants.errorColor.withOpacity(0.1)
-                                      : AppConstants.primaryColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: request.urgency == 'Urgent'
-                                        ? AppConstants.errorColor.withOpacity(0.5)
-                                        : AppConstants.primaryColor.withOpacity(0.5),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  request.bloodType,
-                                  style: TextStyle(
-                                    color: request.urgency == 'Urgent'
-                                        ? AppConstants.errorColor
-                                        : AppConstants.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            request.location.split(',').first,
-                            style: const TextStyle(
-                              color: AppConstants.lightTextColor,
-                              fontSize: 14,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: AppConstants.lightTextColor,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  request.location.contains(',') 
-                                      ? request.location.split(',').skip(1).join(',').trim() 
-                                      : request.location,
-                                  style: const TextStyle(
-                                    color: AppConstants.lightTextColor,
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              decoration: BoxDecoration(
+                                color: request.urgency == 'Urgent'
+                                    ? AppConstants.errorColor.withOpacity(0.1)
+                                    : AppConstants.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: request.urgency == 'Urgent'
+                                      ? AppConstants.errorColor.withOpacity(0.5)
+                                      : AppConstants.primaryColor.withOpacity(0.5),
+                                  width: 1,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: AppConstants.lightTextColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${request.requestDate.day}/${request.requestDate.month}/${request.requestDate.year}',
-                                style: const TextStyle(
+                              child: Text(
+                                request.bloodType,
+                                style: TextStyle(
+                                  color: request.urgency == 'Urgent'
+                                      ? AppConstants.errorColor
+                                      : AppConstants.primaryColor,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 12,
-                                  color: AppConstants.lightTextColor,
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          request.location.split(',').first,
+                          style: TextStyle(
+                            color: context.secondaryTextColor,
+                            fontSize: 14,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: AppConstants.lightTextColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                request.location.contains(',') 
+                                    ? request.location.split(',').skip(1).join(',').trim() 
+                                    : request.location,
+                                style: const TextStyle(
+                                  color: AppConstants.lightTextColor,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: AppConstants.lightTextColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${request.requestDate.day}/${request.requestDate.month}/${request.requestDate.year}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppConstants.lightTextColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                if (request.notes.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-                  Text(
-                    request.notes,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppConstants.darkTextColor,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        // Option to call the requester
-                        // This would typically launch a phone call
-                      },
-                      icon: const Icon(Icons.phone, size: 16),
-                      label: const Text('Call'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppConstants.primaryColor,
-                        side: BorderSide(color: AppConstants.primaryColor),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle donation response
-                        _showResponseDialog(request);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      ),
-                      child: const Text('Respond'),
-                    ),
-                  ],
+              ),
+              if (request.notes.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                Text(
+                  request.notes,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppConstants.darkTextColor,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // Option to call the requester
+                      // This would typically launch a phone call
+                    },
+                    icon: const Icon(Icons.phone, size: 16),
+                    label: const Text('Call'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppConstants.primaryColor,
+                      side: BorderSide(color: AppConstants.primaryColor),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Handle donation response
+                      _showResponseDialog(request);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Respond'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

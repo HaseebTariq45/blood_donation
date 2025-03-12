@@ -170,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final currentUser = appProvider.currentUser;
     
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.backgroundColor,
       appBar: CustomAppBar(
         title: 'My Profile',
         showProfilePicture: false,
@@ -208,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
                 child: Icon(
                   _isEditing ? Icons.close_rounded : Icons.edit_rounded,
-                  color: _isEditing ? Colors.white : Colors.white,
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -219,8 +219,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   showDialog(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
-                      title: const Text('Discard Changes?'),
-                      content: const Text('Any unsaved changes will be lost. Do you want to continue?'),
+                      backgroundColor: Theme.of(dialogContext).cardColor,
+                      title: Text(
+                        'Discard Changes?',
+                        style: TextStyle(color: Theme.of(dialogContext).textTheme.titleLarge?.color),
+                      ),
+                      content: Text(
+                        'Any unsaved changes will be lost. Do you want to continue?',
+                        style: TextStyle(color: Theme.of(dialogContext).textTheme.bodyMedium?.color),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
@@ -303,7 +310,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: context.isDarkMode
+                                      ? Colors.black.withOpacity(0.3)
+                                      : Colors.grey.withOpacity(0.2),
                                   blurRadius: 10,
                                   spreadRadius: 1,
                                   offset: const Offset(0, 4),
@@ -312,12 +321,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             ),
                             child: CircleAvatar(
                               radius: 60,
-                              backgroundColor: AppConstants.accentColor,
+                              backgroundColor: context.isDarkMode 
+                                  ? const Color(0xFF2E2E2E) 
+                                  : AppConstants.accentColor,
                               backgroundImage: currentUser.imageUrl.isNotEmpty
                                   ? NetworkImage(currentUser.imageUrl)
                                   : null,
                               child: currentUser.imageUrl.isEmpty
-                                  ? const Icon(
+                                  ? Icon(
                                       Icons.person,
                                       color: AppConstants.primaryColor,
                                       size: 60,
@@ -335,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                   color: AppConstants.primaryColor,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white,
+                                    color: context.cardColor,
                                     width: 3,
                                   ),
                                   boxShadow: [
@@ -359,10 +370,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       const SizedBox(height: 20),
                       Text(
                         _isEditing ? 'Edit Profile' : currentUser.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: AppConstants.darkTextColor,
+                          color: context.textColor,
                         ),
                       ),
                       if (!_isEditing) ...[
@@ -482,14 +493,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Profile Fields
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 20),
                         child: Text(
                           'Personal Information',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppConstants.darkTextColor,
+                            color: context.textColor,
                           ),
                         ),
                       ),
@@ -560,14 +571,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       // Blood Type Selection
                       if (_isEditing) ...[
                         // Visual blood type selection when in edit mode
-                        const Padding(
-                          padding: EdgeInsets.only(left: 4, bottom: 16),
-                          child: Text(
-                            'Blood Type',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppConstants.darkTextColor,
+                        Builder(
+                          builder: (context) => Padding(
+                            padding: const EdgeInsets.only(left: 4, bottom: 16),
+                            child: Text(
+                              'Blood Type',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: context.textColor,
+                              ),
                             ),
                           ),
                         ),
@@ -584,124 +597,128 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       
                       const SizedBox(height: 24),
                       
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: 16),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 16),
                         child: Text(
                           'Donation Status',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppConstants.darkTextColor,
+                            color: context.textColor,
                           ),
                         ),
                       ),
                       
                       // Availability Toggle
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.07),
-                              blurRadius: 15,
-                              spreadRadius: 1,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                          border: _isAvailableToDonate
-                              ? Border.all(
-                                  color: AppConstants.successColor.withOpacity(0.5),
-                                  width: 1.5,
-                                )
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: _isAvailableToDonate
-                                    ? AppConstants.successColor.withOpacity(0.1)
-                                    : AppConstants.primaryColor.withOpacity(0.1),
-                                shape: BoxShape.circle,
+                      Builder(
+                        builder: (context) => Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode 
+                                    ? Colors.black.withOpacity(0.1) 
+                                    : Colors.grey.withOpacity(0.07),
+                                blurRadius: 15,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 5),
                               ),
-                              child: Icon(
-                                Icons.volunteer_activism,
-                                color: _isAvailableToDonate
-                                    ? AppConstants.successColor
-                                    : AppConstants.primaryColor,
-                                size: 24,
+                            ],
+                            border: _isAvailableToDonate
+                                ? Border.all(
+                                    color: AppConstants.successColor.withOpacity(0.5),
+                                    width: 1.5,
+                                  )
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: _isAvailableToDonate
+                                      ? AppConstants.successColor.withOpacity(0.1)
+                                      : AppConstants.primaryColor.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.volunteer_activism,
+                                  color: _isAvailableToDonate
+                                      ? AppConstants.successColor
+                                      : AppConstants.primaryColor,
+                                  size: 24,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Available to Donate',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                      color: _isAvailableToDonate
-                                          ? AppConstants.successColor
-                                          : AppConstants.darkTextColor,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Available to Donate',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        color: _isAvailableToDonate
+                                            ? AppConstants.successColor
+                                            : context.textColor,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Let others know if you are available for blood donation requests',
-                                    style: TextStyle(
-                                      color: AppConstants.lightTextColor,
-                                      fontSize: 13,
-                                      height: 1.4,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Let others know if you are available for blood donation requests',
+                                      style: TextStyle(
+                                        color: context.secondaryTextColor,
+                                        fontSize: 13,
+                                        height: 1.4,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Switch.adaptive(
-                              value: _isAvailableToDonate,
-                              onChanged: (value) {
-                                // Toggle availability regardless of edit mode
-                                setState(() {
-                                  _isAvailableToDonate = value;
-                                });
-                                
-                                // Update user profile with new availability
-                                final appProvider = Provider.of<AppProvider>(context, listen: false);
-                                final currentUser = appProvider.currentUser;
-                                final updatedUser = currentUser.copyWith(
-                                  isAvailableToDonate: value,
-                                );
-                                appProvider.updateUserProfile(updatedUser);
-                                
-                                // Show confirmation snackbar
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      value 
-                                          ? 'You are now available for donation requests' 
-                                          : 'You are now marked as unavailable for donation',
+                              Switch.adaptive(
+                                value: _isAvailableToDonate,
+                                onChanged: (value) {
+                                  // Toggle availability regardless of edit mode
+                                  setState(() {
+                                    _isAvailableToDonate = value;
+                                  });
+                                  
+                                  // Update user profile with new availability
+                                  final appProvider = Provider.of<AppProvider>(context, listen: false);
+                                  final currentUser = appProvider.currentUser;
+                                  final updatedUser = currentUser.copyWith(
+                                    isAvailableToDonate: value,
+                                  );
+                                  appProvider.updateUserProfile(updatedUser);
+                                  
+                                  // Show confirmation snackbar
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        value 
+                                            ? 'You are now available for donation requests' 
+                                            : 'You are now marked as unavailable for donation',
+                                      ),
+                                      backgroundColor: value 
+                                          ? AppConstants.successColor 
+                                          : AppConstants.primaryColor,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(10),
+                                      duration: const Duration(seconds: 2),
                                     ),
-                                    backgroundColor: value 
-                                        ? AppConstants.successColor 
-                                        : AppConstants.primaryColor,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    margin: const EdgeInsets.all(10),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                              activeColor: AppConstants.successColor,
-                              activeTrackColor: AppConstants.successColor.withOpacity(0.3),
-                            ),
-                          ],
+                                  );
+                                },
+                                activeColor: AppConstants.successColor,
+                                activeTrackColor: AppConstants.successColor.withOpacity(0.3),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       
@@ -741,31 +758,33 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       if (!_isEditing) ...[
                         const SizedBox(height: 20),
                         // Edit Details Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _toggleEdit,
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text(
-                              'EDIT DETAILS',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: AppConstants.primaryColor,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: AppConstants.primaryColor,
-                                  width: 1.5,
+                        Builder(
+                          builder: (context) => SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _toggleEdit,
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text(
+                                'EDIT DETAILS',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
                                 ),
                               ),
-                              elevation: 0,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: context.cardColor,
+                                foregroundColor: AppConstants.primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: AppConstants.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                elevation: 0,
+                              ),
                             ),
                           ),
                         ),
@@ -775,27 +794,30 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       
                       // Logout Button - Shows only when not editing
                       if (!_isEditing)
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // Show confirmation dialog before logout
-                              _showLogoutConfirmation();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.red.withOpacity(0.7), width: 1.5),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        Builder(
+                          builder: (context) => SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                // Show confirmation dialog before logout
+                                _showLogoutConfirmation();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.red.withOpacity(0.7), width: 1.5),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                foregroundColor: Colors.red,
+                                backgroundColor: context.cardColor,
                               ),
-                              foregroundColor: Colors.red,
-                            ),
-                            child: const Text(
-                              'LOGOUT',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
+                              child: const Text(
+                                'LOGOUT',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
                           ),
@@ -815,23 +837,33 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).cardColor,
+        title: Text(
+          'Logout',
+          style: TextStyle(color: Theme.of(dialogContext).textTheme.titleLarge?.color),
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: Theme.of(dialogContext).textTheme.bodyMedium?.color),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('CANCEL'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               // Perform logout action
               final appProvider = Provider.of<AppProvider>(context, listen: false);
               appProvider.logout();
               Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             },
             child: const Text('LOGOUT'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
           ),
         ],
       ),
@@ -840,79 +872,85 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   // Build a grid of blood type options
   Widget _buildBloodTypeGrid() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 1,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-        ),
-        itemCount: _bloodTypes.length,
-        itemBuilder: (context, index) {
-          final bloodType = _bloodTypes[index];
-          final isSelected = _bloodType == bloodType;
-          
-          // Individual blood type card
-          return GestureDetector(
-            onTap: () {
-              // Update selected blood type when tapped
-              setState(() {
-                _bloodType = bloodType;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? AppConstants.primaryColor 
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
+    return Builder(
+      builder: (context) => Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            childAspectRatio: 1,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemCount: _bloodTypes.length,
+          itemBuilder: (context, index) {
+            final bloodType = _bloodTypes[index];
+            final isSelected = _bloodType == bloodType;
+            
+            // Individual blood type card
+            return GestureDetector(
+              onTap: () {
+                // Update selected blood type when tapped
+                setState(() {
+                  _bloodType = bloodType;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
                   color: isSelected 
                       ? AppConstants.primaryColor 
-                      : Colors.grey.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
+                      : context.cardColor,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
                     color: isSelected 
-                        ? AppConstants.primaryColor.withOpacity(0.3) 
-                        : Colors.grey.withOpacity(0.05),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 2),
+                        ? AppConstants.primaryColor 
+                        : context.isDarkMode
+                            ? Colors.grey.withOpacity(0.3)
+                            : Colors.grey.withOpacity(0.2),
+                    width: 1.5,
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Blood type display
-                  Text(
-                    bloodType,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : AppConstants.darkTextColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  if (isSelected) ...[
-                    const SizedBox(height: 5),
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                      size: 16,
+                  boxShadow: [
+                    BoxShadow(
+                      color: isSelected 
+                          ? AppConstants.primaryColor.withOpacity(0.3) 
+                          : context.isDarkMode
+                              ? Colors.black.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.05),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 2),
                     ),
                   ],
-                ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Blood type display
+                    Text(
+                      bloodType,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : context.textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(height: 5),
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -926,88 +964,96 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     bool readOnly = false,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.07),
-            blurRadius: 15,
-            spreadRadius: 1,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          floatingLabelStyle: TextStyle(
-            color: readOnly ? AppConstants.lightTextColor : AppConstants.primaryColor,
-            fontWeight: FontWeight.w600,
-          ),
-          prefixIcon: Container(
-            margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: readOnly 
-                  ? Colors.grey.withOpacity(0.1)
-                  : AppConstants.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+    return Builder(
+      builder: (context) => Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: context.isDarkMode
+                  ? Colors.black.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.07),
+              blurRadius: 15,
+              spreadRadius: 1,
+              offset: const Offset(0, 5),
             ),
-            child: Icon(
-              icon,
-              color: readOnly ? Colors.grey : AppConstants.primaryColor,
-              size: 20,
-            ),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.1),
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: AppConstants.primaryColor.withOpacity(0.5),
-              width: 1.5,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: Colors.red.withOpacity(0.5),
-              width: 1.5,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: Colors.red.withOpacity(0.5),
-              width: 1.5,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 16,
-          ),
-          fillColor: Colors.white,
-          filled: true,
+          ],
         ),
-        readOnly: readOnly,
-        validator: validator,
-        style: TextStyle(
-          fontSize: 16,
-          color: readOnly ? AppConstants.lightTextColor : AppConstants.darkTextColor,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label,
+            floatingLabelStyle: TextStyle(
+              color: readOnly ? context.secondaryTextColor : AppConstants.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+            prefixIcon: Container(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: readOnly 
+                    ? context.isDarkMode
+                        ? Colors.grey.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.1)
+                    : AppConstants.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: readOnly ? Colors.grey : AppConstants.primaryColor,
+                size: 20,
+              ),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: context.isDarkMode
+                    ? Colors.grey.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: AppConstants.primaryColor.withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: Colors.red.withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: Colors.red.withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
+            fillColor: context.cardColor,
+            filled: true,
+          ),
+          readOnly: readOnly,
+          validator: validator,
+          style: TextStyle(
+            fontSize: 16,
+            color: readOnly ? context.secondaryTextColor : context.textColor,
+          ),
         ),
       ),
     );
@@ -1020,58 +1066,62 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     required IconData icon,
     required Color color,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.07),
-            blurRadius: 15,
-            spreadRadius: 1,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+    return Builder(
+      builder: (context) => Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: context.isDarkMode
+                  ? Colors.black.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.07),
+              blurRadius: 15,
+              spreadRadius: 1,
+              offset: const Offset(0, 5),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppConstants.lightTextColor,
-                  fontSize: 13,
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: context.secondaryTextColor,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: color,
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: color,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
