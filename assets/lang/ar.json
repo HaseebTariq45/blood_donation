@@ -51,5 +51,13 @@
   "account": "الحساب",
   "change_password": "تغيير كلمة المرور",
   "delete_account": "حذف الحساب",
-  "app_version": "إصدار التطبيق"
+  "app_version": "إصدار التطبيق",
+  "Switch between light and dark themes": "التبديل بين السمات الفاتحة والداكنة",
+  "Select your preferred language": "اختر لغتك المفضلة",
+  "Receive notifications about blood requests and updates": "تلقي إشعارات حول طلبات الدم والتحديثات",
+  "Allow app to access your location for nearby blood banks": "السماح للتطبيق بالوصول إلى موقعك لبنوك الدم القريبة",
+  "Control how the app uses your data": "التحكم في كيفية استخدام التطبيق لبياناتك",
+  "Are you sure you want to logout?": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+  "This action cannot be undone. Are you sure you want to delete your account?": "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد أنك تريد حذف حسابك؟",
+  "delete": "حذف"
 } 

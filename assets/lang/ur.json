@@ -51,5 +51,13 @@
   "account": "اکاؤنٹ",
   "change_password": "پاس ورڈ تبدیل کریں",
   "delete_account": "اکاؤنٹ حذف کریں",
-  "app_version": "ایپ ورژن"
+  "app_version": "ایپ ورژن",
+  "Switch between light and dark themes": "لائٹ اور ڈارک تھیمز کے درمیان تبدیل کریں",
+  "Select your preferred language": "اپنی پسندیدہ زبان منتخب کریں",
+  "Receive notifications about blood requests and updates": "خون کی درخواستوں اور تازہ کاریوں کے بارے میں اطلاعات حاصل کریں",
+  "Allow app to access your location for nearby blood banks": "قریبی بلڈ بینکوں کے لیے ایپ کو اپنے مقام تک رسائی کی اجازت دیں",
+  "Control how the app uses your data": "کنٹرول کریں کہ ایپ آپ کے ڈیٹا کا استعمال کیسے کرتی ہے",
+  "Are you sure you want to logout?": "کیا آپ واقعی لاگ آؤٹ کرنا چاہتے ہیں؟",
+  "This action cannot be undone. Are you sure you want to delete your account?": "یہ عمل ناقابل واپسی ہے۔ کیا آپ واقعی اپنا اکاؤنٹ حذف کرنا چاہتے ہیں؟",
+  "delete": "حذف کریں"
 } 

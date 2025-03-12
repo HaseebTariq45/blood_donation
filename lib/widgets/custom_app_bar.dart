@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
+import '../utils/localization/app_localization.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
   final List<Widget>? actions;
   final bool showProfilePicture;
+  final bool translateTitle;
 
   const CustomAppBar({
     Key? key,
@@ -15,6 +17,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = true,
     this.actions,
     this.showProfilePicture = true,
+    this.translateTitle = true,
   }) : super(key: key);
 
   @override
@@ -22,11 +25,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final appProvider = Provider.of<AppProvider>(context);
     final currentUser = appProvider.currentUser;
 
+    final displayTitle = translateTitle ? title.tr(context) : title;
+
     return AppBar(
       backgroundColor: AppConstants.primaryColor,
       elevation: 0,
       title: Text(
-        title,
+        displayTitle,
         style: const TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 18,

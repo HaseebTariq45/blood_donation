@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 // Dark Mode
                 _buildSettingItem(
                   title: 'dark_mode'.tr(context),
-                  subtitle: 'Switch between light and dark themes',
+                  subtitle: 'Switch between light and dark themes'.tr(context),
                   icon: Icons.dark_mode,
                   trailing: Switch(
                     value: appProvider.isDarkMode,
@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 // Language Selector
                 _buildSettingItem(
                   title: 'language'.tr(context),
-                  subtitle: 'Select your preferred language',
+                  subtitle: 'Select your preferred language'.tr(context),
                   icon: Icons.language,
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -131,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               children: [
                 _buildSettingItem(
                   title: 'enable_notifications'.tr(context),
-                  subtitle: 'Receive notifications about blood requests and updates',
+                  subtitle: 'Receive notifications about blood requests and updates'.tr(context),
                   icon: Icons.notifications,
                   trailing: Switch(
                     value: _notificationsEnabled,
@@ -201,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               children: [
                 _buildSettingItem(
                   title: 'location_services'.tr(context),
-                  subtitle: 'Allow app to access your location for nearby blood banks',
+                  subtitle: 'Allow app to access your location for nearby blood banks'.tr(context),
                   icon: Icons.location_on,
                   trailing: Switch(
                     value: _locationEnabled,
@@ -216,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 const Divider(),
                 _buildSettingItem(
                   title: 'data_usage'.tr(context),
-                  subtitle: 'Control how the app uses your data',
+                  subtitle: 'Control how the app uses your data'.tr(context),
                   icon: Icons.data_usage,
                   onTap: () {
                     // Navigate to data usage settings
@@ -483,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('logout'.tr(context)),
-          content: Text('Are you sure you want to logout?'),
+          content: Text('Are you sure you want to logout?'.tr(context)),
           actions: <Widget>[
             TextButton(
               child: Text('cancel'.tr(context)),
@@ -512,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('delete_account'.tr(context)),
-          content: Text('This action cannot be undone. Are you sure you want to delete your account?'),
+          content: Text('This action cannot be undone. Are you sure you want to delete your account?'.tr(context)),
           actions: <Widget>[
             TextButton(
               child: Text('cancel'.tr(context)),

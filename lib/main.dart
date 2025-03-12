@@ -48,6 +48,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     
+    // Determine if the current language requires right-to-left layout
+    final isRtl = appProvider.locale.languageCode == 'ar' || appProvider.locale.languageCode == 'ur';
+    
     return MaterialApp(
       title: 'Blood Donation App',
       debugShowCheckedModeBanner: false,
@@ -67,6 +70,14 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      
+      // Set text direction based on language
+      builder: (context, child) {
+        return Directionality(
+          textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+          child: child!,
+        );
+      },
       
       theme: ThemeData(
         primaryColor: AppConstants.primaryColor,

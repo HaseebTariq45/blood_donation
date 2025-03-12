@@ -51,5 +51,13 @@
   "account": "Account",
   "change_password": "Change Password",
   "delete_account": "Delete Account",
-  "app_version": "App Version"
+  "app_version": "App Version",
+  "Switch between light and dark themes": "Switch between light and dark themes",
+  "Select your preferred language": "Select your preferred language",
+  "Receive notifications about blood requests and updates": "Receive notifications about blood requests and updates",
+  "Allow app to access your location for nearby blood banks": "Allow app to access your location for nearby blood banks",
+  "Control how the app uses your data": "Control how the app uses your data",
+  "Are you sure you want to logout?": "Are you sure you want to logout?",
+  "This action cannot be undone. Are you sure you want to delete your account?": "This action cannot be undone. Are you sure you want to delete your account?",
+  "delete": "Delete"
 } 

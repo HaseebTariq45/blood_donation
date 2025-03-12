@@ -51,5 +51,13 @@
   "account": "Compte",
   "change_password": "Changer de Mot de passe",
   "delete_account": "Supprimer le Compte",
-  "app_version": "Version de l'Application"
+  "app_version": "Version de l'Application",
+  "Switch between light and dark themes": "Basculer entre les thèmes clair et sombre",
+  "Select your preferred language": "Sélectionnez votre langue préférée",
+  "Receive notifications about blood requests and updates": "Recevez des notifications sur les demandes de sang et les mises à jour",
+  "Allow app to access your location for nearby blood banks": "Autoriser l'application à accéder à votre position pour les banques de sang à proximité",
+  "Control how the app uses your data": "Contrôler comment l'application utilise vos données",
+  "Are you sure you want to logout?": "Êtes-vous sûr de vouloir vous déconnecter?",
+  "This action cannot be undone. Are you sure you want to delete your account?": "Cette action ne peut pas être annulée. Êtes-vous sûr de vouloir supprimer votre compte?",
+  "delete": "Supprimer"
 } 
