@@ -14,6 +14,12 @@ class AppProvider extends ChangeNotifier {
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
 
+  // App locale/language
+  Locale _locale = const Locale('en', 'US');
+  Locale get locale => _locale;
+  String _selectedLanguage = 'English';
+  String get selectedLanguage => _selectedLanguage;
+
   // Profile image error handling
   bool _profileImageLoadError = false;
   bool get profileImageLoadError => _profileImageLoadError;
@@ -79,6 +85,33 @@ class AppProvider extends ChangeNotifier {
     _currentUser = _currentUser!.copyWith(
       imageUrl: 'assets/images/avatar_1.png',
     );
+  }
+
+  // Change app language
+  void setLanguage(String language) {
+    _selectedLanguage = language;
+    
+    switch (language) {
+      case 'English':
+        _locale = const Locale('en', 'US');
+        break;
+      case 'Spanish':
+        _locale = const Locale('es', 'ES');
+        break;
+      case 'French':
+        _locale = const Locale('fr', 'FR');
+        break;
+      case 'Arabic':
+        _locale = const Locale('ar', 'SA');
+        break;
+      case 'Urdu':
+        _locale = const Locale('ur', 'PK');
+        break;
+      default:
+        _locale = const Locale('en', 'US');
+    }
+    
+    notifyListeners();
   }
 
   // Login user

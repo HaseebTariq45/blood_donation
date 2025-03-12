@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
+import '../utils/localization/app_localization.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -17,7 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   bool _emailNotifications = true;
   bool _smsNotifications = false;
   bool _pushNotifications = true;
-  String _selectedLanguage = 'English';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -52,8 +52,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const CustomAppBar(
-        title: 'Settings',
+      appBar: CustomAppBar(
+        title: 'settings'.tr(context),
         showBackButton: true,
       ),
       body: FadeTransition(
@@ -63,11 +63,11 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           children: [
             // App Settings Card
             _buildSettingsCard(
-              title: 'App Settings',
+              title: 'app_settings'.tr(context),
               children: [
                 // Dark Mode
                 _buildSettingItem(
-                  title: 'Dark Mode',
+                  title: 'dark_mode'.tr(context),
                   subtitle: 'Switch between light and dark themes',
                   icon: Icons.dark_mode,
                   trailing: Switch(
@@ -85,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 
                 // Language Selector
                 _buildSettingItem(
-                  title: 'Language',
+                  title: 'language'.tr(context),
                   subtitle: 'Select your preferred language',
                   icon: Icons.language,
                   trailing: Container(
@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: DropdownButton<String>(
-                      value: _selectedLanguage,
+                      value: appProvider.selectedLanguage,
                       isDense: true,
                       underline: const SizedBox(),
                       icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() {
-                            _selectedLanguage = newValue;
+                            appProvider.setLanguage(newValue);
                           });
                         }
                       },
@@ -127,10 +127,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             
             // Notification Settings Card
             _buildSettingsCard(
-              title: 'Notifications',
+              title: 'notifications_settings'.tr(context),
               children: [
                 _buildSettingItem(
-                  title: 'Enable Notifications',
+                  title: 'enable_notifications'.tr(context),
                   subtitle: 'Receive notifications about blood requests and updates',
                   icon: Icons.notifications,
                   trailing: Switch(
@@ -151,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 if (_notificationsEnabled) ...[
                   const Divider(),
                   _buildIndentedSettingItem(
-                    title: 'Email Notifications',
+                    title: 'email_notifications'.tr(context),
                     icon: Icons.email,
                     trailing: Switch(
                       value: _emailNotifications,
@@ -164,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     ),
                   ),
                   _buildIndentedSettingItem(
-                    title: 'SMS Notifications',
+                    title: 'sms_notifications'.tr(context),
                     icon: Icons.sms,
                     trailing: Switch(
                       value: _smsNotifications,
@@ -177,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     ),
                   ),
                   _buildIndentedSettingItem(
-                    title: 'Push Notifications',
+                    title: 'push_notifications'.tr(context),
                     icon: Icons.notifications_active,
                     trailing: Switch(
                       value: _pushNotifications,
@@ -197,10 +197,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             
             // Privacy Settings Card
             _buildSettingsCard(
-              title: 'Privacy & Permission',
+              title: 'privacy_permission'.tr(context),
               children: [
                 _buildSettingItem(
-                  title: 'Location Services',
+                  title: 'location_services'.tr(context),
                   subtitle: 'Allow app to access your location for nearby blood banks',
                   icon: Icons.location_on,
                   trailing: Switch(
@@ -215,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'Data Usage',
+                  title: 'data_usage'.tr(context),
                   subtitle: 'Control how the app uses your data',
                   icon: Icons.data_usage,
                   onTap: () {
@@ -229,10 +229,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             
             // About & Legal Card
             _buildSettingsCard(
-              title: 'About & Legal',
+              title: 'about_legal'.tr(context),
               children: [
                 _buildSettingItem(
-                  title: 'Privacy Policy',
+                  title: 'privacy_policy'.tr(context),
                   icon: Icons.privacy_tip,
                   onTap: () {
                     // Navigate to privacy policy
@@ -240,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'Terms of Service',
+                  title: 'terms_of_service'.tr(context),
                   icon: Icons.description,
                   onTap: () {
                     // Navigate to terms of service
@@ -248,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'About Us',
+                  title: 'about_us'.tr(context),
                   icon: Icons.info,
                   onTap: () {
                     // Navigate to about us
@@ -257,7 +257,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'Contact Support',
+                  title: 'contact_support'.tr(context),
                   icon: Icons.support_agent,
                   onTap: () {
                     // Navigate to support
@@ -270,10 +270,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             
             // Account Settings Card
             _buildSettingsCard(
-              title: 'Account',
+              title: 'account'.tr(context),
               children: [
                 _buildSettingItem(
-                  title: 'Change Password',
+                  title: 'change_password'.tr(context),
                   icon: Icons.lock,
                   onTap: () {
                     // Navigate to change password
@@ -281,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'Logout',
+                  title: 'logout'.tr(context),
                   icon: Icons.logout,
                   onTap: () {
                     _showLogoutDialog();
@@ -289,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 ),
                 const Divider(),
                 _buildSettingItem(
-                  title: 'Delete Account',
+                  title: 'delete_account'.tr(context),
                   icon: Icons.delete_forever,
                   iconColor: AppConstants.errorColor,
                   titleColor: AppConstants.errorColor,
@@ -310,7 +310,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'App Version 1.0.0',
+                  '${'app_version'.tr(context)} 1.0.0',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -449,21 +449,27 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             children: [
               Icon(
                 icon,
-                color: Colors.grey[600],
-                size: 20,
+                color: AppConstants.primaryColor,
+                size: 18,
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
+                    color: AppConstants.darkTextColor,
                     fontSize: 14,
                   ),
                 ),
               ),
               if (trailing != null) trailing,
+              if (onTap != null && trailing == null)
+                const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                  size: 20,
+                ),
             ],
           ),
         ),
@@ -471,76 +477,64 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     );
   }
 
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account?'),
-        content: const Text(
-          'This action cannot be undone. All your personal data, donation history, and blood requests will be permanently deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle account deletion
-              // For now, show a success snackbar
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account deleted successfully'),
-                  backgroundColor: AppConstants.errorColor,
-                ),
-              );
-              // Navigate back to login screen
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.errorColor,
-            ),
-            child: const Text('DELETE'),
-          ),
-        ],
-      ),
-    );
-  }
-  
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle logout
-              // Navigate back to login screen
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryColor,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('logout'.tr(context)),
+          content: Text('Are you sure you want to logout?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('cancel'.tr(context)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-            child: const Text('LOGOUT'),
-          ),
-        ],
-      ),
+            TextButton(
+              child: Text('logout'.tr(context)),
+              onPressed: () {
+                // Logout user and navigate to login screen
+                final appProvider = Provider.of<AppProvider>(context, listen: false);
+                appProvider.logout();
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('delete_account'.tr(context)),
+          content: Text('This action cannot be undone. Are you sure you want to delete your account?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('cancel'.tr(context)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('delete'.tr(context)),
+              style: TextButton.styleFrom(
+                foregroundColor: AppConstants.errorColor,
+              ),
+              onPressed: () {
+                // Delete account and navigate to login screen
+                final appProvider = Provider.of<AppProvider>(context, listen: false);
+                appProvider.logout(); // Just logout for now since we don't have a real backend
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 } 

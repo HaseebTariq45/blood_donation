@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_provider.dart';
 import 'screens/splash_screen.dart';
@@ -17,6 +18,7 @@ import 'screens/blood_banks_screen.dart';
 import 'screens/donation_history_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/about_us_screen.dart';
+import 'utils/localization/app_localization.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -49,6 +51,23 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Blood Donation App',
       debugShowCheckedModeBanner: false,
+      
+      // Localization support
+      locale: appProvider.locale,
+      supportedLocales: const [
+        Locale('en', 'US'), // English
+        Locale('es', 'ES'), // Spanish
+        Locale('fr', 'FR'), // French
+        Locale('ar', 'SA'), // Arabic
+        Locale('ur', 'PK'), // Urdu
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      
       theme: ThemeData(
         primaryColor: AppConstants.primaryColor,
         scaffoldBackgroundColor: Colors.white,
