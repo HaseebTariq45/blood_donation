@@ -9,11 +9,13 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/donor_search_screen.dart';
 import 'screens/blood_request_screen.dart';
+import 'screens/blood_requests_list_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/blood_banks_screen.dart';
 import 'screens/donation_history_screen.dart';
+import 'screens/signup_screen.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -175,9 +177,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
         '/donor_search': (context) => const DonorSearchScreen(),
         '/blood_request': (context) => const BloodRequestScreen(),
+        '/blood_requests_list': (context) => const BloodRequestsListScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
         '/settings': (context) => const SettingsScreen(),

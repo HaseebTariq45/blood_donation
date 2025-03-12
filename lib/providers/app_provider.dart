@@ -87,6 +87,21 @@ class AppProvider extends ChangeNotifier {
     _currentUser = UserModel.dummy();
     notifyListeners();
   }
+  
+  // Register a new user
+  void registerUser(UserModel user, String password) {
+    // BACKEND IMPLEMENTATION NOTE:
+    // In a real app, this would make an API call to register the user
+    // with the provided information and password
+    
+    // For this demo, we just store the user object locally
+    _currentUser = user;
+    
+    // Add the new user to the donors list as well
+    _donors.add(user);
+    
+    notifyListeners();
+  }
 
   // Logout user
   void logout() {

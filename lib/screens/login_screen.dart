@@ -203,6 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextButton(
                             onPressed: () {
                               // Navigate to register screen
+                              Navigator.of(context).pushNamed('/signup');
                             },
                             child: const Text('Register Now'),
                           ),

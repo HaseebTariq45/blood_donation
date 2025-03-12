@@ -13,7 +13,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
@@ -23,10 +23,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late bool _isAvailableToDonate;
   bool _isEditing = false;
   bool _isLoading = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  
+  // List of available blood types
+  final List<String> _bloodTypes = [
+    'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+  ];
 
   @override
   void initState() {
     super.initState();
+    // Animation setup
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    _animationController.forward();
+    
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final currentUser = appProvider.currentUser;
     
@@ -44,15 +64,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
+  // Toggle edit mode and play animation
   void _toggleEdit() {
     setState(() {
-      _isEditing = !_isEditing;
+      _isEditing = true;
     });
+    
+    // Subtle animation when entering edit mode
+    _animationController.reset();
+    _animationController.forward();
+    
+    // Show edit mode indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Profile is now in edit mode'),
+        backgroundColor: AppConstants.primaryColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
+        duration: const Duration(seconds: 2),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
+  // Handle profile save - currently just UI with no save logic
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -73,6 +119,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       
       // Simulate network delay
       Future.delayed(const Duration(milliseconds: 800), () {
+        // Note: In a real implementation, we would save the data to a database or API here
+        // For now, we just update the local state
         appProvider.updateUserProfile(updatedUser);
         
         setState(() {
@@ -81,13 +129,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
+          SnackBar(
+            content: const Text('Profile updated successfully'),
             backgroundColor: AppConstants.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+            action: SnackBarAction(
+              label: 'DISMISS',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       });
     }
+  }
+
+  // Reset form values to current user data
+  void _resetFormValues() {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final currentUser = appProvider.currentUser;
+    
+    setState(() {
+      _nameController.text = currentUser.name;
+      _emailController.text = currentUser.email;
+      _phoneController.text = currentUser.phone;
+      _addressController.text = currentUser.address;
+      _bloodType = currentUser.bloodType;
+      _isAvailableToDonate = currentUser.isAvailableToDonate;
+    });
   }
 
   @override
@@ -96,32 +169,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final currentUser = appProvider.currentUser;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: CustomAppBar(
         title: 'My Profile',
         showProfilePicture: false,
         actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.close : Icons.edit),
-            onPressed: _toggleEdit,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child: IconButton(
+              key: ValueKey<bool>(_isEditing),
+              icon: Icon(
+                _isEditing ? Icons.close_rounded : Icons.edit_rounded,
+                color: _isEditing ? Colors.red : AppConstants.primaryColor,
+              ),
+              tooltip: _isEditing ? 'Cancel Editing' : 'Edit Profile',
+              onPressed: () {
+                if (_isEditing) {
+                  // Show confirmation dialog if there are unsaved changes
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Discard Changes?'),
+                      content: const Text('Any unsaved changes will be lost. Do you want to continue?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('KEEP EDITING'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            // Reset to original values and exit edit mode
+                            _resetFormValues();
+                            setState(() {
+                              _isEditing = false;
+                            });
+                          },
+                          child: const Text('DISCARD'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  _toggleEdit();
+                }
+              },
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.paddingL),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile Header
-                Center(
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
+      // Floating action button for quick save when in edit mode
+      floatingActionButton: _isEditing ? FloatingActionButton(
+        onPressed: _saveProfile,
+        backgroundColor: AppConstants.primaryColor,
+        child: _isLoading 
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Icon(Icons.save),
+        tooltip: 'Save Profile',
+      ) : null,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Profile Header
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
                             radius: 60,
                             backgroundColor: AppConstants.accentColor,
                             backgroundImage: currentUser.imageUrl.isNotEmpty
@@ -135,286 +294,600 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   )
                                 : null,
                           ),
-                          if (_isEditing)
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: AppConstants.primaryColor,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _isEditing ? 'Edit Profile' : currentUser.name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      if (!_isEditing) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
+                        if (_isEditing)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: AppConstants.primaryColor,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                currentUser.bloodType,
-                                style: const TextStyle(
+                                shape: BoxShape.circle,
+                                border: Border.all(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  width: 3,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppConstants.primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 18,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: currentUser.isEligibleToDonate
-                                    ? AppConstants.successColor
-                                    : Colors.orange,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                currentUser.isEligibleToDonate
-                                    ? 'Eligible to Donate'
-                                    : '${currentUser.daysUntilNextDonation} days to donate',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
                       ],
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Profile Fields
-                const Text(
-                  'Personal Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Name Field
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  icon: Icons.person,
-                  readOnly: !_isEditing,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Email Field
-                _buildTextField(
-                  controller: _emailController,
-                  label: 'Email',
-                  icon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                  readOnly: !_isEditing,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Phone Field
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  icon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                  readOnly: !_isEditing,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Address Field
-                _buildTextField(
-                  controller: _addressController,
-                  label: 'Address',
-                  icon: Icons.location_on,
-                  readOnly: !_isEditing,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your address';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Blood Type Field
-                if (_isEditing)
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Blood Type',
-                      prefixIcon: Icon(Icons.bloodtype),
                     ),
-                    value: _bloodType,
-                    items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-                        .map((type) {
-                      return DropdownMenuItem<String>(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _bloodType = value;
-                        });
-                      }
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select your blood type';
-                      }
-                      return null;
-                    },
-                  )
-                else
-                  _buildInfoField(
-                    label: 'Blood Type',
-                    value: currentUser.bloodType,
-                    icon: Icons.bloodtype,
-                  ),
-                const SizedBox(height: 16),
-                
-                // Availability Toggle
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppConstants.accentColor,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.volunteer_activism,
-                        color: AppConstants.primaryColor,
+                    const SizedBox(height: 20),
+                    Text(
+                      _isEditing ? 'Edit Profile' : currentUser.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppConstants.darkTextColor,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Available to Donate',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
+                    ),
+                    if (!_isEditing) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Let others know if you are available for blood donation requests',
-                              style: TextStyle(
-                                color: AppConstants.darkTextColor.withOpacity(0.7),
-                                fontSize: 12,
-                              ),
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppConstants.primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.bloodtype,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  currentUser.bloodType,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: currentUser.isEligibleToDonate
+                                  ? AppConstants.successColor
+                                  : Colors.orange,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (currentUser.isEligibleToDonate
+                                          ? AppConstants.successColor
+                                          : Colors.orange)
+                                      .withOpacity(0.3),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    currentUser.isEligibleToDonate
+                                        ? Icons.check_circle
+                                        : Icons.timer,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  currentUser.isEligibleToDonate
+                                      ? 'Eligible to Donate'
+                                      : '${currentUser.daysUntilNextDonation} days to donate',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Fields
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, bottom: 20),
+                        child: Text(
+                          'Personal Information',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.darkTextColor,
+                          ),
                         ),
                       ),
-                      Switch(
-                        value: _isAvailableToDonate,
-                        onChanged: _isEditing
-                            ? (value) {
+                      
+                      // Name Field
+                      _buildFormField(
+                        controller: _nameController,
+                        label: 'Full Name',
+                        icon: Icons.person_outline,
+                        readOnly: !_isEditing,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      // Email Field
+                      _buildFormField(
+                        controller: _emailController,
+                        label: 'Email Address',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        readOnly: !_isEditing,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      // Phone Field
+                      _buildFormField(
+                        controller: _phoneController,
+                        label: 'Phone Number',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        readOnly: !_isEditing,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      // Address Field
+                      _buildFormField(
+                        controller: _addressController,
+                        label: 'Address',
+                        icon: Icons.location_on_outlined,
+                        readOnly: !_isEditing,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your address';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Blood Type Selection
+                      if (_isEditing) ...[
+                        // Visual blood type selection when in edit mode
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 16),
+                          child: Text(
+                            'Blood Type',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.darkTextColor,
+                            ),
+                          ),
+                        ),
+                        // Grid of blood type options
+                        _buildBloodTypeGrid(),
+                      ] else
+                        // Show blood type as info field when not editing
+                        _buildInfoField(
+                          label: 'Blood Type',
+                          value: currentUser.bloodType,
+                          icon: Icons.bloodtype_outlined,
+                          color: AppConstants.primaryColor,
+                        ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, bottom: 16),
+                        child: Text(
+                          'Donation Status',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.darkTextColor,
+                          ),
+                        ),
+                      ),
+                      
+                      // Availability Toggle
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.07),
+                              blurRadius: 15,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                          border: _isAvailableToDonate
+                              ? Border.all(
+                                  color: AppConstants.successColor.withOpacity(0.5),
+                                  width: 1.5,
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _isAvailableToDonate
+                                    ? AppConstants.successColor.withOpacity(0.1)
+                                    : AppConstants.primaryColor.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.volunteer_activism,
+                                color: _isAvailableToDonate
+                                    ? AppConstants.successColor
+                                    : AppConstants.primaryColor,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Available to Donate',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                      color: _isAvailableToDonate
+                                          ? AppConstants.successColor
+                                          : AppConstants.darkTextColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Let others know if you are available for blood donation requests',
+                                    style: TextStyle(
+                                      color: AppConstants.lightTextColor,
+                                      fontSize: 13,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _isAvailableToDonate,
+                              onChanged: (value) {
+                                // Toggle availability regardless of edit mode
                                 setState(() {
                                   _isAvailableToDonate = value;
                                 });
-                              }
-                            : null,
-                        activeColor: AppConstants.primaryColor,
+                                
+                                // Update user profile with new availability
+                                final appProvider = Provider.of<AppProvider>(context, listen: false);
+                                final currentUser = appProvider.currentUser;
+                                final updatedUser = currentUser.copyWith(
+                                  isAvailableToDonate: value,
+                                );
+                                appProvider.updateUserProfile(updatedUser);
+                                
+                                // Show confirmation snackbar
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      value 
+                                          ? 'You are now available for donation requests' 
+                                          : 'You are now marked as unavailable for donation',
+                                    ),
+                                    backgroundColor: value 
+                                        ? AppConstants.successColor 
+                                        : AppConstants.primaryColor,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    margin: const EdgeInsets.all(10),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              activeColor: AppConstants.successColor,
+                              activeTrackColor: AppConstants.successColor.withOpacity(0.3),
+                            ),
+                          ],
+                        ),
                       ),
+                      
+                      const SizedBox(height: 36),
+                      
+                      // Save Profile Button - Shows only when editing
+                      if (_isEditing)
+                        SizedBox(
+                          width: double.infinity,
+                          child: _isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(),
+                                )
+                              : ElevatedButton.icon(
+                                  onPressed: _saveProfile,
+                                  icon: const Icon(Icons.save_rounded),
+                                  label: const Text(
+                                    'SAVE DETAILS',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppConstants.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                ),
+                        ),
+                      
+                      if (!_isEditing) ...[
+                        const SizedBox(height: 20),
+                        // Edit Details Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _toggleEdit,
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text(
+                              'EDIT DETAILS',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppConstants.primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: AppConstants.primaryColor,
+                                  width: 1.5,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Logout Button - Shows only when not editing
+                      if (!_isEditing)
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Show confirmation dialog before logout
+                              _showLogoutConfirmation();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.red.withOpacity(0.7), width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              foregroundColor: Colors.red,
+                            ),
+                            child: const Text(
+                              'LOGOUT',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                
-                // Save Button
-                if (_isEditing)
-                  CustomButton(
-                    text: 'SAVE CHANGES',
-                    onPressed: _saveProfile,
-                    isLoading: _isLoading,
-                  ),
-                
-                const SizedBox(height: 24),
-                
-                // Logout Button
-                if (!_isEditing)
-                  CustomButton(
-                    text: 'LOGOUT',
-                    onPressed: () {
-                      final appProvider = Provider.of<AppProvider>(context, listen: false);
-                      appProvider.logout();
-                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                    },
-                    type: ButtonType.outline,
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+  
+  // Show confirmation dialog before logout
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Perform logout action
+              final appProvider = Provider.of<AppProvider>(context, listen: false);
+              appProvider.logout();
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            },
+            child: const Text('LOGOUT'),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildTextField({
+  // Build a grid of blood type options
+  Widget _buildBloodTypeGrid() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemCount: _bloodTypes.length,
+        itemBuilder: (context, index) {
+          final bloodType = _bloodTypes[index];
+          final isSelected = _bloodType == bloodType;
+          
+          // Individual blood type card
+          return GestureDetector(
+            onTap: () {
+              // Update selected blood type when tapped
+              setState(() {
+                _bloodType = bloodType;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? AppConstants.primaryColor 
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: isSelected 
+                      ? AppConstants.primaryColor 
+                      : Colors.grey.withOpacity(0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected 
+                        ? AppConstants.primaryColor.withOpacity(0.3) 
+                        : Colors.grey.withOpacity(0.05),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Blood type display
+                  Text(
+                    bloodType,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppConstants.darkTextColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(height: 5),
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Build form field with custom styling
+  Widget _buildFormField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -422,35 +895,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool readOnly = false,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        filled: !_isEditing,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.07),
+            blurRadius: 15,
+            spreadRadius: 1,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      readOnly: readOnly,
-      validator: validator,
-      style: TextStyle(
-        color: readOnly ? AppConstants.lightTextColor : AppConstants.darkTextColor,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          floatingLabelStyle: TextStyle(
+            color: readOnly ? AppConstants.lightTextColor : AppConstants.primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: readOnly 
+                  ? Colors.grey.withOpacity(0.1)
+                  : AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: readOnly ? Colors.grey : AppConstants.primaryColor,
+              size: 20,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.1),
+              width: 1.5,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: AppConstants.primaryColor.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: Colors.red.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: Colors.red.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
+          fillColor: Colors.white,
+          filled: true,
+        ),
+        readOnly: readOnly,
+        validator: validator,
+        style: TextStyle(
+          fontSize: 16,
+          color: readOnly ? AppConstants.lightTextColor : AppConstants.darkTextColor,
+        ),
       ),
     );
   }
 
+  // Build info field for display mode
   Widget _buildInfoField({
     required String label,
     required String value,
     required IconData icon,
+    required Color color,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.07),
+            blurRadius: 15,
+            spreadRadius: 1,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: AppConstants.lightTextColor,
-            size: 20,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Column(
@@ -460,14 +1026,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label,
                 style: TextStyle(
                   color: AppConstants.lightTextColor,
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  color: color,
                 ),
               ),
             ],
