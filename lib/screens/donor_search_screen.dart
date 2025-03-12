@@ -7,6 +7,7 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/blood_type_badge.dart';
 import '../widgets/custom_button.dart';
 import '../models/user_model.dart';
+import '../utils/theme_helper.dart';
 
 class DonorSearchScreen extends StatefulWidget {
   const DonorSearchScreen({Key? key}) : super(key: key);
@@ -97,7 +98,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(
         title: 'Find Blood Donors',
       ),

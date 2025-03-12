@@ -5,6 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_provider.dart';
+import 'services/network_tracker_service.dart';
+import 'services/service_locator.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -20,6 +22,7 @@ import 'screens/signup_screen.dart';
 import 'screens/about_us_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/terms_conditions_screen.dart';
+import 'screens/data_usage_screen.dart';
 import 'utils/localization/app_localization.dart';
 
 void main() async {
@@ -35,9 +38,15 @@ void main() async {
     // Continue execution despite the error
   }
   
+  // Create the app provider
+  final appProvider = AppProvider();
+  
+  // Initialize services
+  serviceLocator.initialize(appProvider);
+  
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AppProvider(),
+    ChangeNotifierProvider.value(
+      value: appProvider,
       child: const MyApp(),
     ),
   );
@@ -81,131 +90,9 @@ class MyApp extends StatelessWidget {
         );
       },
       
-      theme: ThemeData(
-        primaryColor: AppConstants.primaryColor,
-        scaffoldBackgroundColor: Colors.white,
-        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
-        appBarTheme: AppBarTheme(
-          color: Colors.white,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: AppConstants.primaryColor),
-          titleTextStyle: GoogleFonts.poppins(
-            color: AppConstants.darkTextColor,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppConstants.primaryColor,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 24,
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: AppConstants.primaryColor,
-            padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.grey[50],
-          contentPadding: const EdgeInsets.all(16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[300]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppConstants.primaryColor),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppConstants.errorColor),
-          ),
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 14,
-          ),
-        ),
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        primaryColor: AppConstants.primaryColor,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
-        appBarTheme: AppBarTheme(
-          color: const Color(0xFF121212),
-          elevation: 0,
-          iconTheme: const IconThemeData(color: AppConstants.primaryColor),
-          titleTextStyle: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppConstants.primaryColor,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 24,
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: AppConstants.primaryColor,
-            padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF1E1E1E),
-          contentPadding: const EdgeInsets.all(16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF2C2C2C)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppConstants.primaryColor),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppConstants.errorColor),
-          ),
-          hintStyle: const TextStyle(
-            color: Color(0xFF8E8E8E),
-            fontSize: 14,
-          ),
-        ),
-      ),
-      themeMode: appProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: AppConstants.getThemeData(),
+      darkTheme: AppConstants.getDarkThemeData(),
+      themeMode: appProvider.themeMode,
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
@@ -223,6 +110,7 @@ class MyApp extends StatelessWidget {
         '/about_us': (context) => const AboutUsScreen(),
         '/privacy_policy': (context) => const PrivacyPolicyScreen(),
         '/terms_conditions': (context) => const TermsConditionsScreen(),
+        '/data_usage': (context) => const DataUsageScreen(),
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
+import '../utils/theme_helper.dart';
 
 class HomeMenuCard extends StatefulWidget {
   final String title;
@@ -79,6 +80,8 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -101,7 +104,8 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: _isPressed 
-                          ? [Colors.white, Colors.white]
+                          ? [isDark ? const Color(0xFF1E1E1E) : Colors.white, 
+                             isDark ? const Color(0xFF1E1E1E) : Colors.white]
                           : _cardGradient,
                     ),
                     borderRadius: BorderRadius.circular(AppConstants.radiusL),
@@ -167,7 +171,7 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(

@@ -14,9 +14,11 @@ class HomeScreen extends StatelessWidget {
     final currentUser = appProvider.currentUser;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primaryColor,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+            ? Theme.of(context).appBarTheme.backgroundColor 
+            : AppConstants.primaryColor,
         elevation: 0,
         title: const Row(
           mainAxisSize: MainAxisSize.min,

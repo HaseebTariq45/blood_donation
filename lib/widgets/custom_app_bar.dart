@@ -28,14 +28,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final displayTitle = translateTitle ? title.tr(context) : title;
 
     return AppBar(
-      backgroundColor: AppConstants.primaryColor,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark 
+          ? Theme.of(context).appBarTheme.backgroundColor 
+          : AppConstants.primaryColor,
       elevation: 0,
       title: Text(
         displayTitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 18,
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.white 
+              : Colors.white,
         ),
       ),
       centerTitle: true,
@@ -43,13 +47,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white
+                      : Colors.white,
                   size: 18,
                 ),
                 onPressed: () => Navigator.of(context).pop(),

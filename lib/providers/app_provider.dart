@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../models/donation_model.dart';
 import '../models/blood_request_model.dart';
 import '../models/blood_bank_model.dart';
+import '../models/data_usage_model.dart';
 
 class AppProvider extends ChangeNotifier {
   // User data
@@ -27,6 +29,10 @@ class AppProvider extends ChangeNotifier {
   // Notification indicators
   bool _hasUnreadNotifications = true;
   bool get hasUnreadNotifications => _hasUnreadNotifications;
+
+  // Data usage tracking
+  DataUsageModel _dataUsage = DataUsageModel.empty();
+  DataUsageModel get dataUsage => _dataUsage;
 
   // Donation history
   List<DonationModel> _donations = [];
@@ -55,6 +61,7 @@ class AppProvider extends ChangeNotifier {
   // Constructor - load dummy data for UI demo
   AppProvider() {
     _loadDummyData();
+    _loadDataUsage();
   }
 
   // Load dummy data for demonstration
@@ -85,6 +92,77 @@ class AppProvider extends ChangeNotifier {
     _currentUser = _currentUser!.copyWith(
       imageUrl: 'assets/images/avatar_1.png',
     );
+  }
+  
+  // Load data usage from shared preferences
+  Future<void> _loadDataUsage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final totalBytes = prefs.getInt('data_usage_total_bytes') ?? 0;
+      final wifiBytes = prefs.getInt('data_usage_wifi_bytes') ?? 0;
+      final mobileBytes = prefs.getInt('data_usage_mobile_bytes') ?? 0;
+      final lastResetTimestamp = prefs.getInt('data_usage_last_reset');
+      
+      final lastReset = lastResetTimestamp != null 
+          ? DateTime.fromMillisecondsSinceEpoch(lastResetTimestamp)
+          : DateTime.now();
+      
+      _dataUsage = DataUsageModel(
+        totalBytes: totalBytes,
+        wifiBytes: wifiBytes,
+        mobileBytes: mobileBytes,
+        lastReset: lastReset,
+      );
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading data usage: $e');
+      // If there's an error, start with empty data
+      _dataUsage = DataUsageModel.empty();
+    }
+  }
+  
+  // Public method to refresh data usage
+  Future<void> refreshDataUsage() async {
+    await _loadDataUsage();
+  }
+  
+  // Save data usage to shared preferences
+  Future<void> _saveDataUsage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('data_usage_total_bytes', _dataUsage.totalBytes);
+      await prefs.setInt('data_usage_wifi_bytes', _dataUsage.wifiBytes);
+      await prefs.setInt('data_usage_mobile_bytes', _dataUsage.mobileBytes);
+      await prefs.setInt('data_usage_last_reset', 
+          _dataUsage.lastReset.millisecondsSinceEpoch);
+    } catch (e) {
+      debugPrint('Error saving data usage: $e');
+    }
+  }
+
+  // Track network data usage
+  void recordDataUsage(int bytesUsed, bool isWifi) {
+    if (isWifi) {
+      _dataUsage = _dataUsage.copyWith(
+        totalBytes: _dataUsage.totalBytes + bytesUsed,
+        wifiBytes: _dataUsage.wifiBytes + bytesUsed,
+      );
+    } else {
+      _dataUsage = _dataUsage.copyWith(
+        totalBytes: _dataUsage.totalBytes + bytesUsed,
+        mobileBytes: _dataUsage.mobileBytes + bytesUsed,
+      );
+    }
+    notifyListeners();
+    _saveDataUsage(); // Save data whenever it changes
+  }
+
+  // Reset data usage statistics
+  void resetDataUsage() {
+    _dataUsage = DataUsageModel.empty();
+    notifyListeners();
+    _saveDataUsage();
   }
 
   // Change app language

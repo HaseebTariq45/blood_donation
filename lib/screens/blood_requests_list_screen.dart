@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/blood_type_badge.dart';
 import '../models/blood_request_model.dart';
+import '../utils/theme_helper.dart';
 
 class BloodRequestsListScreen extends StatefulWidget {
   const BloodRequestsListScreen({Key? key}) : super(key: key);
@@ -46,7 +47,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
   void _showResponseDialog(BloodRequestModel request) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Respond to Request'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -57,7 +58,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
             Text(
               'Responding will share your contact information with the requester.',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: dialogContext.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                 fontSize: 13,
               ),
             ),
@@ -65,12 +66,12 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('CANCEL'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               // Add logic to handle the response
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -100,8 +101,11 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
         : allBloodRequests.where((req) => req.urgency == _selectedFilter).toList();
     
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primaryColor,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+            ? Theme.of(context).appBarTheme.backgroundColor 
+            : AppConstants.primaryColor,
         elevation: 0,
         title: const Text(
           'Blood Requests',
@@ -310,247 +314,258 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
   }
   
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.bloodtype_outlined,
-            size: 80,
-            color: Colors.grey[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Blood Requests',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+    return Builder(
+      builder: (context) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.bloodtype_outlined,
+              size: 80,
+              color: context.isDarkMode ? Colors.grey[700] : Colors.grey[300],
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              _selectedFilter == 'All'
-                  ? 'There are no active blood requests at the moment.'
-                  : 'There are no $_selectedFilter blood requests at the moment.',
-              textAlign: TextAlign.center,
+            const SizedBox(height: 16),
+            Text(
+              'No Blood Requests',
               style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: context.isDarkMode ? Colors.grey[300] : Colors.grey[700],
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, '/blood_request');
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Create a Request'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _selectedFilter == 'All'
+                    ? 'There are no active blood requests at the moment.'
+                    : 'There are no $_selectedFilter blood requests at the moment.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  fontSize: 14,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/blood_request');
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Create a Request'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
   
   Widget _buildRequestCard(BloodRequestModel request) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
+    return Builder(
+      builder: (context) => Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 3,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Colors.white,
-              request.urgency == 'Urgent' ? Colors.red.shade50 : Colors.blue.shade50,
-            ],
-          ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: (request.urgency == 'Urgent' 
-                              ? Colors.red 
-                              : AppConstants.primaryColor).withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: BloodTypeBadge(
-                      bloodType: request.bloodType,
-                      size: 50,
-                    ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: context.isDarkMode
+                ? null
+                : LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [
+                      Colors.white,
+                      request.urgency == 'Urgent' ? Colors.red.shade50 : Colors.blue.shade50,
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                request.urgency == 'Urgent' ? 'Urgent: ${request.requesterName}' : request.requesterName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: request.urgency == 'Urgent'
-                                    ? AppConstants.errorColor.withOpacity(0.1)
-                                    : AppConstants.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: request.urgency == 'Urgent'
-                                      ? AppConstants.errorColor.withOpacity(0.5)
-                                      : AppConstants.primaryColor.withOpacity(0.5),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                request.bloodType,
-                                style: TextStyle(
-                                  color: request.urgency == 'Urgent'
-                                      ? AppConstants.errorColor
-                                      : AppConstants.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          request.location.split(',').first,
-                          style: const TextStyle(
-                            color: AppConstants.lightTextColor,
-                            fontSize: 14,
+            color: context.isDarkMode
+                ? (request.urgency == 'Urgent' 
+                    ? Colors.red.shade900.withOpacity(0.2) 
+                    : Colors.blue.shade900.withOpacity(0.1))
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: (request.urgency == 'Urgent' 
+                                ? Colors.red 
+                                : AppConstants.primaryColor).withOpacity(0.3),
+                            blurRadius: 10,
+                            spreadRadius: 1,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 14,
-                              color: AppConstants.lightTextColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                request.location.contains(',') 
-                                    ? request.location.split(',').skip(1).join(',').trim() 
-                                    : request.location,
-                                style: const TextStyle(
-                                  color: AppConstants.lightTextColor,
-                                  fontSize: 12,
+                        ],
+                      ),
+                      child: BloodTypeBadge(
+                        bloodType: request.bloodType,
+                        size: 50,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  request.urgency == 'Urgent' ? 'Urgent: ${request.requesterName}' : request.requesterName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 14,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: request.urgency == 'Urgent'
+                                      ? AppConstants.errorColor.withOpacity(0.1)
+                                      : AppConstants.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: request.urgency == 'Urgent'
+                                        ? AppConstants.errorColor.withOpacity(0.5)
+                                        : AppConstants.primaryColor.withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  request.bloodType,
+                                  style: TextStyle(
+                                    color: request.urgency == 'Urgent'
+                                        ? AppConstants.errorColor
+                                        : AppConstants.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            request.location.split(',').first,
+                            style: const TextStyle(
                               color: AppConstants.lightTextColor,
+                              fontSize: 14,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${request.requestDate.day}/${request.requestDate.month}/${request.requestDate.year}',
-                              style: const TextStyle(
-                                fontSize: 12,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                size: 14,
                                 color: AppConstants.lightTextColor,
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  request.location.contains(',') 
+                                      ? request.location.split(',').skip(1).join(',').trim() 
+                                      : request.location,
+                                  style: const TextStyle(
+                                    color: AppConstants.lightTextColor,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: AppConstants.lightTextColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${request.requestDate.day}/${request.requestDate.month}/${request.requestDate.year}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppConstants.lightTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+                if (request.notes.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  Text(
+                    request.notes,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppConstants.darkTextColor,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
-              if (request.notes.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Text(
-                  request.notes,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppConstants.darkTextColor,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        // Option to call the requester
+                        // This would typically launch a phone call
+                      },
+                      icon: const Icon(Icons.phone, size: 16),
+                      label: const Text('Call'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppConstants.primaryColor,
+                        side: BorderSide(color: AppConstants.primaryColor),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle donation response
+                        _showResponseDialog(request);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: const Text('Respond'),
+                    ),
+                  ],
                 ),
               ],
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // Option to call the requester
-                      // This would typically launch a phone call
-                    },
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppConstants.primaryColor,
-                      side: BorderSide(color: AppConstants.primaryColor),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Handle donation response
-                      _showResponseDialog(request);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: const Text('Respond'),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import '../widgets/custom_app_bar.dart';
+import '../utils/theme_helper.dart';
 
 class AboutUsScreen extends StatelessWidget {
   const AboutUsScreen({Key? key}) : super(key: key);
@@ -113,7 +114,7 @@ class AboutUsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(
         title: 'About Us',
         showBackButton: true,
@@ -130,7 +131,9 @@ class AboutUsScreen extends StatelessWidget {
                 color: AppConstants.primaryColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: context.isDarkMode
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.1),
                     spreadRadius: 1,
                     blurRadius: 10,
                     offset: const Offset(0, 5),
@@ -195,12 +198,12 @@ class AboutUsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Developer',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppConstants.darkTextColor,
+                      color: context.textColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -209,11 +212,13 @@ class AboutUsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: context.isDarkMode 
+                              ? Colors.black.withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                           offset: const Offset(0, 5),
@@ -255,20 +260,20 @@ class AboutUsScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Haseeb Tariq',
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: AppConstants.darkTextColor,
+                                      color: context.textColor,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     'Mobile App Developer',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      color: AppConstants.lightTextColor,
+                                      color: context.secondaryTextColor,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -309,12 +314,12 @@ class AboutUsScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         
                         // Social Media Links
-                        const Text(
+                        Text(
                           'Connect with me',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppConstants.darkTextColor,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -377,10 +382,10 @@ class AboutUsScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.grey[300]!,
+                                color: context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[300]!,
                                 width: 1,
                               ),
                             ),
@@ -403,12 +408,12 @@ class AboutUsScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'View Project on GitHub',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: AppConstants.darkTextColor,
+                                          color: context.textColor,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -416,16 +421,16 @@ class AboutUsScreen extends StatelessWidget {
                                         '@HaseebTariq45',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.grey[600],
+                                          color: context.secondaryTextColor,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.arrow_forward_ios,
                                   size: 16,
-                                  color: Colors.grey,
+                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey,
                                 ),
                               ],
                             ),
@@ -438,30 +443,32 @@ class AboutUsScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   
                   // App Information
-                  const Text(
+                  Text(
                     'About This App',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppConstants.darkTextColor,
+                      color: context.textColor,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: context.isDarkMode 
+                              ? Colors.black.withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -469,28 +476,28 @@ class AboutUsScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppConstants.darkTextColor,
+                            color: context.textColor,
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
                           'This application helps connect blood donors with patients in need of blood donations. It provides a platform for requesting blood donations, finding donors, and managing your donor profile.',
                           style: TextStyle(
                             fontSize: 15,
-                            color: AppConstants.lightTextColor,
+                            color: context.secondaryTextColor,
                             height: 1.5,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           'Features:',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppConstants.darkTextColor,
+                            color: context.textColor,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         _FeatureItem(text: 'Create and manage blood donation requests'),
                         _FeatureItem(text: 'Connect with blood donors nearby'),
                         _FeatureItem(text: 'Manage your donor profile and availability'),
@@ -576,9 +583,9 @@ class _FeatureItem extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppConstants.lightTextColor,
+                color: context.secondaryTextColor,
                 height: 1.4,
               ),
             ),

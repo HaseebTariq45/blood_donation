@@ -4,6 +4,8 @@ import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../utils/localization/app_localization.dart';
+import '../utils/theme_helper.dart';
+import 'data_usage_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -51,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     final appProvider = Provider.of<AppProvider>(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CustomAppBar(
         title: 'settings'.tr(context),
         showBackButton: true,
@@ -88,35 +90,38 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   title: 'language'.tr(context),
                   subtitle: 'Select your preferred language'.tr(context),
                   icon: Icons.language,
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: DropdownButton<String>(
-                      value: appProvider.selectedLanguage,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
-                      style: const TextStyle(
-                        color: AppConstants.primaryColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+                  trailing: Builder(
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            appProvider.setLanguage(newValue);
-                          });
-                        }
-                      },
-                      items: _languages.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      child: DropdownButton<String>(
+                        value: appProvider.selectedLanguage,
+                        isDense: true,
+                        underline: const SizedBox(),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
+                        style: TextStyle(
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        dropdownColor: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              appProvider.setLanguage(newValue);
+                            });
+                          }
+                        },
+                        items: _languages.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),
@@ -220,6 +225,12 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   icon: Icons.data_usage,
                   onTap: () {
                     // Navigate to data usage settings
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DataUsageScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -305,17 +316,23 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             
             const SizedBox(height: 24),
             Center(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${'app_version'.tr(context)} 1.0.0',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
+              child: Builder(
+                builder: (context) => Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.isDarkMode 
+                        ? Colors.grey[800]
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${'app_version'.tr(context)} 1.0.0',
+                    style: TextStyle(
+                      color: context.isDarkMode 
+                          ? Colors.grey[400]
+                          : Colors.grey[500],
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
@@ -328,42 +345,48 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   }
 
   Widget _buildSettingsCard({required String title, required List<Widget> children}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppConstants.primaryColor,
+    return Builder(
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: context.isDarkMode 
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 1),
               ),
-            ),
+            ],
           ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: children,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+              ),
+              Divider(height: 1, color: context.dividerColor),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: children,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }
     );
   }
 
@@ -372,65 +395,63 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     String? subtitle,
     required IconData icon,
     Color iconColor = AppConstants.primaryColor,
-    Color titleColor = AppConstants.darkTextColor,
+    Color? titleColor,
     Widget? trailing,
     VoidCallback? onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: titleColor,
-                      fontSize: 15,
-                    ),
+    return Builder(
+      builder: (context) {
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: titleColor ?? context.textColor,
+                        ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: context.secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
             ),
-            if (trailing != null) trailing,
-            if (onTap != null && trailing == null)
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.grey,
-                size: 20,
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 
@@ -440,39 +461,41 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     Widget? trailing,
     VoidCallback? onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: AppConstants.primaryColor,
-                size: 18,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: AppConstants.darkTextColor,
-                    fontSize: 14,
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(left: 16.0),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: AppConstants.primaryColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: context.textColor,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-              ),
-              if (trailing != null) trailing,
-              if (onTap != null && trailing == null)
-                const Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey,
-                  size: 20,
-                ),
-            ],
+                if (trailing != null) trailing,
+                if (onTap != null && trailing == null)
+                  Icon(
+                    Icons.chevron_right,
+                    color: context.isDarkMode ? Colors.grey[400] : Colors.grey,
+                    size: 20,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
