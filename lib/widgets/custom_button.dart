@@ -11,7 +11,9 @@ class CustomButton extends StatelessWidget {
   final bool isLoading;
   final IconData? icon;
   final double? width;
-  final double height;
+  final double? height;
+  final double? fontSize;
+  final EdgeInsetsGeometry? padding;
 
   const CustomButton({
     Key? key,
@@ -22,25 +24,45 @@ class CustomButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.width,
-    this.height = 50.0,
+    this.height,
+    this.fontSize,
+    this.padding,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double buttonHeight = height ?? (isSmallScreen ? 45.0 : 50.0);
+    final double buttonFontSize = fontSize ?? (isSmallScreen ? 14.0 : 16.0);
+    final double iconSize = isSmallScreen ? 16.0 : 20.0;
+    final double loaderSize = isSmallScreen ? 16.0 : 20.0;
+    final EdgeInsetsGeometry buttonPadding = padding ?? 
+        EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12.0 : 16.0,
+          vertical: isSmallScreen ? 8.0 : 12.0,
+        );
+    
     switch (type) {
       case ButtonType.primary:
-        return _buildPrimaryButton();
+        return _buildPrimaryButton(context, buttonHeight, buttonFontSize, iconSize, loaderSize, buttonPadding);
       case ButtonType.outline:
-        return _buildOutlineButton();
+        return _buildOutlineButton(context, buttonHeight, buttonFontSize, iconSize, loaderSize, buttonPadding);
       case ButtonType.text:
-        return _buildTextButton();
+        return _buildTextButton(context, buttonFontSize, iconSize, loaderSize, buttonPadding);
     }
   }
 
-  Widget _buildPrimaryButton() {
+  Widget _buildPrimaryButton(BuildContext context, double buttonHeight, double fontSize, double iconSize, double loaderSize, EdgeInsetsGeometry padding) {
     return SizedBox(
       width: isFullWidth ? double.infinity : width,
-      height: height,
+      height: buttonHeight,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -50,16 +72,17 @@ class CustomButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
           ),
           elevation: 2,
+          padding: padding,
         ),
-        child: _buildButtonContent(),
+        child: _buildButtonContent(fontSize, iconSize, loaderSize),
       ),
     );
   }
 
-  Widget _buildOutlineButton() {
+  Widget _buildOutlineButton(BuildContext context, double buttonHeight, double fontSize, double iconSize, double loaderSize, EdgeInsetsGeometry padding) {
     return SizedBox(
       width: isFullWidth ? double.infinity : width,
-      height: height,
+      height: buttonHeight,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
@@ -68,28 +91,30 @@ class CustomButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
           ),
+          padding: padding,
         ),
-        child: _buildButtonContent(),
+        child: _buildButtonContent(fontSize, iconSize, loaderSize),
       ),
     );
   }
 
-  Widget _buildTextButton() {
+  Widget _buildTextButton(BuildContext context, double fontSize, double iconSize, double loaderSize, EdgeInsetsGeometry padding) {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
         foregroundColor: AppConstants.primaryColor,
+        padding: padding,
       ),
-      child: _buildButtonContent(),
+      child: _buildButtonContent(fontSize, iconSize, loaderSize),
     );
   }
 
-  Widget _buildButtonContent() {
+  Widget _buildButtonContent(double fontSize, double iconSize, double loaderSize) {
     if (isLoading) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
+      return SizedBox(
+        width: loaderSize,
+        height: loaderSize,
+        child: const CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
         ),
@@ -101,12 +126,13 @@ class CustomButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 20),
+          Icon(icon, size: iconSize),
           const SizedBox(width: 8),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
+              fontSize: fontSize,
             ),
           ),
         ],
@@ -115,8 +141,9 @@ class CustomButton extends StatelessWidget {
 
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontWeight: FontWeight.w600,
+        fontSize: fontSize,
       ),
     );
   }

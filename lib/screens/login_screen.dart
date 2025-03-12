@@ -49,303 +49,370 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double logoSize = screenWidth * 0.25;
+    final double logoIconSize = logoSize * 0.5;
+    final double headerFontSize = isSmallScreen ? 20 : 24;
+    final double titleFontSize = isSmallScreen ? 24 : 28;
+    final double subtitleFontSize = isSmallScreen ? 12 : 14;
+    
+    // Calculate padding based on screen size
+    final double horizontalPadding = screenWidth * 0.06;
+    final double verticalSpacing = screenHeight * 0.025;
+    
     return Scaffold(
       backgroundColor: context.backgroundColor,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.paddingL),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 80),
-              // Logo and Header
-              Center(
-                child: FadeInDown(
-                  duration: const Duration(milliseconds: 500),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppConstants.primaryColor,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppConstants.primaryColor.withOpacity(0.2),
-                              blurRadius: 10,
-                              spreadRadius: 5,
+      // Use SafeArea to avoid system UI overlays
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: verticalSpacing,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: screenHeight * 0.05),
+                    // Logo and Header
+                    Center(
+                      child: FadeInDown(
+                        duration: const Duration(milliseconds: 500),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: logoSize,
+                              height: logoSize,
+                              decoration: BoxDecoration(
+                                color: AppConstants.primaryColor,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppConstants.primaryColor.withOpacity(0.2),
+                                    blurRadius: 10,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.favorite,
+                                color: Colors.white,
+                                size: logoIconSize,
+                              ),
+                            ),
+                            SizedBox(height: verticalSpacing),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'BLOOD DONATION',
+                                style: TextStyle(
+                                  color: AppConstants.primaryColor,
+                                  fontSize: headerFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.favorite,
-                          color: Colors.white,
-                          size: 50,
-                        ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'BLOOD DONATION',
-                        style: TextStyle(
-                          color: AppConstants.primaryColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 50),
-              // Login Form
-              FadeInUp(
-                duration: const Duration(milliseconds: 600),
-                child: Builder(
-                  builder: (context) => Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Please sign in to continue',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: context.secondaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        // Email Field
-                        Container(
-                          decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.isDarkMode ? 
-                                  Colors.black12 : 
-                                  Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
-                          ),
-                          child: TextFormField(
-                            controller: _emailController,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: TextStyle(
-                                color: context.secondaryTextColor,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.email_outlined,
-                                color: context.isDarkMode ? 
-                                  AppConstants.primaryColor.withOpacity(0.8) : 
-                                  AppConstants.primaryColor,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: context.isDarkMode ? 
-                                    Colors.grey.withOpacity(0.2) : 
-                                    Colors.grey.withOpacity(0.1),
+                    ),
+                    SizedBox(height: screenHeight * 0.06),
+                    // Login Form
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 600),
+                      child: Builder(
+                        builder: (context) => Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: titleFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: AppConstants.primaryColor.withOpacity(0.5),
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.red.withOpacity(0.5),
-                                ),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.red.withOpacity(0.5),
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: context.cardColor,
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: context.textColor),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Password Field
-                        Container(
-                          decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.isDarkMode ? 
-                                  Colors.black12 : 
-                                  Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
-                          ),
-                          child: TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              labelStyle: TextStyle(
-                                color: context.secondaryTextColor,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: context.isDarkMode ? 
-                                  AppConstants.primaryColor.withOpacity(0.8) : 
-                                  AppConstants.primaryColor,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
+                              SizedBox(height: verticalSpacing * 0.3),
+                              Text(
+                                'Please sign in to continue',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize,
                                   color: context.secondaryTextColor,
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: context.isDarkMode ? 
-                                    Colors.grey.withOpacity(0.2) : 
-                                    Colors.grey.withOpacity(0.1),
+                              SizedBox(height: verticalSpacing * 1.2),
+                              // Email Field
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: context.isDarkMode ? 
+                                        Colors.black12 : 
+                                        Colors.grey.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 0.5,
+                                    ),
+                                  ],
+                                ),
+                                child: TextFormField(
+                                  controller: _emailController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Email',
+                                    labelStyle: TextStyle(
+                                      color: context.secondaryTextColor,
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.email_outlined,
+                                      color: context.isDarkMode ? 
+                                        AppConstants.primaryColor.withOpacity(0.8) : 
+                                        AppConstants.primaryColor,
+                                      size: isSmallScreen ? 20 : 24,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: context.isDarkMode ? 
+                                          Colors.grey.withOpacity(0.2) : 
+                                          Colors.grey.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: AppConstants.primaryColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.red.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.red.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.cardColor,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      vertical: isSmallScreen ? 12 : 16,
+                                      horizontal: isSmallScreen ? 12 : 16,
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                  style: TextStyle(
+                                    color: context.textColor,
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your email';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Please enter a valid email';
+                                    }
+                                    return null;
+                                  },
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: AppConstants.primaryColor.withOpacity(0.5),
+                              SizedBox(height: verticalSpacing * 0.8),
+                              // Password Field
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: context.isDarkMode ? 
+                                        Colors.black12 : 
+                                        Colors.grey.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 0.5,
+                                    ),
+                                  ],
+                                ),
+                                child: TextFormField(
+                                  controller: _passwordController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    labelStyle: TextStyle(
+                                      color: context.secondaryTextColor,
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.lock_outline,
+                                      color: context.isDarkMode ? 
+                                        AppConstants.primaryColor.withOpacity(0.8) : 
+                                        AppConstants.primaryColor,
+                                      size: isSmallScreen ? 20 : 24,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: context.secondaryTextColor,
+                                        size: isSmallScreen ? 20 : 24,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: context.isDarkMode ? 
+                                          Colors.grey.withOpacity(0.2) : 
+                                          Colors.grey.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: AppConstants.primaryColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.red.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.red.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.cardColor,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      vertical: isSmallScreen ? 12 : 16,
+                                      horizontal: isSmallScreen ? 12 : 16,
+                                    ),
+                                  ),
+                                  obscureText: _obscurePassword,
+                                  style: TextStyle(
+                                    color: context.textColor,
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your password';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'Password must be at least 6 characters';
+                                    }
+                                    return null;
+                                  },
                                 ),
                               ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.red.withOpacity(0.5),
+                              SizedBox(height: verticalSpacing * 0.6),
+                              // Forgot Password Link
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    // Navigate to forgot password screen
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isSmallScreen ? 8 : 12,
+                                      vertical: isSmallScreen ? 4 : 8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      color: context.isDarkMode ? 
+                                        AppConstants.primaryColor.withOpacity(0.9) : 
+                                        AppConstants.primaryColor,
+                                      fontSize: isSmallScreen ? 12 : 14,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.red.withOpacity(0.5),
+                              SizedBox(height: verticalSpacing * 1.2),
+                              // Login Button
+                              CustomButton(
+                                text: 'LOGIN',
+                                onPressed: _login,
+                                isLoading: _isLoading,
+                              ),
+                              SizedBox(height: verticalSpacing * 1.2),
+                              // Register Link
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: TextStyle(
+                                        color: context.secondaryTextColor,
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        // Navigate to register screen
+                                        Navigator.of(context).pushNamed('/signup');
+                                      },
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isSmallScreen ? 4 : 8,
+                                          vertical: isSmallScreen ? 2 : 4,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Register Now',
+                                        style: TextStyle(
+                                          color: context.isDarkMode ? 
+                                            AppConstants.primaryColor.withOpacity(0.9) : 
+                                            AppConstants.primaryColor,
+                                          fontSize: isSmallScreen ? 12 : 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              filled: true,
-                              fillColor: context.cardColor,
-                            ),
-                            obscureText: _obscurePassword,
-                            style: TextStyle(color: context.textColor),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              return null;
-                            },
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 15),
-                        // Forgot Password Link
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // Navigate to forgot password screen
-                            },
-                            child: Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: context.isDarkMode ? 
-                                  AppConstants.primaryColor.withOpacity(0.9) : 
-                                  AppConstants.primaryColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        // Login Button
-                        CustomButton(
-                          text: 'LOGIN',
-                          onPressed: _login,
-                          isLoading: _isLoading,
-                        ),
-                        const SizedBox(height: 30),
-                        // Register Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: TextStyle(
-                                color: context.secondaryTextColor,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // Navigate to register screen
-                                Navigator.of(context).pushNamed('/signup');
-                              },
-                              child: Text(
-                                'Register Now',
-                                style: TextStyle(
-                                  color: context.isDarkMode ? 
-                                    AppConstants.primaryColor.withOpacity(0.9) : 
-                                    AppConstants.primaryColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

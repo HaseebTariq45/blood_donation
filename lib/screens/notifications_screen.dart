@@ -4,6 +4,7 @@ import '../widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../utils/theme_helper.dart';
+import 'dart:math' as math;
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -56,6 +57,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     ),
   ];
 
+  // Get responsive dimensions based on screen size
+  double _getResponsiveFontSize(BuildContext context, double baseFontSize) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Scale font size based on screen width, with min and max bounds
+    return math.max(baseFontSize * screenWidth / 400, baseFontSize - 2);
+  }
+
+  // Get responsive padding based on screen size
+  EdgeInsets _getResponsivePadding(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Adjust padding based on screen width
+    final horizontalPadding = math.max(16.0, screenWidth * 0.05);
+    return EdgeInsets.symmetric(
+      horizontal: horizontalPadding,
+      vertical: math.max(12.0, screenWidth * 0.03),
+    );
+  }
+  
+  // Get responsive icon size
+  double _getResponsiveIconSize(BuildContext context, double baseSize) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return math.max(baseSize * screenWidth / 400, baseSize - 2);
+  }
+  
+  // Get responsive spacing
+  double _getResponsiveSpacing(BuildContext context, double baseSpacing) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return math.max(baseSpacing * screenWidth / 400, baseSpacing - 2);
+  }
+
   void _markAsRead(String id) {
     setState(() {
       final index = _notifications.indexWhere((item) => item.id == id);
@@ -76,9 +107,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     Provider.of<AppProvider>(context, listen: false).markAllNotificationsAsRead();
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All notifications marked as read'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(
+          'All notifications marked as read',
+          style: TextStyle(
+            fontSize: _getResponsiveFontSize(context, 14),
+          ),
+        ),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -92,6 +128,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final unreadCount = _notifications.where((item) => !item.isRead).length;
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
     
     return Scaffold(
       backgroundColor: context.backgroundColor,
@@ -100,7 +138,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           if (unreadCount > 0)
             IconButton(
-              icon: const Icon(Icons.done_all),
+              icon: Icon(
+                Icons.done_all,
+                size: _getResponsiveIconSize(context, 24),
+              ),
               onPressed: _markAllAsRead,
               tooltip: 'Mark all as read',
             ),
@@ -109,7 +150,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _notifications.isEmpty
           ? _buildEmptyState()
           : ListView.builder(
-              padding: const EdgeInsets.all(AppConstants.paddingM),
+              padding: EdgeInsets.all(_getResponsiveSpacing(context, 16)),
               itemCount: _notifications.length,
               itemBuilder: (context, index) {
                 final notification = _notifications[index];
@@ -127,23 +168,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Icon(
               Icons.notifications_off,
-              size: 70,
+              size: _getResponsiveIconSize(context, 70),
               color: context.isDarkMode ? Colors.grey[700] : Colors.grey[400],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: _getResponsiveSpacing(context, 16)),
             Text(
               'No notifications',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: _getResponsiveFontSize(context, 18),
                 fontWeight: FontWeight.bold,
                 color: context.textColor,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: _getResponsiveSpacing(context, 8)),
             Text(
               'You\'re all caught up!',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: _getResponsiveFontSize(context, 14),
                 color: context.secondaryTextColor,
               ),
             ),
@@ -160,16 +201,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         background: Container(
           color: AppConstants.errorColor,
           alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          child: const Icon(
+          padding: EdgeInsets.only(right: _getResponsiveSpacing(context, 20)),
+          child: Icon(
             Icons.delete,
             color: Colors.white,
+            size: _getResponsiveIconSize(context, 24),
           ),
         ),
         direction: DismissDirection.endToStart,
         onDismissed: (_) => _deleteNotification(notification.id),
         child: Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: EdgeInsets.only(bottom: _getResponsiveSpacing(context, 12)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
           ),
@@ -184,12 +226,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             onTap: () => _markAsRead(notification.id),
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(_getResponsiveSpacing(context, 16)),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildNotificationIcon(notification.type),
-                  const SizedBox(width: 16),
+                  SizedBox(width: _getResponsiveSpacing(context, 16)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +243,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 notification.title,
                                 style: TextStyle(
                                   fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: _getResponsiveFontSize(context, 16),
                                   color: context.textColor,
                                 ),
                               ),
@@ -210,36 +252,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               _formatTime(notification.time),
                               style: TextStyle(
                                 color: context.secondaryTextColor,
-                                fontSize: 12,
+                                fontSize: _getResponsiveFontSize(context, 12),
                                 fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: _getResponsiveSpacing(context, 8)),
                         Text(
                           notification.message,
                           style: TextStyle(
                             color: notification.isRead 
                                 ? context.secondaryTextColor
                                 : context.textColor,
-                            fontSize: 14,
+                            fontSize: _getResponsiveFontSize(context, 14),
                           ),
                         ),
                         if (!notification.isRead)
                           Container(
-                            margin: const EdgeInsets.only(top: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            margin: EdgeInsets.only(top: _getResponsiveSpacing(context, 12)),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: _getResponsiveSpacing(context, 12),
+                              vertical: _getResponsiveSpacing(context, 6),
+                            ),
                             decoration: BoxDecoration(
                               color: context.cardColor,
                               borderRadius: BorderRadius.circular(AppConstants.radiusL),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Mark as read',
                               style: TextStyle(
                                 color: AppConstants.primaryColor,
                                 fontWeight: FontWeight.w500,
-                                fontSize: 12,
+                                fontSize: _getResponsiveFontSize(context, 12),
                               ),
                             ),
                           ),
@@ -256,42 +301,44 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildNotificationIcon(NotificationType type) {
-    IconData icon;
-    Color color;
-    
+    IconData iconData;
+    Color iconColor;
+
     switch (type) {
       case NotificationType.urgent:
-        icon = Icons.priority_high;
-        color = AppConstants.errorColor;
-        break;
-      case NotificationType.event:
-        icon = Icons.event;
-        color = Colors.blue;
-        break;
-      case NotificationType.thanks:
-        icon = Icons.favorite;
-        color = AppConstants.primaryColor;
-        break;
-      case NotificationType.reminder:
-        icon = Icons.access_time;
-        color = Colors.amber;
+        iconData = Icons.priority_high;
+        iconColor = Colors.red;
         break;
       case NotificationType.request:
-        icon = Icons.bloodtype;
-        color = AppConstants.primaryColor;
+        iconData = Icons.bloodtype;
+        iconColor = AppConstants.primaryColor;
+        break;
+      case NotificationType.event:
+        iconData = Icons.event;
+        iconColor = Colors.blue;
+        break;
+      case NotificationType.thanks:
+        iconData = Icons.favorite;
+        iconColor = Colors.pink;
+        break;
+      case NotificationType.reminder:
+        iconData = Icons.access_time;
+        iconColor = Colors.amber;
         break;
     }
-    
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        color: color,
-        size: 20,
+
+    return Builder(
+      builder: (context) => Container(
+        padding: EdgeInsets.all(_getResponsiveSpacing(context, 10)),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          iconData,
+          color: iconColor,
+          size: _getResponsiveIconSize(context, 20),
+        ),
       ),
     );
   }
@@ -299,8 +346,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
-    if (difference.inMinutes < 60) {
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
       return '${difference.inMinutes}m ago';
     } else if (difference.inHours < 24) {
       return '${difference.inHours}h ago';
@@ -354,4 +403,4 @@ class NotificationItem {
       type: type ?? this.type,
     );
   }
-} 
+}

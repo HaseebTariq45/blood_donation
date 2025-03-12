@@ -151,59 +151,59 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                   duration: const Duration(milliseconds: 500),
                   child: Builder(
                     builder: (context) => Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 30,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 30,
+                      horizontal: 20,
+                    ),
+                    decoration: BoxDecoration(
                         color: context.cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
                             color: context.isDarkMode
                                 ? Colors.black.withOpacity(0.15)
                                 : Colors.grey.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: AppConstants.primaryColor.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person_add_rounded,
-                              color: AppConstants.primaryColor,
-                              size: 40,
-                            ),
+                          child: const Icon(
+                            Icons.person_add_rounded,
+                            color: AppConstants.primaryColor,
+                            size: 40,
                           ),
-                          const SizedBox(height: 15),
+                        ),
+                        const SizedBox(height: 15),
                           Text(
-                            'Join the Blood Donation Community',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          'Join the Blood Donation Community',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                               color: context.textColor,
-                            ),
-                            textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 8),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
                           Text(
-                            'Fill in your details to create your account',
-                            style: TextStyle(
-                              fontSize: 14,
+                          'Fill in your details to create your account',
+                          style: TextStyle(
+                            fontSize: 14,
                               color: context.secondaryTextColor,
-                            ),
-                            textAlign: TextAlign.center,
                           ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       ),
                     ),
                   ),
@@ -317,83 +317,83 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                 // Availability Toggle
                 Builder(
                   builder: (context) => Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
                       color: context.cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
                           color: context.isDarkMode
                               ? Colors.black.withOpacity(0.15)
                               : Colors.grey.withOpacity(0.07),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 5),
+                        blurRadius: 15,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                    border: _isAvailableToDonate
+                        ? Border.all(
+                            color: AppConstants.successColor.withOpacity(0.5),
+                            width: 1.5,
+                          )
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _isAvailableToDonate
+                              ? AppConstants.successColor.withOpacity(0.1)
+                              : AppConstants.primaryColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                      border: _isAvailableToDonate
-                          ? Border.all(
-                              color: AppConstants.successColor.withOpacity(0.5),
-                              width: 1.5,
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: _isAvailableToDonate
-                                ? AppConstants.successColor.withOpacity(0.1)
-                                : AppConstants.primaryColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.volunteer_activism,
-                            color: _isAvailableToDonate
-                                ? AppConstants.successColor
-                                : AppConstants.primaryColor,
-                            size: 24,
-                          ),
+                        child: Icon(
+                          Icons.volunteer_activism,
+                          color: _isAvailableToDonate
+                              ? AppConstants.successColor
+                              : AppConstants.primaryColor,
+                          size: 24,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Available to Donate',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  color: _isAvailableToDonate
-                                      ? AppConstants.successColor
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Available to Donate',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: _isAvailableToDonate
+                                    ? AppConstants.successColor
                                       : context.textColor,
-                                ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Let others know if you are available for blood donation requests',
-                                style: TextStyle(
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Let others know if you are available for blood donation requests',
+                              style: TextStyle(
                                   color: context.secondaryTextColor,
-                                  fontSize: 13,
-                                  height: 1.4,
-                                ),
+                                fontSize: 13,
+                                height: 1.4,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Switch.adaptive(
-                          value: _isAvailableToDonate,
-                          onChanged: (value) {
-                            setState(() {
-                              _isAvailableToDonate = value;
-                            });
-                          },
-                          activeColor: AppConstants.successColor,
-                          activeTrackColor: AppConstants.successColor.withOpacity(0.3),
-                        ),
-                      ],
+                      ),
+                      Switch.adaptive(
+                        value: _isAvailableToDonate,
+                        onChanged: (value) {
+                          setState(() {
+                            _isAvailableToDonate = value;
+                          });
+                        },
+                        activeColor: AppConstants.successColor,
+                        activeTrackColor: AppConstants.successColor.withOpacity(0.3),
+                      ),
+                    ],
                     ),
                   ),
                 ),
@@ -415,44 +415,44 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                 
                 // Password Field
                 _buildPasswordField(
-                  controller: _passwordController,
+                    controller: _passwordController,
                   label: 'Password',
-                  obscureText: _obscurePassword,
+                    obscureText: _obscurePassword,
                   toggleVisibility: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
                 ),
                 
                 // Confirm Password Field
                 _buildPasswordField(
-                  controller: _confirmPasswordController,
+                    controller: _confirmPasswordController,
                   label: 'Confirm Password',
-                  obscureText: _obscureConfirmPassword,
+                    obscureText: _obscureConfirmPassword,
                   toggleVisibility: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
                 ),
                 
                 const SizedBox(height: 30),
@@ -482,30 +482,30 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                         child: Builder(
                           builder: (context) => RichText(
                             text: TextSpan(
-                              text: 'I agree to the ',
-                              style: TextStyle(
+                            text: 'I agree to the ',
+                            style: TextStyle(
                                 color: context.secondaryTextColor,
-                                fontSize: 14,
-                              ),
+                              fontSize: 14,
+                            ),
                               children: const [
-                                TextSpan(
-                                  text: 'Terms & Conditions',
-                                  style: TextStyle(
-                                    color: AppConstants.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              TextSpan(
+                                text: 'Terms & Conditions',
+                                style: TextStyle(
+                                  color: AppConstants.primaryColor,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                TextSpan(
-                                  text: ' and ',
+                              ),
+                              TextSpan(
+                                text: ' and ',
+                              ),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(
+                                  color: AppConstants.primaryColor,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                TextSpan(
-                                  text: 'Privacy Policy',
-                                  style: TextStyle(
-                                    color: AppConstants.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ],
                             ),
                           ),
                         ),
@@ -585,84 +585,84 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
   Widget _buildBloodTypeGrid() {
     return Builder(
       builder: (context) => Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: _bloodTypes.length,
-          itemBuilder: (context, index) {
-            final bloodType = _bloodTypes[index];
-            final isSelected = _bloodType == bloodType;
-            
-            // Individual blood type card
-            return GestureDetector(
-              onTap: () {
-                // Update selected blood type when tapped
-                setState(() {
-                  _bloodType = bloodType;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemCount: _bloodTypes.length,
+        itemBuilder: (context, index) {
+          final bloodType = _bloodTypes[index];
+          final isSelected = _bloodType == bloodType;
+          
+          // Individual blood type card
+          return GestureDetector(
+            onTap: () {
+              // Update selected blood type when tapped
+              setState(() {
+                _bloodType = bloodType;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? AppConstants.primaryColor 
+                      : context.cardColor,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
                   color: isSelected 
                       ? AppConstants.primaryColor 
-                      : context.cardColor,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: isSelected 
-                        ? AppConstants.primaryColor 
                         : context.isDarkMode
                             ? Colors.grey.withOpacity(0.3)
-                            : Colors.grey.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isSelected 
-                          ? AppConstants.primaryColor.withOpacity(0.3) 
+                      : Colors.grey.withOpacity(0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected 
+                        ? AppConstants.primaryColor.withOpacity(0.3) 
                           : context.isDarkMode
                               ? Colors.black.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.05),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Blood type display
-                    Text(
-                      bloodType,
-                      style: TextStyle(
+                        : Colors.grey.withOpacity(0.05),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Blood type display
+                  Text(
+                    bloodType,
+                    style: TextStyle(
                         color: isSelected 
                             ? Colors.white 
                             : context.textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
-                    if (isSelected) ...[
-                      const SizedBox(height: 5),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(height: 5),
                       const Icon(
-                        Icons.check_circle,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ],
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ],
-                ),
+                ],
               ),
-            );
-          },
+            ),
+          );
+        },
         ),
       ),
     );
@@ -678,87 +678,87 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
   }) {
     return Builder(
       builder: (context) => Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
           color: context.cardColor,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
               color: context.isDarkMode
                   ? Colors.black.withOpacity(0.1)
                   : Colors.grey.withOpacity(0.07),
-              blurRadius: 15,
-              spreadRadius: 1,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
+            blurRadius: 15,
+            spreadRadius: 1,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
             floatingLabelStyle: TextStyle(
+            color: AppConstants.primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
               color: AppConstants.primaryColor,
-              fontWeight: FontWeight.w600,
+              size: 20,
             ),
-            prefixIcon: Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppConstants.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: AppConstants.primaryColor,
-                size: 20,
-              ),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
                 color: context.isDarkMode
                     ? Colors.grey.withOpacity(0.2)
                     : Colors.grey.withOpacity(0.1),
-                width: 1.5,
-              ),
+              width: 1.5,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: AppConstants.primaryColor.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 16,
-            ),
-            fillColor: context.cardColor,
-            filled: true,
           ),
-          validator: validator,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: AppConstants.primaryColor.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: Colors.red.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(
+              color: Colors.red.withOpacity(0.5),
+              width: 1.5,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
+            fillColor: context.cardColor,
+          filled: true,
+        ),
+        validator: validator,
           style: TextStyle(
-            fontSize: 16,
+          fontSize: 16,
             color: context.textColor,
           ),
         ),

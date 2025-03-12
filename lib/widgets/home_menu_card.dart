@@ -82,6 +82,26 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double iconSize = isSmallScreen ? 24.0 : 28.0;
+    final double titleFontSize = isSmallScreen ? 10.0 : 12.0;
+    final double badgeFontSize = isSmallScreen ? 8.0 : 10.0;
+    final double iconPadding = isSmallScreen ? 10.0 : 14.0;
+    final double contentPadding = isSmallScreen ? 12.0 : 16.0;
+    final double spacingHeight = isSmallScreen ? 8.0 : 12.0;
+    
+    // Calculate decorative element sizes
+    final double largeBubbleSize = isSmallScreen ? 60.0 : 80.0;
+    final double mediumBubbleSize = isSmallScreen ? 60.0 : 70.0;
+    final double smallBubbleSize = isSmallScreen ? 16.0 : 20.0;
+    
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -127,8 +147,8 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                         right: -20,
                         top: -20,
                         child: Container(
-                          width: 70,
-                          height: 70,
+                          width: mediumBubbleSize,
+                          height: mediumBubbleSize,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
                             shape: BoxShape.circle,
@@ -139,8 +159,8 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                         left: -25,
                         bottom: -25,
                         child: Container(
-                          width: 80,
-                          height: 80,
+                          width: largeBubbleSize,
+                          height: largeBubbleSize,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.08),
                             shape: BoxShape.circle,
@@ -152,8 +172,8 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                         right: 40,
                         bottom: 30,
                         child: Container(
-                          width: 20,
-                          height: 20,
+                          width: smallBubbleSize,
+                          height: smallBubbleSize,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.15),
                             shape: BoxShape.circle,
@@ -162,14 +182,14 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                       ),
                       // Content with improved spacing and styling
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.all(contentPadding),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.all(14),
+                              padding: EdgeInsets.all(iconPadding),
                               decoration: BoxDecoration(
                                 color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                                 shape: BoxShape.circle,
@@ -185,30 +205,33 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                               child: Icon(
                                 widget.icon,
                                 color: _cardGradient.first,
-                                size: 28,
+                                size: iconSize,
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: spacingHeight),
                             Flexible(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                child: Text(
-                                  widget.title,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        blurRadius: 2,
-                                        offset: Offset(0, 1),
-                                      ),
-                                    ],
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    widget.title,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: titleFontSize,
+                                      color: Colors.white,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 2,
+                                          offset: Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
@@ -218,13 +241,16 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                       // "New" badge for a special feature (optional)
                       if (widget.index == 1) // Just for the Request Blood card
                         Positioned(
-                          top: 10,
-                          right: 10,
+                          top: isSmallScreen ? 8 : 10,
+                          right: isSmallScreen ? 8 : 10,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 6 : 8, 
+                              vertical: isSmallScreen ? 3 : 4
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -238,7 +264,7 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                               'NEW',
                               style: TextStyle(
                                 color: _cardGradient.first,
-                                fontSize: 10,
+                                fontSize: badgeFontSize,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
