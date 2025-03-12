@@ -13,7 +13,7 @@ class BloodRequestScreen extends StatefulWidget {
   State<BloodRequestScreen> createState() => _BloodRequestScreenState();
 }
 
-class _BloodRequestScreenState extends State<BloodRequestScreen> with SingleTickerProviderStateMixin {
+class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();

@@ -174,6 +174,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: 'My Profile',
         showProfilePicture: false,
         actions: [
+          // Settings icon
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.settings,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (Widget child, Animation<double> animation) {
@@ -181,9 +199,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             },
             child: IconButton(
               key: ValueKey<bool>(_isEditing),
-              icon: Icon(
-                _isEditing ? Icons.close_rounded : Icons.edit_rounded,
-                color: _isEditing ? Colors.red : AppConstants.primaryColor,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isEditing ? Icons.close_rounded : Icons.edit_rounded,
+                  color: _isEditing ? Colors.white : Colors.white,
+                  size: 20,
+                ),
               ),
               tooltip: _isEditing ? 'Cancel Editing' : 'Edit Profile',
               onPressed: () {
