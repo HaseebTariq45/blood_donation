@@ -16,6 +16,7 @@ import 'screens/settings_screen.dart';
 import 'screens/blood_banks_screen.dart';
 import 'screens/donation_history_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/about_us_screen.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -187,6 +188,7 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/blood_banks': (context) => const BloodBanksScreen(),
         '/donation_history': (context) => const DonationHistoryScreen(),
+        '/about_us': (context) => const AboutUsScreen(),
       },
     );
   }

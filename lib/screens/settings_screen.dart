@@ -252,6 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   icon: Icons.info,
                   onTap: () {
                     // Navigate to about us
+                    Navigator.pushNamed(context, '/about_us');
                   },
                 ),
                 const Divider(),
