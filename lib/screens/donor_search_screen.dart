@@ -17,11 +17,22 @@ class DonorSearchScreen extends StatefulWidget {
 class _DonorSearchScreenState extends State<DonorSearchScreen> {
   final _searchController = TextEditingController();
   String? _selectedBloodType;
+  String? _selectedLocation;
   bool _onlyAvailable = false;
   List<UserModel> _filteredDonors = [];
   
   final List<String> _bloodTypes = [
     'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+  ];
+  
+  // Sample locations - in a real app, this would come from a location database
+  final List<String> _locations = [
+    'Any Location',
+    'Main St, City',
+    'Downtown',
+    'Uptown',
+    'West Side',
+    'East Side',
   ];
 
   @override
@@ -47,9 +58,18 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
         bloodType: _selectedBloodType,
         onlyAvailable: _onlyAvailable,
       ).where((donor) {
-        if (searchQuery.isEmpty) return true;
-        return donor.name.toLowerCase().contains(searchQuery) ||
-            donor.address.toLowerCase().contains(searchQuery);
+        bool matchesSearch = true;
+        if (searchQuery.isNotEmpty) {
+          matchesSearch = donor.name.toLowerCase().contains(searchQuery) ||
+              donor.address.toLowerCase().contains(searchQuery);
+        }
+        
+        bool matchesLocation = true;
+        if (_selectedLocation != null && _selectedLocation != 'Any Location') {
+          matchesLocation = donor.address.contains(_selectedLocation!);
+        }
+        
+        return matchesSearch && matchesLocation;
       }).toList();
     });
   }
@@ -83,8 +103,14 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search by name or location',
+                    hintText: 'Search donors by name or location',
                     prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: AppConstants.accentColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide.none,
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -111,7 +137,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
-                            hint: const Text('Blood Type'),
+                            hint: const Text('Blood Group'),
                             value: _selectedBloodType,
                             isExpanded: true,
                             items: [
@@ -137,57 +163,86 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Available Toggle
+                    // Location Dropdown
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _onlyAvailable = !_onlyAvailable;
-                          });
-                          _updateFilteredDonors();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _onlyAvailable
-                                ? AppConstants.primaryColor.withOpacity(0.1)
-                                : AppConstants.accentColor,
-                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                            border: _onlyAvailable
-                                ? Border.all(color: AppConstants.primaryColor)
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                size: 18,
-                                color: _onlyAvailable
-                                    ? AppConstants.primaryColor
-                                    : AppConstants.lightTextColor,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Available Only',
-                                style: TextStyle(
-                                  color: _onlyAvailable
-                                      ? AppConstants.primaryColor
-                                      : AppConstants.lightTextColor,
-                                  fontWeight: _onlyAvailable
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: AppConstants.accentColor,
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            hint: const Text('Location'),
+                            value: _selectedLocation,
+                            isExpanded: true,
+                            items: _locations.map((location) {
+                              return DropdownMenuItem<String>(
+                                value: location,
+                                child: Text(location),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedLocation = value;
+                              });
+                              _updateFilteredDonors();
+                            },
                           ),
                         ),
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                // Available Toggle
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _onlyAvailable = !_onlyAvailable;
+                    });
+                    _updateFilteredDonors();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _onlyAvailable
+                          ? AppConstants.primaryColor.withOpacity(0.1)
+                          : AppConstants.accentColor,
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      border: _onlyAvailable
+                          ? Border.all(color: AppConstants.primaryColor)
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 18,
+                          color: _onlyAvailable
+                              ? AppConstants.primaryColor
+                              : AppConstants.lightTextColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Available Donors Only',
+                          style: TextStyle(
+                            color: _onlyAvailable
+                                ? AppConstants.primaryColor
+                                : AppConstants.lightTextColor,
+                            fontWeight: _onlyAvailable
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -245,7 +300,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
   Widget _buildDonorCard(UserModel donor) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusL),
       ),
@@ -305,34 +360,42 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       // Availability Status
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: donor.isAvailableToDonate
-                              ? AppConstants.successColor.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          donor.isAvailableToDonate ? 'Available' : 'Busy',
-                          style: TextStyle(
-                            color: donor.isAvailableToDonate
-                                ? AppConstants.successColor
-                                : Colors.orange,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: donor.isAvailableToDonate
+                                  ? AppConstants.successColor.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              donor.isAvailableToDonate ? 'Available' : 'Busy',
+                              style: TextStyle(
+                                color: donor.isAvailableToDonate
+                                    ? AppConstants.successColor
+                                    : Colors.orange,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                BloodTypeBadge(bloodType: donor.bloodType),
+                // Blood Type Badge
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: BloodTypeBadge(bloodType: donor.bloodType),
+                ),
               ],
             ),
             const SizedBox(height: 16),
