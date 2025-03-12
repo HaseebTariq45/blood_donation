@@ -236,6 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   icon: Icons.privacy_tip,
                   onTap: () {
                     // Navigate to privacy policy
+                    Navigator.pushNamed(context, '/privacy_policy');
                   },
                 ),
                 const Divider(),
@@ -244,6 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   icon: Icons.description,
                   onTap: () {
                     // Navigate to terms of service
+                    Navigator.pushNamed(context, '/terms_conditions');
                   },
                 ),
                 const Divider(),

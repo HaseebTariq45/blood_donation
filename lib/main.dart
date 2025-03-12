@@ -18,6 +18,8 @@ import 'screens/blood_banks_screen.dart';
 import 'screens/donation_history_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/about_us_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/terms_conditions_screen.dart';
 import 'utils/localization/app_localization.dart';
 
 void main() async {
@@ -219,6 +221,8 @@ class MyApp extends StatelessWidget {
         '/blood_banks': (context) => const BloodBanksScreen(),
         '/donation_history': (context) => const DonationHistoryScreen(),
         '/about_us': (context) => const AboutUsScreen(),
+        '/privacy_policy': (context) => const PrivacyPolicyScreen(),
+        '/terms_conditions': (context) => const TermsConditionsScreen(),
       },
     );
   }
