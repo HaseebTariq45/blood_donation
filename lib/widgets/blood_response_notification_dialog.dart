@@ -158,7 +158,7 @@ class _BloodResponseNotificationDialogState
         widget.responderId,
       );
 
-      // Show success message and close dialog
+      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -166,7 +166,9 @@ class _BloodResponseNotificationDialogState
             backgroundColor: AppConstants.successColor,
           ),
         );
-        Navigator.of(context, rootNavigator: true).pop();
+        
+        // Show confirmation dialog with next steps
+        _showAcceptanceConfirmationDialog();
       }
     } catch (e) {
       debugPrint('Error accepting donation: $e');
@@ -183,6 +185,124 @@ class _BloodResponseNotificationDialogState
         _isLoading = false;
       });
     }
+  }
+  
+  // Show confirmation dialog after accepting donation
+  void _showAcceptanceConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: AppConstants.successColor, size: 24),
+            const SizedBox(width: 8),
+            const Text('Donation Accepted'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You have accepted ${widget.responderName}\'s offer to donate blood.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Next steps:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            _buildNextStepItem(
+              icon: Icons.location_on,
+              text: 'Your location has been shared with the donor',
+            ),
+            _buildNextStepItem(
+              icon: Icons.phone,
+              text: 'Contact the donor to coordinate the donation',
+            ),
+            _buildNextStepItem(
+              icon: Icons.medical_services,
+              text: 'Prepare for the donation (stay hydrated, eat well)',
+            ),
+            _buildNextStepItem(
+              icon: Icons.info_outline,
+              text: 'Inform medical staff about the incoming donor',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.tips_and_updates, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'You can call or message the donor using the contact options provided.',
+                      style: TextStyle(fontSize: 12, color: Colors.blue),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close this dialog
+              Navigator.of(context, rootNavigator: true).pop(); // Close the main dialog
+            },
+            child: const Text('CLOSE'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close this dialog
+              Navigator.of(context, rootNavigator: true).pop(); // Close the main dialog
+              // Call the donor
+              _makePhoneCall(widget.responderPhone);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'CALL DONOR',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Build next step item with icon and text
+  Widget _buildNextStepItem({required IconData icon, required String text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: AppConstants.primaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Function to make a phone call
@@ -704,12 +824,7 @@ class _BloodResponseNotificationDialogState
               ),
               const Spacer(),
               InkWell(
-                onTap: () async {
-                  final url = 'https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}';
-                  if (await url_launcher.canLaunch(url)) {
-                    await url_launcher.launch(url);
-                  }
-                },
+                onTap: () => _openLocation(location.latitude, location.longitude),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -734,6 +849,108 @@ class _BloodResponseNotificationDialogState
             style: const TextStyle(fontSize: 12),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Coordinates: ${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+              InkWell(
+                onTap: () => _copyToClipboard('${location.latitude}, ${location.longitude}', 'Coordinates'),
+                child: const Icon(Icons.copy, size: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Open location in any map app
+  Future<void> _openLocation(double latitude, double longitude) async {
+    try {
+      // Try different URI schemes to maximize compatibility
+      final List<String> mapUris = [
+        // Geo URI - works with many map apps
+        'geo:$latitude,$longitude',
+        // HTTP URL - fallback for web or if geo URI fails
+        'https://maps.google.com/maps?q=$latitude,$longitude',
+      ];
+      
+      bool launched = false;
+      
+      // Try each URI until one works
+      for (final uri in mapUris) {
+        if (await url_launcher.canLaunch(uri)) {
+          await url_launcher.launch(uri);
+          launched = true;
+          break;
+        }
+      }
+      
+      // If none of the URIs worked, show a dialog with the coordinates
+      if (!launched) {
+        if (mounted) {
+          _showLocationCopyDialog(latitude, longitude);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error opening location: $e');
+      if (mounted) {
+        _showLocationCopyDialog(latitude, longitude);
+      }
+    }
+  }
+  
+  // Show dialog with coordinates when map apps fail
+  void _showLocationCopyDialog(double latitude, double longitude) {
+    final coordsString = '$latitude, $longitude';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Location Information'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Could not open maps app. You can copy the coordinates and use them in your preferred maps application:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      coordsString,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    onPressed: () {
+                      _copyToClipboard(coordsString, 'Coordinates');
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
           ),
         ],
       ),
