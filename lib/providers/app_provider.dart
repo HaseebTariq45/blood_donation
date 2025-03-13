@@ -6,17 +6,20 @@ import '../models/donation_model.dart';
 import '../models/blood_request_model.dart';
 import '../models/blood_bank_model.dart';
 import '../models/data_usage_model.dart';
+import '../models/emergency_contact_model.dart';
 import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
 import '../firebase/firebase_auth_service.dart';
 import '../firebase/firebase_user_service.dart';
 import '../firebase/firebase_donation_service.dart';
+import '../firebase/firebase_emergency_contact_service.dart';
 
 class AppProvider extends ChangeNotifier {
   // Firebase services - lazy initialization
   late final FirebaseAuthService _authService;
   late final FirebaseUserService _userService;
   late final FirebaseDonationService _donationService;
+  late final FirebaseEmergencyContactService _emergencyContactService;
   
   // User data
   UserModel? _currentUser;
@@ -87,6 +90,10 @@ class AppProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
 
+  // Emergency contacts data
+  List<EmergencyContactModel> _emergencyContacts = [];
+  List<EmergencyContactModel> get emergencyContacts => _emergencyContacts;
+
   // Constructor - load data for app
   AppProvider() {
     _initializeServices();
@@ -99,6 +106,7 @@ class AppProvider extends ChangeNotifier {
       _authService = FirebaseAuthService();
       _userService = FirebaseUserService();
       _donationService = FirebaseDonationService();
+      _emergencyContactService = FirebaseEmergencyContactService();
       
       // Load data
       _loadDummyData();
@@ -129,6 +137,11 @@ class AppProvider extends ChangeNotifier {
           UserModel? userData = await _authService.getUserData();
           if (userData != null) {
             _currentUser = userData;
+            
+            // Load user-specific data
+            loadUserDonations();
+            loadEmergencyContacts();
+            
             notifyListeners();
           }
         } catch (e) {
@@ -141,12 +154,17 @@ class AppProvider extends ChangeNotifier {
         if (user == null) {
           // User signed out
           _currentUser = null;
+          _emergencyContacts = []; // Clear emergency contacts when user signs out
         } else {
           // User signed in, get their data from Firestore
           ensureUserDataInFirestore().then((_) {
             _authService.getUserData().then((userData) {
               if (userData != null) {
                 _currentUser = userData;
+                
+                // Load user-specific data
+                loadUserDonations();
+                loadEmergencyContacts();
               }
               notifyListeners();
             });
@@ -798,5 +816,103 @@ class AppProvider extends ChangeNotifier {
   void updateBloodRequests(List<BloodRequestModel> requests) {
     _bloodRequests = requests;
     notifyListeners();
+  }
+
+  // Load emergency contacts for the current user
+  Future<void> loadEmergencyContacts() async {
+    if (!isLoggedIn) return;
+    
+    try {
+      _emergencyContacts = await _emergencyContactService.getAllEmergencyContacts(currentUser.id);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading emergency contacts: $e');
+    }
+  }
+
+  // Get a stream of emergency contacts for real-time updates
+  Stream<List<EmergencyContactModel>> getEmergencyContactsStream() {
+    if (!isLoggedIn) return Stream.value([]);
+    return _emergencyContactService.getEmergencyContactsStream(currentUser.id);
+  }
+
+  // Add a new emergency contact
+  Future<bool> addEmergencyContact(EmergencyContactModel contact) async {
+    if (!isLoggedIn) return false;
+    
+    try {
+      // Create a new contact with the current user ID
+      final newContact = contact.copyWith(userId: currentUser.id);
+      
+      // Add to Firebase
+      final success = await _emergencyContactService.addEmergencyContact(newContact);
+      
+      if (success) {
+        // Refresh the contacts list
+        await loadEmergencyContacts();
+      }
+      
+      return success;
+    } catch (e) {
+      debugPrint('Error adding emergency contact: $e');
+      return false;
+    }
+  }
+
+  // Update an existing emergency contact
+  Future<bool> updateEmergencyContact(EmergencyContactModel contact) async {
+    if (!isLoggedIn) return false;
+    
+    try {
+      final success = await _emergencyContactService.updateEmergencyContact(contact);
+      
+      if (success) {
+        // Refresh the contacts list
+        await loadEmergencyContacts();
+      }
+      
+      return success;
+    } catch (e) {
+      debugPrint('Error updating emergency contact: $e');
+      return false;
+    }
+  }
+
+  // Delete an emergency contact
+  Future<bool> deleteEmergencyContact(String contactId) async {
+    if (!isLoggedIn) return false;
+    
+    try {
+      final success = await _emergencyContactService.deleteEmergencyContact(contactId);
+      
+      if (success) {
+        // Refresh the contacts list
+        await loadEmergencyContacts();
+      }
+      
+      return success;
+    } catch (e) {
+      debugPrint('Error deleting emergency contact: $e');
+      return false;
+    }
+  }
+
+  // Toggle pin status for a contact
+  Future<bool> toggleContactPinStatus(String contactId, bool isPinned) async {
+    if (!isLoggedIn) return false;
+    
+    try {
+      final success = await _emergencyContactService.togglePinStatus(contactId, isPinned);
+      
+      if (success) {
+        // Refresh the contacts list
+        await loadEmergencyContacts();
+      }
+      
+      return success;
+    } catch (e) {
+      debugPrint('Error toggling pin status: $e');
+      return false;
+    }
   }
 } 

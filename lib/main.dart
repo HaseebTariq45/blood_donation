@@ -25,8 +25,10 @@ import 'screens/about_us_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/terms_conditions_screen.dart';
 import 'screens/data_usage_screen.dart';
+import 'screens/emergency_contacts_screen.dart';
 import 'utils/localization/app_localization.dart';
 import 'firebase/firebase_service.dart';
+import 'services/firebase_notification_service.dart';
 
 // Create a separate function for initialization
 Future<void> _initializeApp() async {
@@ -62,6 +64,9 @@ void main() async {
   // Initialize services
   serviceLocator.initialize(appProvider);
   
+  // Initialize notification service - moved to widget's initState
+  // to ensure we have context available
+  
   runApp(
     ChangeNotifierProvider.value(
       value: appProvider,
@@ -70,8 +75,28 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final FirebaseNotificationService _notificationService = FirebaseNotificationService();
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize notification service after build is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeNotifications();
+    });
+  }
+  
+  Future<void> _initializeNotifications() async {
+    await _notificationService.initialize(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +155,7 @@ class MyApp extends StatelessWidget {
         '/privacy_policy': (context) => const PrivacyPolicyScreen(),
         '/terms_conditions': (context) => const TermsConditionsScreen(),
         '/data_usage': (context) => const DataUsageScreen(),
+        '/emergency_contacts': (context) => const EmergencyContactsScreen(),
       },
     );
   }

@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../widgets/blood_type_badge.dart';
 import '../models/blood_request_model.dart';
 import '../utils/theme_helper.dart';
+import '../services/firebase_notification_service.dart';
 
 class BloodRequestsListScreen extends StatefulWidget {
   const BloodRequestsListScreen({Key? key}) : super(key: key);
@@ -104,6 +105,15 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
               final appProvider = Provider.of<AppProvider>(context, listen: false);
               final currentUser = appProvider.currentUser;
               
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+              
               // Update the request status in Firestore
               FirebaseFirestore.instance.collection('blood_requests').doc(request.id).update({
                 'status': 'In Progress',
@@ -111,42 +121,67 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
                 'responderName': currentUser.name,
                 'responderPhone': currentUser.phone,
                 'responseDate': DateTime.now().toIso8601String(),
-              }).then((_) {
+              }).then((_) async {
+                // Send notification to requester
+                final notificationService = FirebaseNotificationService();
+                await notificationService.sendBloodRequestResponseNotification(
+                  requesterId: request.requesterId,
+                  requesterName: request.requesterName,
+                  requestId: request.id,
+                  responderName: currentUser.name,
+                  responderPhone: currentUser.phone,
+                  bloodType: currentUser.bloodType,
+                );
+                
+                // Close loading indicator
+                if (mounted) {
+                  Navigator.pop(context);
+                }
+                
                 // Show success message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('You have responded to ${request.requesterName}\'s request'),
-                    backgroundColor: AppConstants.successColor,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('You have responded to ${request.requesterName}\'s request'),
+                      backgroundColor: AppConstants.successColor,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      margin: const EdgeInsets.all(10),
+                      action: SnackBarAction(
+                        label: 'DISMISS',
+                        textColor: Colors.white,
+                        onPressed: () {},
+                      ),
                     ),
-                    margin: const EdgeInsets.all(10),
-                    action: SnackBarAction(
-                      label: 'DISMISS',
-                      textColor: Colors.white,
-                      onPressed: () {},
-                    ),
-                  ),
-                );
+                  );
+                }
               }).catchError((error) {
+                // Close loading indicator
+                if (mounted) {
+                  Navigator.pop(context);
+                }
+                
                 // Show error message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to respond to request: $error'),
-                    backgroundColor: AppConstants.errorColor,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to respond to request: $error'),
+                      backgroundColor: AppConstants.errorColor,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      margin: const EdgeInsets.all(10),
+                      action: SnackBarAction(
+                        label: 'DISMISS',
+                        textColor: Colors.white,
+                        onPressed: () {},
+                      ),
                     ),
-                    margin: const EdgeInsets.all(10),
-                    action: SnackBarAction(
-                      label: 'DISMISS',
-                      textColor: Colors.white,
-                      onPressed: () {},
-                    ),
-                  ),
-                );
+                  );
+                }
               });
             },
             style: ElevatedButton.styleFrom(
@@ -195,12 +230,12 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
                 splashBorderRadius: BorderRadius.circular(50),
                 indicator: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
-                  color: Colors.white,
+                    color: Colors.white,
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      spreadRadius: 1,
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      spreadRadius: 1,
                       offset: const Offset(0, 1),
                     ),
                   ],
@@ -265,7 +300,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
       ),
     );
   }
-
+  
   Widget _buildRequestsList(String filter) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('blood_requests')
@@ -511,9 +546,9 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
                             const SizedBox(width: 4),
                             Text(
                               request.formattedDate,
-                              style: const TextStyle(
+                                style: const TextStyle(
                                 fontSize: 13,
-                                color: AppConstants.lightTextColor,
+                                  color: AppConstants.lightTextColor,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -604,18 +639,18 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
                   ),
                   const SizedBox(width: 12),
                   if (canRespond)
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle donation response
-                        _showResponseDialog(request);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      ),
-                      child: const Text('Respond'),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Handle donation response
+                      _showResponseDialog(request);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Respond'),
                     )
                   else if (isCurrentUserRequest)
                     ElevatedButton(
@@ -641,7 +676,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
                       child: Text(request.status),
-                    ),
+                  ),
                 ],
               ),
             ],

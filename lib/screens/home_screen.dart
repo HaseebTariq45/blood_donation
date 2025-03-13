@@ -297,52 +297,98 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: verticalPadding * 0.8),
-                        GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          crossAxisSpacing: horizontalPadding,
-                          mainAxisSpacing: verticalPadding,
-                          childAspectRatio: screenWidth / (screenHeight * 0.5),
+                        // First row of cards (2 cards)
+                        Row(
                           children: [
-                            HomeMenuCard(
-                              title: 'Find Blood Donors',
-                              icon: Icons.person_search,
-                              onTap: () {
-                                Navigator.pushNamed(context, '/donor_search');
-                              },
-                              index: 0,
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Find Blood Donors',
+                                icon: Icons.person_search,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/donor_search');
+                                },
+                                index: 0,
+                              ),
                             ),
-                            HomeMenuCard(
-                              title: 'Request Blood',
-                              icon: Icons.bloodtype,
-                              onTap: () {
-                                Navigator.pushNamed(context, '/blood_request');
-                              },
-                              index: 1,
+                            SizedBox(width: horizontalPadding),
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Request Blood',
+                                icon: Icons.bloodtype,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/blood_request');
+                                },
+                                index: 1,
+                              ),
                             ),
-                            HomeMenuCard(
-                              title: 'Nearby Blood Banks',
-                              icon: Icons.location_on,
-                              onTap: () {
-                                Navigator.pushNamed(context, '/blood_banks');
-                              },
-                              index: 2,
+                          ],
+                        ),
+                        SizedBox(height: verticalPadding),
+                        
+                        // Second row of cards (2 cards)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Blood Requests',
+                                icon: Icons.format_list_bulleted,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/blood_requests_list');
+                                },
+                                index: 2,
+                              ),
                             ),
-                            HomeMenuCard(
-                              title: 'Donation History',
-                              icon: Icons.history,
-                              onTap: () {
-                                Navigator.pushNamed(context, '/donation_history');
-                              },
-                              index: 3,
+                            SizedBox(width: horizontalPadding),
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Nearby Blood Banks',
+                                icon: Icons.location_on,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/blood_banks');
+                                },
+                                index: 3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: verticalPadding),
+                        
+                        // Third row (1 card)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Donation History',
+                                icon: Icons.history,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/donation_history');
+                                },
+                                index: 4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: verticalPadding),
+                        
+                        // Fourth row (1 card)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Emergency Contacts',
+                                icon: Icons.emergency,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/emergency_contacts');
+                                },
+                                index: 5,
+                              ),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  // Recent Requests
+                  // Health Tips or Upcoming Campaigns instead of Urgent Blood Requests
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
@@ -353,215 +399,84 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Urgent Blood Requests',
-                                style: TextStyle(
-                                  fontSize: sectionTitleFontSize,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textColor,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // View all requests
-                                Navigator.pushNamed(context, '/blood_requests_list');
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding * 0.5,
-                                  vertical: verticalPadding * 0.2,
-                                ),
-                              ),
-                              child: Text(
-                                'View All', 
-                                style: TextStyle(
-                                  color: AppConstants.primaryColor,
-                                  fontSize: bodyTextFontSize,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Donation Tips',
+                          style: TextStyle(
+                            fontSize: sectionTitleFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: context.textColor,
+                          ),
                         ),
                         SizedBox(height: verticalPadding * 0.8),
-                        // Recent blood requests list
-                        if (appProvider.bloodRequests.isNotEmpty)
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: appProvider.bloodRequests
-                                .where((req) => req.isUrgent && req.status == 'Pending')
-                                .take(3)
-                                .length,
-                            itemBuilder: (context, index) {
-                              final urgentRequests = appProvider.bloodRequests
-                                  .where((req) => req.isUrgent && req.status == 'Pending')
-                                  .toList();
-                              if (index < urgentRequests.length) {
-                                final request = urgentRequests[index];
-                                return Card(
-                                  margin: EdgeInsets.only(bottom: verticalPadding * 0.8),
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                                  ),
-                                  color: context.cardColor,
-                                  shadowColor: context.isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/blood_requests_list');
-                                    },
-                                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                                    splashColor: Colors.red.withOpacity(0.1),
-                                    highlightColor: Colors.red.withOpacity(0.05),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(horizontalPadding * 0.8),
-                                      child: Row(
-                                        children: [
-                                          // Blood Type Badge
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.red.withOpacity(0.3),
-                                                  blurRadius: 10,
-                                                  spreadRadius: 1,
-                                                ),
-                                              ],
-                                            ),
-                                            child: BloodTypeBadge(
-                                              bloodType: request.bloodType,
-                                              size: badgeSize,
-                                            ),
-                                          ),
-                                          SizedBox(width: horizontalPadding * 0.8),
-                                          // Request Info
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Urgent: ${request.requesterName}',
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: isSmallScreen ? 14 : 16,
-                                                          color: context.textColor,
-                                                        ),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      padding: EdgeInsets.symmetric(
-                                                        horizontal: horizontalPadding * 0.4,
-                                                        vertical: verticalPadding * 0.2,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.red.withOpacity(0.1),
-                                                        borderRadius: BorderRadius.circular(16),
-                                                        border: Border.all(
-                                                          color: Colors.red.withOpacity(0.5),
-                                                          width: 1,
-                                                        ),
-                                                      ),
-                                                      child: Text(
-                                                        'Urgent',
-                                                        style: TextStyle(
-                                                          color: Colors.red,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: isSmallScreen ? 10 : 12,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(height: verticalPadding * 0.2),
-                                                Text(
-                                                  request.location,
-                                                  style: TextStyle(
-                                                    color: context.secondaryTextColor,
-                                                    fontSize: bodyTextFontSize,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                SizedBox(height: verticalPadding * 0.4),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.access_time,
-                                                      size: smallIconSize,
-                                                      color: context.secondaryTextColor,
-                                                    ),
-                                                    SizedBox(width: horizontalPadding * 0.2),
-                                                    Text(
-                                                      '${_getTimeAgo(request.requestDate)} • ',
-                                                      style: TextStyle(
-                                                        fontSize: isSmallScreen ? 10 : 12,
-                                                        color: context.secondaryTextColor,
-                                                      ),
-                                                    ),
-                                                    Icon(
-                                                      Icons.location_on,
-                                                      size: smallIconSize,
-                                                      color: context.secondaryTextColor,
-                                                    ),
-                                                    SizedBox(width: horizontalPadding * 0.2),
-                                                    Expanded(
-                                                      child: Text(
-                                                        request.location.split(',').first,
-                                                        style: TextStyle(
-                                                          fontSize: isSmallScreen ? 10 : 12,
-                                                          color: context.secondaryTextColor,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                        Card(
+                          margin: EdgeInsets.only(bottom: verticalPadding * 0.8),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                          ),
+                          color: context.cardColor,
+                          shadowColor: context.isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
+                          child: Padding(
+                            padding: EdgeInsets.all(horizontalPadding * 0.8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lightbulb,
+                                      color: Colors.amber,
+                                      size: iconSize,
+                                    ),
+                                    SizedBox(width: horizontalPadding * 0.5),
+                                    Expanded(
+                                      child: Text(
+                                        'Preparing for Blood Donation',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: isSmallScreen ? 14 : 16,
+                                          color: context.textColor,
+                                        ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                                SizedBox(height: verticalPadding * 0.6),
+                                Text(
+                                  '• Get at least 8 hours of sleep the night before',
+                                  style: TextStyle(
+                                    fontSize: bodyTextFontSize,
+                                    color: context.secondaryTextColor,
                                   ),
-                                );
-                              }
-                              return null;
-                            },
-                          )
-                        else
-                          Center(
-                            child: Padding(
-                              padding: standardPadding,
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.bloodtype_outlined,
-                                    size: isSmallScreen ? 48 : 64,
-                                    color: context.isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                                ),
+                                SizedBox(height: verticalPadding * 0.3),
+                                Text(
+                                  '• Eat a healthy meal before donating',
+                                  style: TextStyle(
+                                    fontSize: bodyTextFontSize,
+                                    color: context.secondaryTextColor,
                                   ),
-                                  SizedBox(height: verticalPadding * 0.8),
-                                  Text(
-                                    'No urgent blood requests at the moment',
-                                    style: TextStyle(
-                                      fontSize: bodyTextFontSize,
-                                      color: context.secondaryTextColor,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: verticalPadding * 0.3),
+                                Text(
+                                  '• Drink an extra 16 oz of water before donation',
+                                  style: TextStyle(
+                                    fontSize: bodyTextFontSize,
+                                    color: context.secondaryTextColor,
                                   ),
-                                ],
-                              ),
+                                ),
+                                SizedBox(height: verticalPadding * 0.3),
+                                Text(
+                                  '• Avoid fatty foods before donating',
+                                  style: TextStyle(
+                                    fontSize: bodyTextFontSize,
+                                    color: context.secondaryTextColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),

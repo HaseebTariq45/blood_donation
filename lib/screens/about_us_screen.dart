@@ -113,69 +113,46 @@ class AboutUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions for responsive sizing
-    final Size screenSize = MediaQuery.of(context).size;
-    final double screenWidth = screenSize.width;
-    final double screenHeight = screenSize.height;
-    
-    // Determine if we're on a small screen
-    final bool isSmallScreen = screenWidth < 360;
-    
-    // Calculate responsive sizes
-    final double headerLogoSize = isSmallScreen ? 80.0 : 100.0;
-    final double headerIconSize = isSmallScreen ? 50.0 : 60.0;
-    final double headerTitleSize = isSmallScreen ? 20.0 : 24.0;
-    final double headerSubtitleSize = isSmallScreen ? 14.0 : 16.0;
-    
-    final double sectionTitleSize = isSmallScreen ? 18.0 : 20.0;
-    final double avatarRadius = isSmallScreen ? 35.0 : 40.0;
-    final double avatarFontSize = isSmallScreen ? 20.0 : 24.0;
-    
-    final double nameFontSize = isSmallScreen ? 18.0 : 20.0;
-    final double subtitleFontSize = isSmallScreen ? 14.0 : 16.0;
-    final double bodyTextSize = isSmallScreen ? 13.0 : 15.0;
-    final double iconSize = isSmallScreen ? 14.0 : 16.0;
-    
-    // Calculate padding based on screen size
-    final double horizontalPadding = screenWidth * 0.05;
-    final double verticalPadding = screenHeight * 0.02;
-    final EdgeInsets standardPadding = EdgeInsets.all(horizontalPadding);
-    
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(
         title: 'About Us',
         showBackButton: true,
         showProfilePicture: false,
       ),
-      body: SafeArea(
-        child: LayoutBuilder(
+        body: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  // App Logo and Name
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.isDarkMode
-                              ? Colors.black.withOpacity(0.2)
-                              : Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
-                      ),
-                    ),
-                    child: Column(
+            // Get screen dimensions for responsive sizing
+            final mediaQuery = MediaQuery.of(context);
+            final screenWidth = mediaQuery.size.width;
+            final screenHeight = mediaQuery.size.height;
+            
+            // Determine screen size categories
+            final bool isSmallScreen = screenWidth < 360;
+            final bool isLandscape = mediaQuery.orientation == Orientation.landscape;
+            
+            // Calculate responsive sizing
+            final double horizontalPadding = screenWidth * 0.05;
+            final double verticalPadding = screenHeight * 0.02;
+            
+            // Calculate adaptive sizes based on screen dimensions
+            final double headerLogoSize = constraints.maxWidth * 0.25;
+            final double headerIconSize = headerLogoSize * 0.6;
+            final double headerTitleSize = constraints.maxWidth * 0.06;
+            final double headerSubtitleSize = constraints.maxWidth * 0.04;
+            
+            final double sectionTitleSize = constraints.maxWidth * 0.05;
+            final double avatarRadius = constraints.maxWidth * 0.1;
+            final double avatarFontSize = avatarRadius * 0.6;
+            
+            final double nameFontSize = constraints.maxWidth * 0.045;
+            final double subtitleFontSize = constraints.maxWidth * 0.035;
+            final double bodyTextSize = constraints.maxWidth * 0.033;
+            final double iconSize = constraints.maxWidth * 0.035;
+            
+            // Create adaptive layout for different orientations
+            Widget headerContent = Column(
                       children: [
                         Container(
                           height: headerLogoSize,
@@ -193,10 +170,16 @@ class AboutUsScreen extends StatelessWidget {
                             ],
                           ),
                           child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Padding(
+                        padding: EdgeInsets.all(headerLogoSize * 0.1),
                             child: Icon(
                               Icons.bloodtype,
                               size: headerIconSize,
                               color: AppConstants.primaryColor,
+                        ),
+                      ),
                             ),
                           ),
                         ),
@@ -213,15 +196,111 @@ class AboutUsScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: verticalPadding * 0.4),
-                        Text(
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Version 1.0.0',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: headerSubtitleSize,
+                    ),
+                  ),
+                ),
+              ],
+            );
+            
+            if (isLandscape) {
+              headerContent = Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    height: headerLogoSize * 0.8,
+                    width: headerLogoSize * 0.8,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppConstants.primaryColor.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Padding(
+                          padding: EdgeInsets.all(headerLogoSize * 0.08),
+                          child: Icon(
+                            Icons.bloodtype,
+                            color: AppConstants.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: horizontalPadding),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'BloodLine',
+                          style: TextStyle(
+                            fontSize: headerTitleSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: verticalPadding * 0.2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
                           'Version 1.0.0',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: headerSubtitleSize,
                           ),
                         ),
+                      ),
                       ],
                     ),
+                ],
+              );
+            }
+            
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // App Logo and Name
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(screenWidth * 0.06),
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: context.isDarkMode
+                              ? Colors.black.withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: headerContent,
                   ),
                   
                   SizedBox(height: verticalPadding * 1.2),
@@ -232,19 +311,23 @@ class AboutUsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
                           'Developer',
                           style: TextStyle(
                             fontSize: sectionTitleSize,
                             fontWeight: FontWeight.bold,
                             color: context.textColor,
+                            ),
                           ),
                         ),
                         SizedBox(height: verticalPadding * 0.8),
                         
                         // Developer Card
                         Container(
-                          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                          padding: EdgeInsets.all(screenWidth * 0.05),
                           decoration: BoxDecoration(
                             color: context.cardColor,
                             borderRadius: BorderRadius.circular(16),
@@ -262,7 +345,9 @@ class AboutUsScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               // Developer Profile
-                              Row(
+                              LayoutBuilder(
+                                builder: (context, innerConstraints) {
+                                  return Row(
                                 children: [
                                   Container(
                                     decoration: BoxDecoration(
@@ -279,12 +364,18 @@ class AboutUsScreen extends StatelessWidget {
                                     child: CircleAvatar(
                                       radius: avatarRadius,
                                       backgroundColor: AppConstants.primaryColor,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(avatarRadius * 0.3),
                                       child: Text(
                                         'HT',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: avatarFontSize,
                                           fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                         ),
                                       ),
                                     ),
@@ -294,20 +385,28 @@ class AboutUsScreen extends StatelessWidget {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
                                           'Haseeb Tariq',
                                           style: TextStyle(
                                             fontSize: nameFontSize,
                                             fontWeight: FontWeight.bold,
                                             color: context.textColor,
+                                                ),
                                           ),
                                         ),
                                         SizedBox(height: verticalPadding * 0.2),
-                                        Text(
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
                                           'Mobile App Developer',
                                           style: TextStyle(
                                             fontSize: subtitleFontSize,
                                             color: context.secondaryTextColor,
+                                                ),
                                           ),
                                         ),
                                         SizedBox(height: verticalPadding * 0.4),
@@ -324,14 +423,16 @@ class AboutUsScreen extends StatelessWidget {
                                               ),
                                               SizedBox(width: horizontalPadding * 0.4),
                                               Expanded(
+                                                    child: FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      alignment: Alignment.centerLeft,
                                                 child: Text(
                                                   'haseebawang4545@gmail.com',
                                                   style: TextStyle(
-                                                    fontSize: isSmallScreen ? 12 : 14,
+                                                          fontSize: subtitleFontSize * 0.9,
                                                     color: AppConstants.primaryColor,
                                                   ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                  maxLines: 1,
+                                                      ),
                                                 ),
                                               ),
                                             ],
@@ -341,6 +442,8 @@ class AboutUsScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ],
+                                  );
+                                }
                               ),
                               
                               SizedBox(height: verticalPadding * 1.2),
@@ -348,24 +451,28 @@ class AboutUsScreen extends StatelessWidget {
                               SizedBox(height: verticalPadding * 0.8),
                               
                               // Social Media Links
-                              Text(
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
                                 'Connect with me',
                                 style: TextStyle(
                                   fontSize: subtitleFontSize,
                                   fontWeight: FontWeight.bold,
                                   color: context.textColor,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: verticalPadding * 0.8),
                               
                               // Social Links Grid
                               GridView.count(
-                                crossAxisCount: 3,
+                                crossAxisCount: isLandscape ? 5 : 3,
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 childAspectRatio: isSmallScreen ? 1.1 : 1.3,
-                                mainAxisSpacing: isSmallScreen ? 12 : 16,
-                                crossAxisSpacing: isSmallScreen ? 12 : 16,
+                                mainAxisSpacing: screenWidth * 0.03,
+                                crossAxisSpacing: screenWidth * 0.03,
                                 children: [
                                   _buildSocialButton(
                                     context: context,
@@ -373,7 +480,7 @@ class AboutUsScreen extends StatelessWidget {
                                     icon: Icons.photo_camera,
                                     color: const Color(0xFFE1306C),
                                     onTap: () => _launchSocialMedia(context, 'https://instagram.com/haseeb_awan45', 'haseeb_awan45', 'instagram'),
-                                    isSmallScreen: isSmallScreen,
+                                    constraints: constraints,
                                   ),
                                   _buildSocialButton(
                                     context: context,
@@ -381,7 +488,7 @@ class AboutUsScreen extends StatelessWidget {
                                     icon: Icons.alternate_email,
                                     color: const Color(0xFF1DA1F2),
                                     onTap: () => _launchSocialMedia(context, 'https://twitter.com/haseeb_awan45', 'haseeb_awan45', 'twitter'),
-                                    isSmallScreen: isSmallScreen,
+                                    constraints: constraints,
                                   ),
                                   _buildSocialButton(
                                     context: context,
@@ -389,7 +496,7 @@ class AboutUsScreen extends StatelessWidget {
                                     icon: Icons.code,
                                     color: const Color(0xFF333333),
                                     onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
-                                    isSmallScreen: isSmallScreen,
+                                    constraints: constraints,
                                   ),
                                   _buildSocialButton(
                                     context: context,
@@ -398,7 +505,7 @@ class AboutUsScreen extends StatelessWidget {
                                     color: const Color(0xFFFFFC00),
                                     textColor: Colors.black,
                                     onTap: () => _launchSocialMedia(context, 'https://snapchat.com/add/haseeb_awan45', 'haseeb_awan45', 'snapchat'),
-                                    isSmallScreen: isSmallScreen,
+                                    constraints: constraints,
                                   ),
                                   _buildSocialButton(
                                     context: context,
@@ -406,7 +513,7 @@ class AboutUsScreen extends StatelessWidget {
                                     icon: Icons.stream,
                                     color: const Color(0xFF000000),
                                     onTap: () => _launchSocialMedia(context, 'https://threads.net/@haseeb_awan45', 'haseeb_awan45', 'threads'),
-                                    isSmallScreen: isSmallScreen,
+                                    constraints: constraints,
                                   ),
                                 ],
                               ),
@@ -419,7 +526,7 @@ class AboutUsScreen extends StatelessWidget {
                               InkWell(
                                 onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
                                 child: Container(
-                                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                                  padding: EdgeInsets.all(screenWidth * 0.04),
                                   decoration: BoxDecoration(
                                     color: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[50],
                                     borderRadius: BorderRadius.circular(12),
@@ -431,7 +538,7 @@ class AboutUsScreen extends StatelessWidget {
                                   child: Row(
                                     children: [
                                       Container(
-                                        padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                                        padding: EdgeInsets.all(screenWidth * 0.025),
                                         decoration: const BoxDecoration(
                                           color: Color(0xFF333333),
                                           shape: BoxShape.circle,
@@ -439,7 +546,7 @@ class AboutUsScreen extends StatelessWidget {
                                         child: Icon(
                                           Icons.code,
                                           color: Colors.white,
-                                          size: isSmallScreen ? 18 : 20,
+                                          size: iconSize * 1.2,
                                         ),
                                       ),
                                       SizedBox(width: horizontalPadding * 0.8),
@@ -447,20 +554,28 @@ class AboutUsScreen extends StatelessWidget {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
                                               'View Project on GitHub',
                                               style: TextStyle(
                                                 fontSize: subtitleFontSize,
                                                 fontWeight: FontWeight.bold,
                                                 color: context.textColor,
+                                                ),
                                               ),
                                             ),
                                             SizedBox(height: verticalPadding * 0.2),
-                                            Text(
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
                                               '@HaseebTariq45',
                                               style: TextStyle(
-                                                fontSize: isSmallScreen ? 12 : 14,
+                                                  fontSize: subtitleFontSize * 0.8,
                                                 color: context.secondaryTextColor,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -482,17 +597,21 @@ class AboutUsScreen extends StatelessWidget {
                         SizedBox(height: verticalPadding * 1.2),
                         
                         // App Information
-                        Text(
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
                           'About This App',
                           style: TextStyle(
                             fontSize: sectionTitleSize,
                             fontWeight: FontWeight.bold,
                             color: context.textColor,
+                            ),
                           ),
                         ),
                         SizedBox(height: verticalPadding * 0.8),
                         Container(
-                          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                          padding: EdgeInsets.all(screenWidth * 0.05),
                           decoration: BoxDecoration(
                             color: context.cardColor,
                             borderRadius: BorderRadius.circular(16),
@@ -510,12 +629,16 @@ class AboutUsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
                                 'BloodLine',
                                 style: TextStyle(
                                   fontSize: subtitleFontSize + 2,
                                   fontWeight: FontWeight.bold,
                                   color: context.textColor,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: verticalPadding * 0.6),
@@ -528,39 +651,53 @@ class AboutUsScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: verticalPadding * 0.8),
-                              Text(
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
                                 'Features:',
                                 style: TextStyle(
                                   fontSize: subtitleFontSize,
                                   fontWeight: FontWeight.bold,
                                   color: context.textColor,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: verticalPadding * 0.4),
                               _FeatureItem(
                                 text: 'Create and manage blood donation requests',
                                 iconSize: iconSize,
-                                fontSize: isSmallScreen ? 12 : 14,
+                                fontSize: bodyTextSize,
                               ),
                               _FeatureItem(
                                 text: 'Connect with blood donors nearby',
                                 iconSize: iconSize,
-                                fontSize: isSmallScreen ? 12 : 14,
+                                fontSize: bodyTextSize,
                               ),
                               _FeatureItem(
                                 text: 'Manage your donor profile and availability',
                                 iconSize: iconSize,
-                                fontSize: isSmallScreen ? 12 : 14,
+                                fontSize: bodyTextSize,
                               ),
                               _FeatureItem(
                                 text: 'Receive notifications for blood donation requests',
                                 iconSize: iconSize,
-                                fontSize: isSmallScreen ? 12 : 14,
+                                fontSize: bodyTextSize,
                               ),
                               _FeatureItem(
                                 text: 'Track your donation history',
                                 iconSize: iconSize,
-                                fontSize: isSmallScreen ? 12 : 14,
+                                fontSize: bodyTextSize,
+                              ),
+                              _FeatureItem(
+                                text: 'Find nearby blood banks',
+                                iconSize: iconSize,
+                                fontSize: bodyTextSize,
+                              ),
+                              _FeatureItem(
+                                text: 'Access emergency contacts',
+                                iconSize: iconSize,
+                                fontSize: bodyTextSize,
                               ),
                             ],
                           ),
@@ -586,13 +723,17 @@ class AboutUsScreen extends StatelessWidget {
     required Color color,
     Color? textColor,
     required VoidCallback onTap,
-    required bool isSmallScreen,
+    required BoxConstraints constraints,
   }) {
+    final double iconSize = constraints.maxWidth * 0.05;
+    final double fontSize = constraints.maxWidth * 0.03;
+    final bool isSmallScreen = constraints.maxWidth < 360;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+        padding: EdgeInsets.all(constraints.maxWidth * 0.02),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -607,15 +748,18 @@ class AboutUsScreen extends StatelessWidget {
             Icon(
               icon,
               color: color,
-              size: isSmallScreen ? 20 : 24,
+              size: iconSize,
             ),
-            SizedBox(height: isSmallScreen ? 6 : 8),
-            Text(
+            SizedBox(height: constraints.maxHeight * 0.01),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
               title,
               style: TextStyle(
-                fontSize: isSmallScreen ? 10 : 12,
+                  fontSize: fontSize,
                 fontWeight: FontWeight.w500,
                 color: textColor ?? color,
+                ),
               ),
             ),
           ],
@@ -639,7 +783,7 @@ class _FeatureItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.01),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -648,7 +792,7 @@ class _FeatureItem extends StatelessWidget {
             color: AppConstants.successColor,
             size: iconSize,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
           Expanded(
             child: Text(
               text,
