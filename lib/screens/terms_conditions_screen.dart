@@ -8,6 +8,26 @@ class TermsConditionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
+    final double paragraphFontSize = isSmallScreen ? 13.0 : 15.0;
+    final double bulletFontSize = isSmallScreen ? 13.0 : 15.0;
+    final double lastUpdatedFontSize = isSmallScreen ? 12.0 : 14.0;
+    
+    // Calculate padding based on screen size
+    final double horizontalPadding = screenWidth * 0.05;
+    final double verticalPadding = screenHeight * 0.02;
+    final double sectionSpacing = isSmallScreen ? 12.0 : 16.0;
+    final double bulletLeftPadding = isSmallScreen ? 12.0 : 16.0;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
@@ -16,109 +36,133 @@ class TermsConditionsScreen extends StatelessWidget {
         showProfilePicture: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppConstants.paddingM),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Last Updated
-              Text(
-                'terms_last_updated'.tr(context),
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Last Updated
+                  Text(
+                    'terms_last_updated'.tr(context),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: lastUpdatedFontSize,
+                    ),
+                  ),
+                  SizedBox(height: verticalPadding * 1.2),
+
+                  // Introduction
+                  _buildSectionTitle(context, 'terms_intro_title', titleFontSize),
+                  _buildParagraph(context, 'terms_intro_content', paragraphFontSize),
+                  SizedBox(height: sectionSpacing),
+
+                  // Eligibility
+                  _buildSectionTitle(context, 'terms_eligibility_title', titleFontSize),
+                  _buildParagraph(context, 'terms_eligibility_content', paragraphFontSize),
+                  _buildBulletPoints(
+                    context, 
+                    [
+                      'terms_eligibility_point1',
+                      'terms_eligibility_point2',
+                      'terms_eligibility_point3',
+                      'terms_eligibility_point4',
+                    ],
+                    bulletFontSize,
+                    bulletLeftPadding,
+                  ),
+                  SizedBox(height: sectionSpacing),
+
+                  // Account Responsibilities
+                  _buildSectionTitle(context, 'terms_account_title', titleFontSize),
+                  _buildParagraph(context, 'terms_account_content', paragraphFontSize),
+                  _buildBulletPoints(
+                    context, 
+                    [
+                      'terms_account_point1',
+                      'terms_account_point2',
+                      'terms_account_point3',
+                      'terms_account_point4',
+                    ],
+                    bulletFontSize,
+                    bulletLeftPadding,
+                  ),
+                  SizedBox(height: sectionSpacing),
+
+                  // Code of Conduct
+                  _buildSectionTitle(context, 'terms_conduct_title', titleFontSize),
+                  _buildParagraph(context, 'terms_conduct_content', paragraphFontSize),
+                  _buildBulletPoints(
+                    context, 
+                    [
+                      'terms_conduct_point1',
+                      'terms_conduct_point2',
+                      'terms_conduct_point3',
+                      'terms_conduct_point4',
+                      'terms_conduct_point5',
+                    ],
+                    bulletFontSize,
+                    bulletLeftPadding,
+                  ),
+                  SizedBox(height: sectionSpacing),
+
+                  // Blood Donation Rules
+                  _buildSectionTitle(context, 'terms_donation_title', titleFontSize),
+                  _buildParagraph(context, 'terms_donation_content', paragraphFontSize),
+                  _buildBulletPoints(
+                    context, 
+                    [
+                      'terms_donation_point1',
+                      'terms_donation_point2',
+                      'terms_donation_point3',
+                      'terms_donation_point4',
+                    ],
+                    bulletFontSize,
+                    bulletLeftPadding,
+                  ),
+                  SizedBox(height: sectionSpacing),
+
+                  // Intellectual Property
+                  _buildSectionTitle(context, 'terms_ip_title', titleFontSize),
+                  _buildParagraph(context, 'terms_ip_content', paragraphFontSize),
+                  SizedBox(height: sectionSpacing),
+
+                  // Limitation of Liability
+                  _buildSectionTitle(context, 'terms_liability_title', titleFontSize),
+                  _buildParagraph(context, 'terms_liability_content', paragraphFontSize),
+                  SizedBox(height: sectionSpacing),
+
+                  // Termination
+                  _buildSectionTitle(context, 'terms_termination_title', titleFontSize),
+                  _buildParagraph(context, 'terms_termination_content', paragraphFontSize),
+                  SizedBox(height: sectionSpacing),
+
+                  // Changes to Terms
+                  _buildSectionTitle(context, 'terms_changes_title', titleFontSize),
+                  _buildParagraph(context, 'terms_changes_content', paragraphFontSize),
+                  SizedBox(height: sectionSpacing),
+
+                  // Contact Information
+                  _buildSectionTitle(context, 'terms_contact_title', titleFontSize),
+                  _buildParagraph(context, 'terms_contact_content', paragraphFontSize),
+                  SizedBox(height: verticalPadding * 1.6),
+                ],
               ),
-              const SizedBox(height: 24),
-
-              // Introduction
-              _buildSectionTitle(context, 'terms_intro_title'),
-              _buildParagraph(context, 'terms_intro_content'),
-              const SizedBox(height: 16),
-
-              // Eligibility
-              _buildSectionTitle(context, 'terms_eligibility_title'),
-              _buildParagraph(context, 'terms_eligibility_content'),
-              _buildBulletPoints(context, [
-                'terms_eligibility_point1',
-                'terms_eligibility_point2',
-                'terms_eligibility_point3',
-                'terms_eligibility_point4',
-              ]),
-              const SizedBox(height: 16),
-
-              // Account Responsibilities
-              _buildSectionTitle(context, 'terms_account_title'),
-              _buildParagraph(context, 'terms_account_content'),
-              _buildBulletPoints(context, [
-                'terms_account_point1',
-                'terms_account_point2',
-                'terms_account_point3',
-                'terms_account_point4',
-              ]),
-              const SizedBox(height: 16),
-
-              // Code of Conduct
-              _buildSectionTitle(context, 'terms_conduct_title'),
-              _buildParagraph(context, 'terms_conduct_content'),
-              _buildBulletPoints(context, [
-                'terms_conduct_point1',
-                'terms_conduct_point2',
-                'terms_conduct_point3',
-                'terms_conduct_point4',
-                'terms_conduct_point5',
-              ]),
-              const SizedBox(height: 16),
-
-              // Blood Donation Rules
-              _buildSectionTitle(context, 'terms_donation_title'),
-              _buildParagraph(context, 'terms_donation_content'),
-              _buildBulletPoints(context, [
-                'terms_donation_point1',
-                'terms_donation_point2',
-                'terms_donation_point3',
-                'terms_donation_point4',
-              ]),
-              const SizedBox(height: 16),
-
-              // Intellectual Property
-              _buildSectionTitle(context, 'terms_ip_title'),
-              _buildParagraph(context, 'terms_ip_content'),
-              const SizedBox(height: 16),
-
-              // Limitation of Liability
-              _buildSectionTitle(context, 'terms_liability_title'),
-              _buildParagraph(context, 'terms_liability_content'),
-              const SizedBox(height: 16),
-
-              // Termination
-              _buildSectionTitle(context, 'terms_termination_title'),
-              _buildParagraph(context, 'terms_termination_content'),
-              const SizedBox(height: 16),
-
-              // Changes to Terms
-              _buildSectionTitle(context, 'terms_changes_title'),
-              _buildParagraph(context, 'terms_changes_content'),
-              const SizedBox(height: 16),
-
-              // Contact Information
-              _buildSectionTitle(context, 'terms_contact_title'),
-              _buildParagraph(context, 'terms_contact_content'),
-              const SizedBox(height: 32),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String key) {
+  Widget _buildSectionTitle(BuildContext context, String key, double fontSize) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         key.tr(context),
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
           color: AppConstants.primaryColor,
         ),
@@ -126,39 +170,39 @@ class TermsConditionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildParagraph(BuildContext context, String key) {
+  Widget _buildParagraph(BuildContext context, String key, double fontSize) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         key.tr(context),
-        style: const TextStyle(
-          fontSize: 15,
+        style: TextStyle(
+          fontSize: fontSize,
           height: 1.5,
         ),
       ),
     );
   }
 
-  Widget _buildBulletPoints(BuildContext context, List<String> points) {
+  Widget _buildBulletPoints(BuildContext context, List<String> points, double fontSize, double leftPadding) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0),
+      padding: EdgeInsets.only(left: leftPadding, top: 8.0, bottom: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: points.map((point) => _buildBulletPoint(context, point)).toList(),
+        children: points.map((point) => _buildBulletPoint(context, point, fontSize)).toList(),
       ),
     );
   }
 
-  Widget _buildBulletPoint(BuildContext context, String key) {
+  Widget _buildBulletPoint(BuildContext context, String key, double fontSize) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '• ',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: fontSize,
               fontWeight: FontWeight.bold,
               color: AppConstants.primaryColor,
             ),
@@ -166,8 +210,8 @@ class TermsConditionsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               key.tr(context),
-              style: const TextStyle(
-                fontSize: 15,
+              style: TextStyle(
+                fontSize: fontSize,
                 height: 1.5,
               ),
             ),

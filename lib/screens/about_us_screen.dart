@@ -113,6 +113,34 @@ class AboutUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double headerLogoSize = isSmallScreen ? 80.0 : 100.0;
+    final double headerIconSize = isSmallScreen ? 50.0 : 60.0;
+    final double headerTitleSize = isSmallScreen ? 20.0 : 24.0;
+    final double headerSubtitleSize = isSmallScreen ? 14.0 : 16.0;
+    
+    final double sectionTitleSize = isSmallScreen ? 18.0 : 20.0;
+    final double avatarRadius = isSmallScreen ? 35.0 : 40.0;
+    final double avatarFontSize = isSmallScreen ? 20.0 : 24.0;
+    
+    final double nameFontSize = isSmallScreen ? 18.0 : 20.0;
+    final double subtitleFontSize = isSmallScreen ? 14.0 : 16.0;
+    final double bodyTextSize = isSmallScreen ? 13.0 : 15.0;
+    final double iconSize = isSmallScreen ? 14.0 : 16.0;
+    
+    // Calculate padding based on screen size
+    final double horizontalPadding = screenWidth * 0.05;
+    final double verticalPadding = screenHeight * 0.02;
+    final EdgeInsets standardPadding = EdgeInsets.all(horizontalPadding);
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(
@@ -120,103 +148,21 @@ class AboutUsScreen extends StatelessWidget {
         showBackButton: true,
         showProfilePicture: false,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // App Logo and Name
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppConstants.primaryColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: context.isDarkMode
-                        ? Colors.black.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
               child: Column(
                 children: [
+                  // App Logo and Name
                   Container(
-                    height: 100,
-                    width: 100,
+                    width: double.infinity,
+                    padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppConstants.primaryColor,
                       boxShadow: [
                         BoxShadow(
-                          color: AppConstants.primaryColor.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.bloodtype,
-                        size: 60,
-                        color: AppConstants.primaryColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Blood Donation App',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Version 1.0.0',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Developer Information
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Developer',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: context.textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Developer Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: context.cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.isDarkMode 
+                          color: context.isDarkMode
                               ? Colors.black.withOpacity(0.2)
                               : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
@@ -224,80 +170,171 @@ class AboutUsScreen extends StatelessWidget {
                           offset: const Offset(0, 5),
                         ),
                       ],
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
                     ),
                     child: Column(
                       children: [
-                        // Developer Profile
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppConstants.primaryColor.withOpacity(0.2),
-                                    spreadRadius: 1,
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                        Container(
+                          height: headerLogoSize,
+                          width: headerLogoSize,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppConstants.primaryColor.withOpacity(0.3),
+                                blurRadius: 15,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 5),
                               ),
-                              child: CircleAvatar(
-                                radius: 40,
-                                backgroundColor: AppConstants.primaryColor,
-                                child: const Text(
-                                  'HT',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.bloodtype,
+                              size: headerIconSize,
+                              color: AppConstants.primaryColor,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          ),
+                        ),
+                        SizedBox(height: verticalPadding),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Blood Donation App',
+                            style: TextStyle(
+                              fontSize: headerTitleSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: verticalPadding * 0.4),
+                        Text(
+                          'Version 1.0.0',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: headerSubtitleSize,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  SizedBox(height: verticalPadding * 1.2),
+                  
+                  // Developer Information
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Developer',
+                          style: TextStyle(
+                            fontSize: sectionTitleSize,
+                            fontWeight: FontWeight.bold,
+                            color: context.textColor,
+                          ),
+                        ),
+                        SizedBox(height: verticalPadding * 0.8),
+                        
+                        // Developer Card
+                        Container(
+                          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode 
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Developer Profile
+                              Row(
                                 children: [
-                                  Text(
-                                    'Haseeb Tariq',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.textColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Mobile App Developer',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: context.secondaryTextColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  InkWell(
-                                    onTap: () async {
-                                      await _launchEmail(context, 'haseebawang4545@gmail.com');
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.email_outlined,
-                                          size: 16,
-                                          color: AppConstants.primaryColor,
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppConstants.primaryColor.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 3),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'haseebawang4545@gmail.com',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: AppConstants.primaryColor,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
+                                      ],
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: avatarRadius,
+                                      backgroundColor: AppConstants.primaryColor,
+                                      child: Text(
+                                        'HT',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: avatarFontSize,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: horizontalPadding * 0.8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Haseeb Tariq',
+                                          style: TextStyle(
+                                            fontSize: nameFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: context.textColor,
+                                          ),
+                                        ),
+                                        SizedBox(height: verticalPadding * 0.2),
+                                        Text(
+                                          'Mobile App Developer',
+                                          style: TextStyle(
+                                            fontSize: subtitleFontSize,
+                                            color: context.secondaryTextColor,
+                                          ),
+                                        ),
+                                        SizedBox(height: verticalPadding * 0.4),
+                                        InkWell(
+                                          onTap: () async {
+                                            await _launchEmail(context, 'haseebawang4545@gmail.com');
+                                          },
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.email_outlined,
+                                                size: iconSize,
+                                                color: AppConstants.primaryColor,
+                                              ),
+                                              SizedBox(width: horizontalPadding * 0.4),
+                                              Expanded(
+                                                child: Text(
+                                                  'haseebawang4545@gmail.com',
+                                                  style: TextStyle(
+                                                    fontSize: isSmallScreen ? 12 : 14,
+                                                    color: AppConstants.primaryColor,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
@@ -305,213 +342,238 @@ class AboutUsScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        
-                        // Social Media Links
-                        Text(
-                          'Connect with me',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Social Links Grid
-                        GridView.count(
-                          crossAxisCount: 3,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          childAspectRatio: 1.3,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          children: [
-                            _buildSocialButton(
-                              context: context,
-                              title: 'Instagram',
-                              icon: Icons.photo_camera,
-                              color: const Color(0xFFE1306C),
-                              onTap: () => _launchSocialMedia(context, 'https://instagram.com/haseeb_awan45', 'haseeb_awan45', 'instagram'),
-                            ),
-                            _buildSocialButton(
-                              context: context,
-                              title: 'Twitter',
-                              icon: Icons.alternate_email,
-                              color: const Color(0xFF1DA1F2),
-                              onTap: () => _launchSocialMedia(context, 'https://twitter.com/haseeb_awan45', 'haseeb_awan45', 'twitter'),
-                            ),
-                            _buildSocialButton(
-                              context: context,
-                              title: 'GitHub',
-                              icon: Icons.code,
-                              color: const Color(0xFF333333),
-                              onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
-                            ),
-                            _buildSocialButton(
-                              context: context,
-                              title: 'Snapchat',
-                              icon: Icons.whatshot,
-                              color: const Color(0xFFFFFC00),
-                              textColor: Colors.black,
-                              onTap: () => _launchSocialMedia(context, 'https://snapchat.com/add/haseeb_awan45', 'haseeb_awan45', 'snapchat'),
-                            ),
-                            _buildSocialButton(
-                              context: context,
-                              title: 'Threads',
-                              icon: Icons.stream,
-                              color: const Color(0xFF000000),
-                              onTap: () => _launchSocialMedia(context, 'https://threads.net/@haseeb_awan45', 'haseeb_awan45', 'threads'),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        
-                        // GitHub Project
-                        InkWell(
-                          onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[300]!,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF333333),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.code,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
+                              
+                              SizedBox(height: verticalPadding * 1.2),
+                              const Divider(),
+                              SizedBox(height: verticalPadding * 0.8),
+                              
+                              // Social Media Links
+                              Text(
+                                'Connect with me',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                              ),
+                              SizedBox(height: verticalPadding * 0.8),
+                              
+                              // Social Links Grid
+                              GridView.count(
+                                crossAxisCount: 3,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                childAspectRatio: isSmallScreen ? 1.1 : 1.3,
+                                mainAxisSpacing: isSmallScreen ? 12 : 16,
+                                crossAxisSpacing: isSmallScreen ? 12 : 16,
+                                children: [
+                                  _buildSocialButton(
+                                    context: context,
+                                    title: 'Instagram',
+                                    icon: Icons.photo_camera,
+                                    color: const Color(0xFFE1306C),
+                                    onTap: () => _launchSocialMedia(context, 'https://instagram.com/haseeb_awan45', 'haseeb_awan45', 'instagram'),
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  _buildSocialButton(
+                                    context: context,
+                                    title: 'Twitter',
+                                    icon: Icons.alternate_email,
+                                    color: const Color(0xFF1DA1F2),
+                                    onTap: () => _launchSocialMedia(context, 'https://twitter.com/haseeb_awan45', 'haseeb_awan45', 'twitter'),
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  _buildSocialButton(
+                                    context: context,
+                                    title: 'GitHub',
+                                    icon: Icons.code,
+                                    color: const Color(0xFF333333),
+                                    onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  _buildSocialButton(
+                                    context: context,
+                                    title: 'Snapchat',
+                                    icon: Icons.whatshot,
+                                    color: const Color(0xFFFFFC00),
+                                    textColor: Colors.black,
+                                    onTap: () => _launchSocialMedia(context, 'https://snapchat.com/add/haseeb_awan45', 'haseeb_awan45', 'snapchat'),
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                  _buildSocialButton(
+                                    context: context,
+                                    title: 'Threads',
+                                    icon: Icons.stream,
+                                    color: const Color(0xFF000000),
+                                    onTap: () => _launchSocialMedia(context, 'https://threads.net/@haseeb_awan45', 'haseeb_awan45', 'threads'),
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                ],
+                              ),
+                              
+                              SizedBox(height: verticalPadding * 1.2),
+                              const Divider(),
+                              SizedBox(height: verticalPadding * 0.8),
+                              
+                              // GitHub Project
+                              InkWell(
+                                onTap: () => _launchSocialMedia(context, 'https://github.com/HaseebTariq45', 'HaseebTariq45', 'github'),
+                                child: Container(
+                                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                                  decoration: BoxDecoration(
+                                    color: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: context.isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[300]!,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'View Project on GitHub',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.textColor,
+                                      Container(
+                                        padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF333333),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.code,
+                                          color: Colors.white,
+                                          size: isSmallScreen ? 18 : 20,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '@HaseebTariq45',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: context.secondaryTextColor,
+                                      SizedBox(width: horizontalPadding * 0.8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'View Project on GitHub',
+                                              style: TextStyle(
+                                                fontSize: subtitleFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: context.textColor,
+                                              ),
+                                            ),
+                                            SizedBox(height: verticalPadding * 0.2),
+                                            Text(
+                                              '@HaseebTariq45',
+                                              style: TextStyle(
+                                                fontSize: isSmallScreen ? 12 : 14,
+                                                color: context.secondaryTextColor,
+                                              ),
+                                            ),
+                                          ],
                                         ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: iconSize,
+                                        color: context.isDarkMode ? Colors.grey[400] : Colors.grey,
                                       ),
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        SizedBox(height: verticalPadding * 1.2),
+                        
+                        // App Information
+                        Text(
+                          'About This App',
+                          style: TextStyle(
+                            fontSize: sectionTitleSize,
+                            fontWeight: FontWeight.bold,
+                            color: context.textColor,
+                          ),
+                        ),
+                        SizedBox(height: verticalPadding * 0.8),
+                        Container(
+                          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode 
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Blood Donation App',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize + 2,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(height: verticalPadding * 0.6),
+                              Text(
+                                'This application helps connect blood donors with patients in need of blood donations. It provides a platform for requesting blood donations, finding donors, and managing your donor profile.',
+                                style: TextStyle(
+                                  fontSize: bodyTextSize,
+                                  color: context.secondaryTextColor,
+                                  height: 1.5,
+                                ),
+                              ),
+                              SizedBox(height: verticalPadding * 0.8),
+                              Text(
+                                'Features:',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
+                                ),
+                              ),
+                              SizedBox(height: verticalPadding * 0.4),
+                              _FeatureItem(
+                                text: 'Create and manage blood donation requests',
+                                iconSize: iconSize,
+                                fontSize: isSmallScreen ? 12 : 14,
+                              ),
+                              _FeatureItem(
+                                text: 'Connect with blood donors nearby',
+                                iconSize: iconSize,
+                                fontSize: isSmallScreen ? 12 : 14,
+                              ),
+                              _FeatureItem(
+                                text: 'Manage your donor profile and availability',
+                                iconSize: iconSize,
+                                fontSize: isSmallScreen ? 12 : 14,
+                              ),
+                              _FeatureItem(
+                                text: 'Receive notifications for blood donation requests',
+                                iconSize: iconSize,
+                                fontSize: isSmallScreen ? 12 : 14,
+                              ),
+                              _FeatureItem(
+                                text: 'Track your donation history',
+                                iconSize: iconSize,
+                                fontSize: isSmallScreen ? 12 : 14,
+                              ),
+                            ],
                           ),
                         ),
+                        
+                        SizedBox(height: verticalPadding * 2),
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // App Information
-                  Text(
-                    'About This App',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: context.textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: context.cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.isDarkMode 
-                              ? Colors.black.withOpacity(0.2)
-                              : Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Blood Donation App',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'This application helps connect blood donors with patients in need of blood donations. It provides a platform for requesting blood donations, finding donors, and managing your donor profile.',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: context.secondaryTextColor,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Features:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _FeatureItem(text: 'Create and manage blood donation requests'),
-                        _FeatureItem(text: 'Connect with blood donors nearby'),
-                        _FeatureItem(text: 'Manage your donor profile and availability'),
-                        _FeatureItem(text: 'Receive notifications for blood donation requests'),
-                        _FeatureItem(text: 'Track your donation history'),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 40),
                 ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -524,12 +586,13 @@ class AboutUsScreen extends StatelessWidget {
     required Color color,
     Color? textColor,
     required VoidCallback onTap,
+    required bool isSmallScreen,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -544,13 +607,13 @@ class AboutUsScreen extends StatelessWidget {
             Icon(
               icon,
               color: color,
-              size: 24,
+              size: isSmallScreen ? 20 : 24,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 6 : 8),
             Text(
               title,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isSmallScreen ? 10 : 12,
                 fontWeight: FontWeight.w500,
                 color: textColor ?? color,
               ),
@@ -564,8 +627,14 @@ class AboutUsScreen extends StatelessWidget {
 
 class _FeatureItem extends StatelessWidget {
   final String text;
+  final double iconSize;
+  final double fontSize;
   
-  const _FeatureItem({required this.text});
+  const _FeatureItem({
+    required this.text,
+    this.iconSize = 16,
+    this.fontSize = 14,
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -574,17 +643,17 @@ class _FeatureItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle,
             color: AppConstants.successColor,
-            size: 16,
+            size: iconSize,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: fontSize,
                 color: context.secondaryTextColor,
                 height: 1.4,
               ),

@@ -169,664 +169,655 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final appProvider = Provider.of<AppProvider>(context);
     final currentUser = appProvider.currentUser;
     
-    return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: CustomAppBar(
-        title: 'My Profile',
-        showProfilePicture: false,
-        actions: [
-          // Settings icon
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.settings,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return ScaleTransition(scale: animation, child: child);
-            },
-            child: IconButton(
-              key: ValueKey<bool>(_isEditing),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: context.backgroundColor,
+        appBar: CustomAppBar(
+          title: 'My Profile',
+          showProfilePicture: false,
+          actions: [
+            // Settings icon
+            IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  _isEditing ? Icons.close_rounded : Icons.edit_rounded,
+                child: const Icon(
+                  Icons.settings,
                   color: Colors.white,
                   size: 20,
                 ),
               ),
-              tooltip: _isEditing ? 'Cancel Editing' : 'Edit Profile',
               onPressed: () {
-                if (_isEditing) {
-                  // Show confirmation dialog if there are unsaved changes
-                  showDialog(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      backgroundColor: Theme.of(dialogContext).cardColor,
-                      title: Text(
-                        'Discard Changes?',
-                        style: TextStyle(color: Theme.of(dialogContext).textTheme.titleLarge?.color),
-                      ),
-                      content: Text(
-                        'Any unsaved changes will be lost. Do you want to continue?',
-                        style: TextStyle(color: Theme.of(dialogContext).textTheme.bodyMedium?.color),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text('KEEP EDITING'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(dialogContext);
-                            // Reset to original values and exit edit mode
-                            _resetFormValues();
-                            setState(() {
-                              _isEditing = false;
-                            });
-                          },
-                          child: const Text('DISCARD'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  _toggleEdit();
-                }
+                Navigator.pushNamed(context, '/settings');
               },
             ),
-          ),
-        ],
-      ),
-      // Floating action button for quick save when in edit mode
-      floatingActionButton: _isEditing ? FloatingActionButton(
-        onPressed: _saveProfile,
-        backgroundColor: AppConstants.primaryColor,
-        child: _isLoading 
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Icon(Icons.save),
-        tooltip: 'Save Profile',
-      ) : null,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Profile Header
-              Builder(
-                builder: (context) => Container(
-                  width: double.infinity,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
+              child: IconButton(
+                key: ValueKey<bool>(_isEditing),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: context.cardColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.isDarkMode 
-                            ? Colors.black.withOpacity(0.2)
-                            : Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
                   ),
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: context.isDarkMode
-                                      ? Colors.black.withOpacity(0.3)
-                                      : Colors.grey.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundColor: context.isDarkMode 
-                                  ? const Color(0xFF2E2E2E) 
-                                  : AppConstants.accentColor,
-                              backgroundImage: currentUser.imageUrl.isNotEmpty
-                                  ? NetworkImage(currentUser.imageUrl)
-                                  : null,
-                              child: currentUser.imageUrl.isEmpty
-                                  ? Icon(
-                                      Icons.person,
-                                      color: AppConstants.primaryColor,
-                                      size: 60,
-                                    )
-                                  : null,
+                  child: Icon(
+                    _isEditing ? Icons.close_rounded : Icons.edit_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                tooltip: _isEditing ? 'Cancel Editing' : 'Edit Profile',
+                onPressed: () {
+                  if (_isEditing) {
+                    // Show confirmation dialog if there are unsaved changes
+                    showDialog(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        backgroundColor: Theme.of(dialogContext).cardColor,
+                        title: Text(
+                          'Discard Changes?',
+                          style: TextStyle(color: Theme.of(dialogContext).textTheme.titleLarge?.color),
+                        ),
+                        content: Text(
+                          'Any unsaved changes will be lost. Do you want to continue?',
+                          style: TextStyle(color: Theme.of(dialogContext).textTheme.bodyMedium?.color),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('KEEP EDITING'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                              // Reset to original values and exit edit mode
+                              _resetFormValues();
+                              setState(() {
+                                _isEditing = false;
+                              });
+                            },
+                            child: const Text('DISCARD'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
                             ),
                           ),
-                          if (_isEditing)
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppConstants.primaryColor,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: context.cardColor,
-                                    width: 3,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppConstants.primaryColor.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _isEditing ? 'Edit Profile' : currentUser.name,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: context.textColor,
-                        ),
-                      ),
-                      if (!_isEditing) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppConstants.primaryColor,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppConstants.primaryColor.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.3),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.bloodtype,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    currentUser.bloodType,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: currentUser.isEligibleToDonate
-                                    ? AppConstants.successColor
-                                    : Colors.orange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: (currentUser.isEligibleToDonate
-                                            ? AppConstants.successColor
-                                            : Colors.orange)
-                                        .withOpacity(0.3),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.3),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      currentUser.isEligibleToDonate
-                                          ? Icons.check_circle
-                                          : Icons.timer,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    currentUser.isEligibleToDonate
-                                        ? 'Eligible to Donate'
-                                        : '${currentUser.daysUntilNextDonation} days to donate',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    );
+                  } else {
+                    _toggleEdit();
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: _isEditing ? FloatingActionButton(
+          onPressed: _saveProfile,
+          backgroundColor: AppConstants.primaryColor,
+          child: _isLoading 
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.save),
+          tooltip: 'Save Profile',
+        ) : null,
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Builder(
+                      builder: (context) => Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: context.cardColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.isDarkMode 
+                                  ? Colors.black.withOpacity(0.2)
+                                  : Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
                           ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Profile Fields
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 20),
-                        child: Text(
-                          'Personal Information',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(30),
+                            bottomRight: Radius.circular(30),
                           ),
                         ),
-                      ),
-                      
-                      // Name Field
-                      _buildFormField(
-                        controller: _nameController,
-                        label: 'Full Name',
-                        icon: Icons.person_outline,
-                        readOnly: !_isEditing,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Email Field
-                      _buildFormField(
-                        controller: _emailController,
-                        label: 'Email Address',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        readOnly: !_isEditing,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Please enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Phone Field
-                      _buildFormField(
-                        controller: _phoneController,
-                        label: 'Phone Number',
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        readOnly: !_isEditing,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your phone number';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Address Field
-                      _buildFormField(
-                        controller: _addressController,
-                        label: 'Address',
-                        icon: Icons.location_on_outlined,
-                        readOnly: !_isEditing,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your address';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Blood Type Selection
-                      if (_isEditing) ...[
-                        // Visual blood type selection when in edit mode
-                        Builder(
-                          builder: (context) => Padding(
-                            padding: const EdgeInsets.only(left: 4, bottom: 16),
-                            child: Text(
-                              'Blood Type',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: context.textColor,
-                              ),
-                            ),
-                          ),
+                        padding: EdgeInsets.fromLTRB(
+                          constraints.maxWidth * 0.05,
+                          constraints.maxHeight * 0.05,
+                          constraints.maxWidth * 0.05,
+                          constraints.maxHeight * 0.1,
                         ),
-                        // Grid of blood type options
-                        _buildBloodTypeGrid(),
-                      ] else
-                        // Show blood type as info field when not editing
-                        _buildInfoField(
-                          label: 'Blood Type',
-                          value: currentUser.bloodType,
-                          icon: Icons.bloodtype_outlined,
-                          color: AppConstants.primaryColor,
-                        ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 16),
-                        child: Text(
-                          'Donation Status',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      
-                      // Availability Toggle
-                      Builder(
-                        builder: (context) => Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.isDarkMode 
-                                    ? Colors.black.withOpacity(0.1) 
-                                    : Colors.grey.withOpacity(0.07),
-                                blurRadius: 15,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                            border: _isAvailableToDonate
-                                ? Border.all(
-                                    color: AppConstants.successColor.withOpacity(0.5),
-                                    width: 1.5,
-                                  )
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: _isAvailableToDonate
-                                      ? AppConstants.successColor.withOpacity(0.1)
-                                      : AppConstants.primaryColor.withOpacity(0.1),
-                                  shape: BoxShape.circle,
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: context.isDarkMode
+                                            ? Colors.black.withOpacity(0.3)
+                                            : Colors.grey.withOpacity(0.2),
+                                        blurRadius: 10,
+                                        spreadRadius: 1,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: constraints.maxWidth * 0.15,
+                                    backgroundColor: context.isDarkMode 
+                                        ? const Color(0xFF2E2E2E) 
+                                        : AppConstants.accentColor,
+                                    backgroundImage: currentUser.imageUrl.isNotEmpty
+                                        ? NetworkImage(currentUser.imageUrl)
+                                        : null,
+                                    child: currentUser.imageUrl.isEmpty
+                                        ? Icon(
+                                            Icons.person,
+                                            color: AppConstants.primaryColor,
+                                            size: constraints.maxWidth * 0.15,
+                                          )
+                                        : null,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.volunteer_activism,
-                                  color: _isAvailableToDonate
-                                      ? AppConstants.successColor
-                                      : AppConstants.primaryColor,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Available to Donate',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: _isAvailableToDonate
-                                            ? AppConstants.successColor
-                                            : context.textColor,
+                                if (_isEditing)
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(constraints.maxWidth * 0.02),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.primaryColor,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: context.cardColor,
+                                          width: 3,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppConstants.primaryColor.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 18,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Let others know if you are available for blood donation requests',
-                                      style: TextStyle(
-                                        color: context.secondaryTextColor,
-                                        fontSize: 13,
-                                        height: 1.4,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            FittedBox(
+                              child: Text(
+                                _isEditing ? 'Edit Profile' : currentUser.name,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
+                                ),
+                              ),
+                            ),
+                            if (!_isEditing) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Flexible(
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: MediaQuery.of(context).size.width * 0.03,
+                                        vertical: MediaQuery.of(context).size.height * 0.01,
                                       ),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.primaryColor,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppConstants.primaryColor.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.01),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.3),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.bloodtype,
+                                              color: Colors.white,
+                                              size: MediaQuery.of(context).size.width * 0.035,
+                                            ),
+                                          ),
+                                          SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                                          FittedBox(
+                                            child: Text(
+                                              currentUser.bloodType,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: MediaQuery.of(context).size.width * 0.04,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                                  Flexible(
+                                    flex: 2,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: MediaQuery.of(context).size.width * 0.03,
+                                        vertical: MediaQuery.of(context).size.height * 0.01,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: currentUser.isEligibleToDonate
+                                            ? AppConstants.successColor
+                                            : Colors.orange,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (currentUser.isEligibleToDonate
+                                                    ? AppConstants.successColor
+                                                    : Colors.orange)
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.01),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.3),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              currentUser.isEligibleToDonate
+                                                  ? Icons.check_circle
+                                                  : Icons.timer,
+                                              color: Colors.white,
+                                              size: MediaQuery.of(context).size.width * 0.035,
+                                            ),
+                                          ),
+                                          SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                currentUser.isEligibleToDonate
+                                                    ? 'Eligible to Donate'
+                                                    : '${currentUser.daysUntilNextDonation} days to donate',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: MediaQuery.of(context).size.width * 0.035,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(constraints.maxWidth * 0.05),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: constraints.maxWidth * 0.01, bottom: constraints.maxHeight * 0.02),
+                              child: Text(
+                                'Personal Information',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
+                                ),
+                              ),
+                            ),
+                            _buildFormField(
+                              controller: _nameController,
+                              label: 'Full Name',
+                              icon: Icons.person_outline,
+                              readOnly: !_isEditing,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your name';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildFormField(
+                              controller: _emailController,
+                              label: 'Email Address',
+                              icon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              readOnly: !_isEditing,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!value.contains('@')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildFormField(
+                              controller: _phoneController,
+                              label: 'Phone Number',
+                              icon: Icons.phone_outlined,
+                              keyboardType: TextInputType.phone,
+                              readOnly: !_isEditing,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your phone number';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildFormField(
+                              controller: _addressController,
+                              label: 'Address',
+                              icon: Icons.location_on_outlined,
+                              readOnly: !_isEditing,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your address';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            if (_isEditing) ...[
+                              Builder(
+                                builder: (context) => Padding(
+                                  padding: EdgeInsets.only(left: constraints.maxWidth * 0.01, bottom: constraints.maxHeight * 0.02),
+                                  child: Text(
+                                    'Blood Type',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.textColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              _buildBloodTypeGrid(),
+                            ] else
+                              _buildInfoField(
+                                label: 'Blood Type',
+                                value: currentUser.bloodType,
+                                icon: Icons.bloodtype_outlined,
+                                color: AppConstants.primaryColor,
+                              ),
+                            const SizedBox(height: 24),
+                            Padding(
+                              padding: EdgeInsets.only(left: constraints.maxWidth * 0.01, bottom: constraints.maxHeight * 0.02),
+                              child: Text(
+                                'Donation Status',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
+                                ),
+                              ),
+                            ),
+                            Builder(
+                              builder: (context) => Container(
+                                padding: EdgeInsets.all(constraints.maxWidth * 0.05),
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: context.isDarkMode 
+                                          ? Colors.black.withOpacity(0.1) 
+                                          : Colors.grey.withOpacity(0.07),
+                                      blurRadius: 15,
+                                      spreadRadius: 1,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                  border: _isAvailableToDonate
+                                      ? Border.all(
+                                          color: AppConstants.successColor.withOpacity(0.5),
+                                          width: 1.5,
+                                        )
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(constraints.maxWidth * 0.03),
+                                      decoration: BoxDecoration(
+                                        color: _isAvailableToDonate
+                                            ? AppConstants.successColor.withOpacity(0.1)
+                                            : AppConstants.primaryColor.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.volunteer_activism,
+                                        color: _isAvailableToDonate
+                                            ? AppConstants.successColor
+                                            : AppConstants.primaryColor,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Available to Donate',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                              color: _isAvailableToDonate
+                                                  ? AppConstants.successColor
+                                                  : context.textColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Let others know if you are available for blood donation requests',
+                                            style: TextStyle(
+                                              color: context.secondaryTextColor,
+                                              fontSize: 13,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch.adaptive(
+                                      value: _isAvailableToDonate,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _isAvailableToDonate = value;
+                                        });
+                                        final appProvider = Provider.of<AppProvider>(context, listen: false);
+                                        final currentUser = appProvider.currentUser;
+                                        final updatedUser = currentUser.copyWith(
+                                          isAvailableToDonate: value,
+                                        );
+                                        appProvider.updateUserProfile(updatedUser);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              value 
+                                                  ? 'You are now available for donation requests' 
+                                                  : 'You are now marked as unavailable for donation',
+                                            ),
+                                            backgroundColor: value 
+                                                ? AppConstants.successColor 
+                                                : AppConstants.primaryColor,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            margin: const EdgeInsets.all(10),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      },
+                                      activeColor: AppConstants.successColor,
+                                      activeTrackColor: AppConstants.successColor.withOpacity(0.3),
                                     ),
                                   ],
                                 ),
                               ),
-                              Switch.adaptive(
-                                value: _isAvailableToDonate,
-                                onChanged: (value) {
-                                  // Toggle availability regardless of edit mode
-                                  setState(() {
-                                    _isAvailableToDonate = value;
-                                  });
-                                  
-                                  // Update user profile with new availability
-                                  final appProvider = Provider.of<AppProvider>(context, listen: false);
-                                  final currentUser = appProvider.currentUser;
-                                  final updatedUser = currentUser.copyWith(
-                                    isAvailableToDonate: value,
-                                  );
-                                  appProvider.updateUserProfile(updatedUser);
-                                  
-                                  // Show confirmation snackbar
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        value 
-                                            ? 'You are now available for donation requests' 
-                                            : 'You are now marked as unavailable for donation',
+                            ),
+                            const SizedBox(height: 36),
+                            if (_isEditing)
+                              SizedBox(
+                                width: double.infinity,
+                                child: _isLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : ElevatedButton.icon(
+                                        onPressed: _saveProfile,
+                                        icon: const Icon(Icons.save_rounded),
+                                        label: const Text(
+                                          'SAVE DETAILS',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppConstants.primaryColor,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(vertical: constraints.maxHeight * 0.02),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          elevation: 2,
+                                        ),
                                       ),
-                                      backgroundColor: value 
-                                          ? AppConstants.successColor 
-                                          : AppConstants.primaryColor,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                              ),
+                            if (!_isEditing) ...[
+                              const SizedBox(height: 20),
+                              Builder(
+                                builder: (context) => SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _toggleEdit,
+                                    icon: const Icon(Icons.edit_outlined),
+                                    label: const Text(
+                                      'EDIT DETAILS',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1,
                                       ),
-                                      margin: const EdgeInsets.all(10),
-                                      duration: const Duration(seconds: 2),
                                     ),
-                                  );
-                                },
-                                activeColor: AppConstants.successColor,
-                                activeTrackColor: AppConstants.successColor.withOpacity(0.3),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: context.cardColor,
+                                      foregroundColor: AppConstants.primaryColor,
+                                      padding: EdgeInsets.symmetric(vertical: constraints.maxHeight * 0.02),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: AppConstants.primaryColor,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
-                          ),
+                            const SizedBox(height: 16),
+                            if (!_isEditing)
+                              Builder(
+                                builder: (context) => SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _showLogoutConfirmation();
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: Colors.red.withOpacity(0.7), width: 1.5),
+                                      padding: EdgeInsets.symmetric(vertical: constraints.maxHeight * 0.02),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      foregroundColor: Colors.red,
+                                      backgroundColor: context.cardColor,
+                                    ),
+                                    child: const Text(
+                                      'LOGOUT',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      
-                      const SizedBox(height: 36),
-                      
-                      // Save Profile Button - Shows only when editing
-                      if (_isEditing)
-                        SizedBox(
-                          width: double.infinity,
-                          child: _isLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(),
-                                )
-                              : ElevatedButton.icon(
-                                  onPressed: _saveProfile,
-                                  icon: const Icon(Icons.save_rounded),
-                                  label: const Text(
-                                    'SAVE DETAILS',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppConstants.primaryColor,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    elevation: 2,
-                                  ),
-                                ),
-                        ),
-                      
-                      if (!_isEditing) ...[
-                        const SizedBox(height: 20),
-                        // Edit Details Button
-                        Builder(
-                          builder: (context) => SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _toggleEdit,
-                              icon: const Icon(Icons.edit_outlined),
-                              label: const Text(
-                                'EDIT DETAILS',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: context.cardColor,
-                                foregroundColor: AppConstants.primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: AppConstants.primaryColor,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                elevation: 0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Logout Button - Shows only when not editing
-                      if (!_isEditing)
-                        Builder(
-                          builder: (context) => SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                // Show confirmation dialog before logout
-                                _showLogoutConfirmation();
-                              },
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.red.withOpacity(0.7), width: 1.5),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                foregroundColor: Colors.red,
-                                backgroundColor: context.cardColor,
-                              ),
-                              child: const Text(
-                                'LOGOUT',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -878,11 +869,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: (MediaQuery.of(context).size.width ~/ 100).toInt(), // Adjusts number of columns based on width
             childAspectRatio: 1,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
+            crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
+            mainAxisSpacing: MediaQuery.of(context).size.height * 0.02,
           ),
           itemCount: _bloodTypes.length,
           itemBuilder: (context, index) {
@@ -929,12 +920,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Blood type display
-                    Text(
-                      bloodType,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : context.textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                    FittedBox(
+                      child: Text(
+                        bloodType,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : context.textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: MediaQuery.of(context).size.width * 0.045,
+                        ),
                       ),
                     ),
                     if (isSelected) ...[

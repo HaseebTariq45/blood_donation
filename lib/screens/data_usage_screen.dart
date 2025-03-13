@@ -36,6 +36,31 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final dataUsage = appProvider.dataUsage;
     final isDarkMode = context.isDarkMode;
+    
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
+    final double subtitleFontSize = isSmallScreen ? 14.0 : 16.0;
+    final double totalUsageFontSize = isSmallScreen ? 30.0 : 36.0;
+    final double bodyTextFontSize = isSmallScreen ? 12.0 : 14.0;
+    final double dateFontSize = isSmallScreen ? 12.0 : 14.0;
+    final double valueTextFontSize = isSmallScreen ? 14.0 : 16.0;
+    final double percentTextFontSize = isSmallScreen ? 10.0 : 12.0;
+    
+    // Calculate padding based on screen size
+    final double horizontalPadding = screenWidth * 0.04;
+    final double verticalPadding = isSmallScreen ? 12.0 : 16.0;
+    final double cardPadding = isSmallScreen ? 16.0 : 20.0;
+    final double iconSize = isSmallScreen ? 20.0 : 24.0;
+    final double progressBarHeight = isSmallScreen ? 8.0 : 10.0;
+    final double spacingBetweenCards = isSmallScreen ? 16.0 : 20.0;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -58,28 +83,65 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTotalUsageCard(context, dataUsage),
-            const SizedBox(height: 20),
-            _buildUsageBreakdown(context, dataUsage),
-            const SizedBox(height: 20),
-            _buildResetButton(context, appProvider),
-            const SizedBox(height: 20),
-            _buildDataUsageInfo(context),
-          ],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTotalUsageCard(
+                    context, 
+                    dataUsage, 
+                    titleFontSize, 
+                    totalUsageFontSize, 
+                    dateFontSize, 
+                    cardPadding
+                  ),
+                  SizedBox(height: spacingBetweenCards),
+                  _buildUsageBreakdown(
+                    context, 
+                    dataUsage, 
+                    titleFontSize, 
+                    valueTextFontSize, 
+                    percentTextFontSize, 
+                    iconSize, 
+                    progressBarHeight, 
+                    cardPadding
+                  ),
+                  SizedBox(height: spacingBetweenCards),
+                  _buildResetButton(context, appProvider, subtitleFontSize),
+                  SizedBox(height: spacingBetweenCards),
+                  _buildDataUsageInfo(
+                    context,
+                    titleFontSize,
+                    subtitleFontSize,
+                    bodyTextFontSize,
+                    cardPadding,
+                    iconSize
+                  ),
+                  SizedBox(height: verticalPadding),
+                ],
+              ),
+            );
+          }
         ),
       ),
     );
   }
 
-  Widget _buildTotalUsageCard(BuildContext context, DataUsageModel dataUsage) {
+  Widget _buildTotalUsageCard(
+    BuildContext context, 
+    DataUsageModel dataUsage, 
+    double titleFontSize, 
+    double totalUsageFontSize, 
+    double dateFontSize, 
+    double padding
+  ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16.0),
@@ -98,25 +160,28 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           Text(
             'Total Data Used',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: titleFontSize,
               fontWeight: FontWeight.bold,
               color: context.textColor,
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            DataUsageModel.formatBytes(dataUsage.totalBytes),
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
+          SizedBox(height: padding * 0.8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              DataUsageModel.formatBytes(dataUsage.totalBytes),
+              style: TextStyle(
+                fontSize: totalUsageFontSize,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: padding * 0.4),
           Text(
             'Since ${dataUsage.lastReset.day}/${dataUsage.lastReset.month}/${dataUsage.lastReset.year}',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: dateFontSize,
               color: context.secondaryTextColor,
             ),
           ),
@@ -125,7 +190,16 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     );
   }
 
-  Widget _buildUsageBreakdown(BuildContext context, DataUsageModel dataUsage) {
+  Widget _buildUsageBreakdown(
+    BuildContext context, 
+    DataUsageModel dataUsage, 
+    double titleFontSize, 
+    double valueTextFontSize, 
+    double percentTextFontSize, 
+    double iconSize, 
+    double progressBarHeight, 
+    double padding
+  ) {
     final totalBytes = dataUsage.totalBytes.toDouble();
     final wifiBytes = dataUsage.wifiBytes.toDouble();
     final mobileBytes = dataUsage.mobileBytes.toDouble();
@@ -136,7 +210,7 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16.0),
@@ -156,12 +230,12 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           Text(
             'Usage Breakdown',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: titleFontSize,
               fontWeight: FontWeight.bold,
               color: context.textColor,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: padding),
           
           // WiFi usage
           Row(
@@ -172,13 +246,13 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
                   Icon(
                     Icons.wifi,
                     color: Colors.blue,
-                    size: 24,
+                    size: iconSize,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: padding * 0.6),
                   Text(
                     'WiFi',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: valueTextFontSize,
                       color: context.textColor,
                     ),
                   ),
@@ -187,33 +261,33 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
               Text(
                 DataUsageModel.formatBytes(dataUsage.wifiBytes),
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: valueTextFontSize,
                   fontWeight: FontWeight.bold,
                   color: Colors.blue,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: padding * 0.4),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: wifiPercentage / 100,
-              minHeight: 10,
+              minHeight: progressBarHeight,
               backgroundColor: Colors.blue.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: padding * 0.2),
           Text(
             '${wifiPercentage.toStringAsFixed(1)}%',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: percentTextFontSize,
               color: context.secondaryTextColor,
             ),
           ),
           
-          const SizedBox(height: 16),
+          SizedBox(height: padding * 0.8),
           
           // Mobile data usage
           Row(
@@ -224,13 +298,13 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
                   Icon(
                     Icons.signal_cellular_alt,
                     color: Colors.orange,
-                    size: 24,
+                    size: iconSize,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: padding * 0.6),
                   Text(
                     'Mobile Data',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: valueTextFontSize,
                       color: context.textColor,
                     ),
                   ),
@@ -239,28 +313,28 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
               Text(
                 DataUsageModel.formatBytes(dataUsage.mobileBytes),
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: valueTextFontSize,
                   fontWeight: FontWeight.bold,
                   color: Colors.orange,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: padding * 0.4),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: mobilePercentage / 100,
-              minHeight: 10,
+              minHeight: progressBarHeight,
               backgroundColor: Colors.orange.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: padding * 0.2),
           Text(
             '${mobilePercentage.toStringAsFixed(1)}%',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: percentTextFontSize,
               color: context.secondaryTextColor,
             ),
           ),
@@ -269,15 +343,20 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     );
   }
 
-  Widget _buildResetButton(BuildContext context, AppProvider appProvider) {
-    return Container(
+  Widget _buildResetButton(BuildContext context, AppProvider appProvider, double fontSize) {
+    return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () {
           _showResetConfirmationDialog(context, appProvider);
         },
         icon: const Icon(Icons.refresh),
-        label: const Text('Reset Data Usage Statistics'),
+        label: Text(
+          'Reset Data Usage Statistics',
+          style: TextStyle(
+            fontSize: fontSize,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           shape: RoundedRectangleBorder(
@@ -288,10 +367,17 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     );
   }
 
-  Widget _buildDataUsageInfo(BuildContext context) {
+  Widget _buildDataUsageInfo(
+    BuildContext context, 
+    double titleFontSize, 
+    double subtitleFontSize, 
+    double bodyTextFontSize, 
+    double padding,
+    double iconSize
+  ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16.0),
@@ -307,40 +393,40 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           Text(
             'About Data Usage Tracking',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: titleFontSize,
               fontWeight: FontWeight.bold,
               color: context.textColor,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: padding * 0.6),
           Text(
             'This screen shows the approximate amount of data used by the app since the last reset. Data is tracked for both WiFi and mobile connections.',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: bodyTextFontSize,
               color: context.secondaryTextColor,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: padding * 0.8),
           Text(
             'Note:',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: subtitleFontSize,
               fontWeight: FontWeight.bold,
               color: context.textColor,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: padding * 0.4),
           Text(
             '• Data usage is tracked only while the app is running\n• Values are approximate and may differ from actual network usage\n• Data is tracked locally and not shared with anyone',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: bodyTextFontSize,
               color: context.secondaryTextColor,
             ),
           ),
           if (_isPlatformWithLimitedConnectivityDetection()) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: padding * 0.8),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(padding * 0.6),
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
@@ -351,16 +437,17 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
                     color: Colors.amber,
+                    size: iconSize,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: padding * 0.6),
                   Expanded(
                     child: Text(
                       'On ${_getPlatformName()}, connectivity detection is limited. All traffic is categorized as WiFi.',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: bodyTextFontSize,
                         color: context.textColor,
                       ),
                     ),
@@ -375,6 +462,10 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
   }
 
   void _showResetConfirmationDialog(BuildContext context, AppProvider appProvider) {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 360;
+    final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
+    final double bodyTextFontSize = isSmallScreen ? 12.0 : 14.0;
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -382,11 +473,17 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           backgroundColor: context.cardColor,
           title: Text(
             'Reset Data Usage',
-            style: TextStyle(color: context.textColor),
+            style: TextStyle(
+              fontSize: titleFontSize, 
+              color: context.textColor,
+            ),
           ),
           content: Text(
             'Are you sure you want to reset all data usage statistics? This action cannot be undone.',
-            style: TextStyle(color: context.secondaryTextColor),
+            style: TextStyle(
+              fontSize: bodyTextFontSize, 
+              color: context.secondaryTextColor,
+            ),
           ),
           actions: [
             TextButton(

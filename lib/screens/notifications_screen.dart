@@ -4,7 +4,6 @@ import '../widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../utils/theme_helper.dart';
-import 'dart:math' as math;
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -57,36 +56,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     ),
   ];
 
-  // Get responsive dimensions based on screen size
-  double _getResponsiveFontSize(BuildContext context, double baseFontSize) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Scale font size based on screen width, with min and max bounds
-    return math.max(baseFontSize * screenWidth / 400, baseFontSize - 2);
-  }
-
-  // Get responsive padding based on screen size
-  EdgeInsets _getResponsivePadding(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Adjust padding based on screen width
-    final horizontalPadding = math.max(16.0, screenWidth * 0.05);
-    return EdgeInsets.symmetric(
-      horizontal: horizontalPadding,
-      vertical: math.max(12.0, screenWidth * 0.03),
-    );
-  }
-  
-  // Get responsive icon size
-  double _getResponsiveIconSize(BuildContext context, double baseSize) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return math.max(baseSize * screenWidth / 400, baseSize - 2);
-  }
-  
-  // Get responsive spacing
-  double _getResponsiveSpacing(BuildContext context, double baseSpacing) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return math.max(baseSpacing * screenWidth / 400, baseSpacing - 2);
-  }
-
   void _markAsRead(String id) {
     setState(() {
       final index = _notifications.indexWhere((item) => item.id == id);
@@ -111,7 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         content: Text(
           'All notifications marked as read',
           style: TextStyle(
-            fontSize: _getResponsiveFontSize(context, 14),
+            fontSize: 14,
           ),
         ),
         duration: const Duration(seconds: 2),
@@ -128,8 +97,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final unreadCount = _notifications.where((item) => !item.isRead).length;
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 360;
+    
+    // Get screen dimensions for responsive sizing
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+    
+    // Determine if we're on a small screen
+    final bool isSmallScreen = screenWidth < 360;
+    
+    // Calculate responsive sizes
+    final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
+    final double messageFontSize = isSmallScreen ? 13.0 : 15.0;
+    final double subtitleFontSize = isSmallScreen ? 12.0 : 14.0;
+    final double timeFontSize = isSmallScreen ? 10.0 : 12.0;
+    final double actionTextFontSize = isSmallScreen ? 10.0 : 12.0;
+    
+    // Calculate icon sizes
+    final double mainIconSize = isSmallScreen ? 60.0 : 70.0;
+    final double typeIconSize = isSmallScreen ? 16.0 : 20.0;
+    final double actionIconSize = isSmallScreen ? 20.0 : 24.0;
+    
+    // Calculate padding based on screen size
+    final double horizontalPadding = screenWidth * 0.04;
+    final double verticalPadding = screenHeight * 0.01;
+    final double itemSpacing = isSmallScreen ? 8.0 : 12.0;
+    final double cardPadding = isSmallScreen ? 12.0 : 16.0;
+    final double iconPadding = isSmallScreen ? 8.0 : 10.0;
     
     return Scaffold(
       backgroundColor: context.backgroundColor,
@@ -140,27 +134,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             IconButton(
               icon: Icon(
                 Icons.done_all,
-                size: _getResponsiveIconSize(context, 24),
+                size: actionIconSize,
               ),
               onPressed: _markAllAsRead,
               tooltip: 'Mark all as read',
             ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: EdgeInsets.all(_getResponsiveSpacing(context, 16)),
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return _buildNotificationItem(notification);
-              },
-            ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return _notifications.isEmpty
+                ? _buildEmptyState(mainIconSize, titleFontSize, subtitleFontSize, itemSpacing)
+                : ListView.builder(
+                    padding: EdgeInsets.all(horizontalPadding),
+                    itemCount: _notifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = _notifications[index];
+                      return _buildNotificationItem(
+                        notification,
+                        itemSpacing,
+                        cardPadding,
+                        titleFontSize,
+                        messageFontSize,
+                        timeFontSize,
+                        typeIconSize,
+                        iconPadding,
+                        actionTextFontSize
+                      );
+                    },
+                  );
+          },
+        ),
+      ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(
+    double iconSize,
+    double titleSize,
+    double subtitleSize,
+    double spacing
+  ) {
     return Builder(
       builder: (context) => Center(
         child: Column(
@@ -168,23 +183,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Icon(
               Icons.notifications_off,
-              size: _getResponsiveIconSize(context, 70),
+              size: iconSize,
               color: context.isDarkMode ? Colors.grey[700] : Colors.grey[400],
             ),
-            SizedBox(height: _getResponsiveSpacing(context, 16)),
+            SizedBox(height: spacing),
             Text(
               'No notifications',
               style: TextStyle(
-                fontSize: _getResponsiveFontSize(context, 18),
+                fontSize: titleSize,
                 fontWeight: FontWeight.bold,
                 color: context.textColor,
               ),
             ),
-            SizedBox(height: _getResponsiveSpacing(context, 8)),
+            SizedBox(height: spacing * 0.5),
             Text(
               'You\'re all caught up!',
               style: TextStyle(
-                fontSize: _getResponsiveFontSize(context, 14),
+                fontSize: subtitleSize,
                 color: context.secondaryTextColor,
               ),
             ),
@@ -194,24 +209,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildNotificationItem(NotificationItem notification) {
+  Widget _buildNotificationItem(
+    NotificationItem notification,
+    double spacing,
+    double padding,
+    double titleSize,
+    double messageSize,
+    double timeSize,
+    double iconSize,
+    double iconPadding,
+    double actionTextSize
+  ) {
     return Builder(
       builder: (context) => Dismissible(
         key: Key(notification.id),
         background: Container(
           color: AppConstants.errorColor,
           alignment: Alignment.centerRight,
-          padding: EdgeInsets.only(right: _getResponsiveSpacing(context, 20)),
+          padding: EdgeInsets.only(right: padding),
           child: Icon(
             Icons.delete,
             color: Colors.white,
-            size: _getResponsiveIconSize(context, 24),
+            size: iconSize,
           ),
         ),
         direction: DismissDirection.endToStart,
         onDismissed: (_) => _deleteNotification(notification.id),
         child: Card(
-          margin: EdgeInsets.only(bottom: _getResponsiveSpacing(context, 12)),
+          margin: EdgeInsets.only(bottom: spacing),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
           ),
@@ -219,19 +244,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ? context.cardColor 
               : context.isDarkMode 
                   ? AppConstants.accentColor.withOpacity(0.3) 
-                  : AppConstants.accentColor,
+                  : AppConstants.accentColor.withOpacity(0.1),
           elevation: 1,
           shadowColor: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
           child: InkWell(
             onTap: () => _markAsRead(notification.id),
             borderRadius: BorderRadius.circular(AppConstants.radiusM),
             child: Padding(
-              padding: EdgeInsets.all(_getResponsiveSpacing(context, 16)),
+              padding: EdgeInsets.all(padding),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildNotificationIcon(notification.type),
-                  SizedBox(width: _getResponsiveSpacing(context, 16)),
+                  _buildNotificationIcon(notification.type, iconSize, iconPadding),
+                  SizedBox(width: spacing),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,7 +268,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 notification.title,
                                 style: TextStyle(
                                   fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
-                                  fontSize: _getResponsiveFontSize(context, 16),
+                                  fontSize: titleSize,
                                   color: context.textColor,
                                 ),
                               ),
@@ -252,28 +277,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               _formatTime(notification.time),
                               style: TextStyle(
                                 color: context.secondaryTextColor,
-                                fontSize: _getResponsiveFontSize(context, 12),
+                                fontSize: timeSize,
                                 fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: _getResponsiveSpacing(context, 8)),
+                        SizedBox(height: spacing * 0.5),
                         Text(
                           notification.message,
                           style: TextStyle(
                             color: notification.isRead 
                                 ? context.secondaryTextColor
                                 : context.textColor,
-                            fontSize: _getResponsiveFontSize(context, 14),
+                            fontSize: messageSize,
                           ),
                         ),
                         if (!notification.isRead)
                           Container(
-                            margin: EdgeInsets.only(top: _getResponsiveSpacing(context, 12)),
+                            margin: EdgeInsets.only(top: spacing * 0.75),
                             padding: EdgeInsets.symmetric(
-                              horizontal: _getResponsiveSpacing(context, 12),
-                              vertical: _getResponsiveSpacing(context, 6),
+                              horizontal: padding * 0.75,
+                              vertical: padding * 0.375,
                             ),
                             decoration: BoxDecoration(
                               color: context.cardColor,
@@ -284,7 +309,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               style: TextStyle(
                                 color: AppConstants.primaryColor,
                                 fontWeight: FontWeight.w500,
-                                fontSize: _getResponsiveFontSize(context, 12),
+                                fontSize: actionTextSize,
                               ),
                             ),
                           ),
@@ -300,7 +325,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildNotificationIcon(NotificationType type) {
+  Widget _buildNotificationIcon(
+    NotificationType type,
+    double iconSize,
+    double padding
+  ) {
     IconData iconData;
     Color iconColor;
 
@@ -329,7 +358,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     return Builder(
       builder: (context) => Container(
-        padding: EdgeInsets.all(_getResponsiveSpacing(context, 10)),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: iconColor.withOpacity(0.1),
           shape: BoxShape.circle,
@@ -337,7 +366,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Icon(
           iconData,
           color: iconColor,
-          size: _getResponsiveIconSize(context, 20),
+          size: iconSize,
         ),
       ),
     );
