@@ -10,13 +10,14 @@ import '../models/user_model.dart';
 import '../utils/theme_helper.dart';
 
 class DonorSearchScreen extends StatefulWidget {
-  const DonorSearchScreen({Key? key}) : super(key: key);
+  const DonorSearchScreen({super.key});
 
   @override
   State<DonorSearchScreen> createState() => _DonorSearchScreenState();
 }
 
-class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTickerProviderStateMixin {
+class _DonorSearchScreenState extends State<DonorSearchScreen>
+    with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   String? _selectedBloodType;
   String? _selectedLocation;
@@ -25,11 +26,18 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isLoading = false;
-  
+
   final List<String> _bloodTypes = [
-    'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
   ];
-  
+
   // Sample locations - in a real app, this would come from a location database
   final List<String> _locations = [
     'Any Location',
@@ -48,13 +56,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
       duration: const Duration(milliseconds: 800),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDonors();
     });
@@ -63,18 +68,18 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   // Load donors from Firestore
   Future<void> _loadDonors() async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    
+
     // Show loading state
     setState(() {
       _isLoading = true;
     });
-    
+
     // Load donors from Firestore
     await appProvider.loadDonorsFromFirestore();
-    
+
     // Update filtered donors
     _updateFilteredDonors();
-    
+
     // Hide loading state
     setState(() {
       _isLoading = false;
@@ -91,27 +96,33 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   void _updateFilteredDonors() {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final searchQuery = _searchController.text.toLowerCase();
-    
+
     setState(() {
-      _filteredDonors = appProvider.filterDonors(
-        bloodType: _selectedBloodType,
-        onlyAvailable: _onlyAvailable,
-      ).where((donor) {
-        bool matchesSearch = true;
-        if (searchQuery.isNotEmpty) {
-          matchesSearch = donor.name.toLowerCase().contains(searchQuery) ||
-              donor.address.toLowerCase().contains(searchQuery);
-        }
-        
-        bool matchesLocation = true;
-        if (_selectedLocation != null && _selectedLocation != 'Any Location') {
-          matchesLocation = donor.address.contains(_selectedLocation!);
-        }
-        
-        return matchesSearch && matchesLocation;
-      }).toList();
+      _filteredDonors =
+          appProvider
+              .filterDonors(
+                bloodType: _selectedBloodType,
+                onlyAvailable: _onlyAvailable,
+              )
+              .where((donor) {
+                bool matchesSearch = true;
+                if (searchQuery.isNotEmpty) {
+                  matchesSearch =
+                      donor.name.toLowerCase().contains(searchQuery) ||
+                      donor.address.toLowerCase().contains(searchQuery);
+                }
+
+                bool matchesLocation = true;
+                if (_selectedLocation != null &&
+                    _selectedLocation != 'Any Location') {
+                  matchesLocation = donor.address.contains(_selectedLocation!);
+                }
+
+                return matchesSearch && matchesLocation;
+              })
+              .toList();
     });
-    
+
     // Animate when list changes
     _animationController.reset();
     _animationController.forward();
@@ -121,9 +132,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.backgroundColor,
-      appBar: const CustomAppBar(
-        title: 'Find Blood Donors',
-      ),
+      appBar: const CustomAppBar(title: 'Find Blood Donors'),
       body: RefreshIndicator(
         onRefresh: _loadDonors,
         child: Column(
@@ -139,7 +148,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                    color:
+                        context.isDarkMode
+                            ? Colors.black12
+                            : Colors.grey.withOpacity(0.1),
                     spreadRadius: 1,
                     blurRadius: 15,
                     offset: const Offset(0, 5),
@@ -165,7 +177,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                          color:
+                              context.isDarkMode
+                                  ? Colors.black12
+                                  : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                           offset: const Offset(0, 2),
@@ -194,19 +209,20 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 16,
                         ),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  color: context.secondaryTextColor,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _updateFilteredDonors();
-                                },
-                              )
-                            : null,
+                        suffixIcon:
+                            _searchController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: context.secondaryTextColor,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _updateFilteredDonors();
+                                  },
+                                )
+                                : null,
                       ),
                       onChanged: (_) => _updateFilteredDonors(),
                     ),
@@ -242,20 +258,28 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: context.cardColor,
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black12
+                                            : Colors.grey.withOpacity(0.1),
                                     spreadRadius: 1,
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                                 border: Border.all(
-                                  color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                                  color:
+                                      context.isDarkMode
+                                          ? Colors.grey[800]!
+                                          : Colors.grey[200]!,
                                   width: 1,
                                 ),
                               ),
@@ -272,9 +296,11 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                   ),
                                   icon: Icon(
                                     Icons.keyboard_arrow_down_rounded,
-                                    color: context.isDarkMode 
-                                      ? AppConstants.primaryColor.withOpacity(0.7) 
-                                      : Colors.grey[400],
+                                    color:
+                                        context.isDarkMode
+                                            ? AppConstants.primaryColor
+                                                .withOpacity(0.7)
+                                            : Colors.grey[400],
                                   ),
                                   style: TextStyle(
                                     color: context.textColor,
@@ -285,7 +311,9 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                       value: null,
                                       child: Text(
                                         'All Blood Types',
-                                        style: TextStyle(color: context.textColor),
+                                        style: TextStyle(
+                                          color: context.textColor,
+                                        ),
                                       ),
                                     ),
                                     ..._bloodTypes.map((type) {
@@ -298,7 +326,8 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                               height: 18,
                                               decoration: const BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: AppConstants.primaryColor,
+                                                color:
+                                                    AppConstants.primaryColor,
                                               ),
                                               child: Center(
                                                 child: Text(
@@ -323,7 +352,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                           ],
                                         ),
                                       );
-                                    }).toList(),
+                                    }),
                                   ],
                                   onChanged: (value) {
                                     setState(() {
@@ -355,20 +384,28 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: context.cardColor,
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black12
+                                            : Colors.grey.withOpacity(0.1),
                                     spreadRadius: 1,
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                                 border: Border.all(
-                                  color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                                  color:
+                                      context.isDarkMode
+                                          ? Colors.grey[800]!
+                                          : Colors.grey[200]!,
                                   width: 1,
                                 ),
                               ),
@@ -385,23 +422,31 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                   ),
                                   icon: Icon(
                                     Icons.keyboard_arrow_down_rounded,
-                                    color: context.isDarkMode 
-                                      ? AppConstants.primaryColor.withOpacity(0.7) 
-                                      : Colors.grey[400],
+                                    color:
+                                        context.isDarkMode
+                                            ? AppConstants.primaryColor
+                                                .withOpacity(0.7)
+                                            : Colors.grey[400],
                                   ),
                                   style: TextStyle(
                                     color: context.textColor,
                                     fontSize: 14,
                                   ),
-                                  items: _locations.map((location) {
-                                    return DropdownMenuItem<String>(
-                                      value: location == 'Any Location' ? null : location,
-                                      child: Text(
-                                        location,
-                                        style: TextStyle(color: context.textColor),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  items:
+                                      _locations.map((location) {
+                                        return DropdownMenuItem<String>(
+                                          value:
+                                              location == 'Any Location'
+                                                  ? null
+                                                  : location,
+                                          child: Text(
+                                            location,
+                                            style: TextStyle(
+                                              color: context.textColor,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       _selectedLocation = value;
@@ -433,14 +478,20 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: _onlyAvailable 
-                            ? AppConstants.primaryColor.withOpacity(0.1)
-                            : context.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                        color:
+                            _onlyAvailable
+                                ? AppConstants.primaryColor.withOpacity(0.1)
+                                : context.isDarkMode
+                                ? Colors.grey[800]
+                                : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _onlyAvailable 
-                              ? AppConstants.primaryColor
-                              : context.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                          color:
+                              _onlyAvailable
+                                  ? AppConstants.primaryColor
+                                  : context.isDarkMode
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!,
                           width: 1.5,
                         ),
                       ),
@@ -452,17 +503,19 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
-                              color: _onlyAvailable 
-                                  ? AppConstants.primaryColor
-                                  : context.textColor,
+                              color:
+                                  _onlyAvailable
+                                      ? AppConstants.primaryColor
+                                      : context.textColor,
                             ),
                           ),
                           const Spacer(),
                           Icon(
                             Icons.person_outline,
-                            color: _onlyAvailable
-                                ? AppConstants.primaryColor
-                                : context.secondaryTextColor,
+                            color:
+                                _onlyAvailable
+                                    ? AppConstants.primaryColor
+                                    : context.secondaryTextColor,
                             size: 20,
                           ),
                         ],
@@ -474,7 +527,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
             ),
             // Results Count
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -490,9 +546,9 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                     Row(
                       children: [
                         Icon(
-                          Icons.sort, 
-                          size: 16, 
-                          color: context.secondaryTextColor
+                          Icons.sort,
+                          size: 16,
+                          color: context.secondaryTextColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -509,39 +565,40 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
             ),
             // Donor List
             Expanded(
-              child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredDonors.isEmpty
-                  ? _buildEmptyState()
-                  : FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.paddingM,
-                          vertical: AppConstants.paddingS,
-                        ),
-                        itemCount: _filteredDonors.length,
-                        itemBuilder: (context, index) {
-                          final donor = _filteredDonors[index];
-                          // Add staggered animation delay based on index
-                          return AnimatedOpacity(
-                            duration: const Duration(milliseconds: 500),
-                            opacity: 1.0,
-                            curve: Curves.easeInOut,
-                            child: AnimatedPadding(
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredDonors.isEmpty
+                      ? _buildEmptyState()
+                      : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.paddingM,
+                            vertical: AppConstants.paddingS,
+                          ),
+                          itemCount: _filteredDonors.length,
+                          itemBuilder: (context, index) {
+                            final donor = _filteredDonors[index];
+                            // Add staggered animation delay based on index
+                            return AnimatedOpacity(
                               duration: const Duration(milliseconds: 500),
-                              padding: EdgeInsets.only(
-                                top: 0,
-                                bottom: 16,
-                                left: 0,
-                                right: 0,
+                              opacity: 1.0,
+                              curve: Curves.easeInOut,
+                              child: AnimatedPadding(
+                                duration: const Duration(milliseconds: 500),
+                                padding: EdgeInsets.only(
+                                  top: 0,
+                                  bottom: 16,
+                                  left: 0,
+                                  right: 0,
+                                ),
+                                child: _buildDonorCard(donor),
                               ),
-                              child: _buildDonorCard(donor),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
-                    ),
             ),
           ],
         ),
@@ -574,10 +631,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
             child: Text(
               'Try changing your filters or search for different criteria',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.secondaryTextColor,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: context.secondaryTextColor, fontSize: 14),
             ),
           ),
           const SizedBox(height: 24),
@@ -602,10 +656,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
             ),
             child: const Text(
               'Reset Filters',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -614,25 +665,30 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
   }
 
   Widget _buildDonorCard(UserModel donor) {
-    final eligibilityStatus = donor.isEligibleToDonate
-        ? 'Available Now'
-        : donor.daysUntilNextDonation > 0
+    final eligibilityStatus =
+        donor.isEligibleToDonate
+            ? 'Available Now'
+            : donor.daysUntilNextDonation > 0
             ? 'Available in ${donor.daysUntilNextDonation} days'
             : 'Not Available';
-    
-    final eligibilityColor = donor.isEligibleToDonate
-        ? AppConstants.successColor
-        : donor.daysUntilNextDonation > 0
+
+    final eligibilityColor =
+        donor.isEligibleToDonate
+            ? AppConstants.successColor
+            : donor.daysUntilNextDonation > 0
             ? Colors.orange
             : Colors.grey;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.07),
+            color:
+                context.isDarkMode
+                    ? Colors.black12
+                    : Colors.grey.withOpacity(0.07),
             blurRadius: 15,
             spreadRadius: 1,
             offset: const Offset(0, 8),
@@ -663,7 +719,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.2),
+                                  color:
+                                      context.isDarkMode
+                                          ? Colors.black12
+                                          : Colors.grey.withOpacity(0.2),
                                   blurRadius: 8,
                                   spreadRadius: 1,
                                   offset: const Offset(0, 2),
@@ -673,19 +732,21 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                             child: CircleAvatar(
                               radius: 32,
                               backgroundColor: AppConstants.accentColor,
-                              backgroundImage: donor.imageUrl.isNotEmpty
-                                  ? AssetImage(donor.imageUrl)
-                                  : null,
-                              child: donor.imageUrl.isEmpty
-                                  ? Text(
-                                      donor.name[0].toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppConstants.primaryColor,
-                                      ),
-                                    )
-                                  : null,
+                              backgroundImage:
+                                  donor.imageUrl.isNotEmpty
+                                      ? AssetImage(donor.imageUrl)
+                                      : null,
+                              child:
+                                  donor.imageUrl.isEmpty
+                                      ? Text(
+                                        donor.name[0].toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppConstants.primaryColor,
+                                        ),
+                                      )
+                                      : null,
                             ),
                           ),
                           Positioned(
@@ -698,7 +759,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.2),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black12
+                                            : Colors.grey.withOpacity(0.2),
                                     blurRadius: 4,
                                     spreadRadius: 1,
                                   ),
@@ -708,9 +772,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                 donor.isAvailableToDonate
                                     ? Icons.check_circle
                                     : Icons.access_time_rounded,
-                                color: donor.isAvailableToDonate
-                                    ? AppConstants.successColor
-                                    : Colors.orange,
+                                color:
+                                    donor.isAvailableToDonate
+                                        ? AppConstants.successColor
+                                        : Colors.orange,
                                 size: 18,
                               ),
                             ),
@@ -741,10 +806,12 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppConstants.primaryColor.withOpacity(0.1),
+                                    color: AppConstants.primaryColor
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppConstants.primaryColor.withOpacity(0.3),
+                                      color: AppConstants.primaryColor
+                                          .withOpacity(0.3),
                                       width: 1,
                                     ),
                                   ),
@@ -772,8 +839,9 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(Icons.calendar_today_outlined, 
-                                  size: 14, 
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 14,
                                   color: context.secondaryTextColor,
                                 ),
                                 const SizedBox(width: 4),
@@ -841,7 +909,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppConstants.primaryColor,
                           side: BorderSide(color: AppConstants.primaryColor),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -858,7 +929,10 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
                           backgroundColor: AppConstants.primaryColor,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -886,7 +960,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
     // In a real app, use url_launcher to launch phone call
     // launch('tel:$phoneNumber');
   }
-  
+
   // Launch SMS
   void _launchSms(String phoneNumber) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -898,121 +972,130 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
     // In a real app, use url_launcher to launch SMS
     // launch('sms:$phoneNumber');
   }
-  
+
   // Show donor details dialog
   void _showDonorDetailsDialog(UserModel donor) {
-    final eligibilityStatus = donor.isEligibleToDonate
-        ? 'Available Now'
-        : donor.daysUntilNextDonation > 0
+    final eligibilityStatus =
+        donor.isEligibleToDonate
+            ? 'Available Now'
+            : donor.daysUntilNextDonation > 0
             ? 'Available in ${donor.daysUntilNextDonation} days'
             : 'Not Available';
-            
-    final eligibilityColor = donor.isEligibleToDonate
-        ? AppConstants.successColor
-        : donor.daysUntilNextDonation > 0
+
+    final eligibilityColor =
+        donor.isEligibleToDonate
+            ? AppConstants.successColor
+            : donor.daysUntilNextDonation > 0
             ? Colors.orange
             : Colors.grey;
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Column(
-          children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppConstants.accentColor,
-              backgroundImage: donor.imageUrl.isNotEmpty
-                  ? AssetImage(donor.imageUrl)
-                  : null,
-              child: donor.imageUrl.isEmpty
-                  ? Text(
-                      donor.name[0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: AppConstants.primaryColor,
-                      ),
-                    )
-                  : null,
+      builder:
+          (context) => AlertDialog(
+            title: Column(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: AppConstants.accentColor,
+                  backgroundImage:
+                      donor.imageUrl.isNotEmpty
+                          ? AssetImage(donor.imageUrl)
+                          : null,
+                  child:
+                      donor.imageUrl.isEmpty
+                          ? Text(
+                            donor.name[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.primaryColor,
+                            ),
+                          )
+                          : null,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  donor.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    donor.bloodType,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.primaryColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              donor.name,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow(
+                  icon: Icons.location_on,
+                  title: 'Address',
+                  value: donor.address,
+                ),
+                _buildDetailRow(
+                  icon: Icons.phone,
+                  title: 'Phone',
+                  value: donor.phone,
+                ),
+                _buildDetailRow(
+                  icon: Icons.calendar_today,
+                  title: 'Last Donation',
+                  value:
+                      '${donor.lastDonationDate.day}/${donor.lastDonationDate.month}/${donor.lastDonationDate.year}',
+                ),
+                _buildDetailRow(
+                  icon:
+                      donor.isEligibleToDonate
+                          ? Icons.check_circle
+                          : Icons.access_time,
+                  title: 'Availability Status',
+                  value: eligibilityStatus,
+                  color: eligibilityColor,
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('CLOSE'),
               ),
-              decoration: BoxDecoration(
-                color: AppConstants.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                donor.bloodType,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.primaryColor,
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _launchCall(donor.phone);
+                },
+                icon: const Icon(Icons.phone, size: 16),
+                label: const Text('CALL'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryColor,
+                  foregroundColor: Colors.white,
                 ),
               ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDetailRow(
-              icon: Icons.location_on,
-              title: 'Address',
-              value: donor.address,
-            ),
-            _buildDetailRow(
-              icon: Icons.phone,
-              title: 'Phone',
-              value: donor.phone,
-            ),
-            _buildDetailRow(
-              icon: Icons.calendar_today,
-              title: 'Last Donation',
-              value: '${donor.lastDonationDate.day}/${donor.lastDonationDate.month}/${donor.lastDonationDate.year}',
-            ),
-            _buildDetailRow(
-              icon: donor.isEligibleToDonate ? Icons.check_circle : Icons.access_time,
-              title: 'Availability Status',
-              value: eligibilityStatus,
-              color: eligibilityColor,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CLOSE'),
+            ],
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              _launchCall(donor.phone);
-            },
-            icon: const Icon(Icons.phone, size: 16),
-            label: const Text('CALL'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryColor,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
-  
+
   // Build detail row for donor dialog
   Widget _buildDetailRow({
     required IconData icon,
@@ -1066,4 +1149,4 @@ class _DonorSearchScreenState extends State<DonorSearchScreen> with SingleTicker
       ),
     );
   }
-} 
+}

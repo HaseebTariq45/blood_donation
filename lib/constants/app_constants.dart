@@ -12,20 +12,20 @@ class AppConstants {
   static const Color successColor = Color(0xFF388E3C);
   static const Color warningColor = Color(0xFFFFA000);
   static const Color backgroundColor = Color(0xFFFAFAFA);
-  
+
   // App Paddings
   static const double paddingXS = 4.0;
   static const double paddingS = 8.0;
   static const double paddingM = 16.0;
   static const double paddingL = 24.0;
   static const double paddingXL = 32.0;
-  
+
   // App Radiuses
   static const double radiusS = 4.0;
   static const double radiusM = 8.0;
   static const double radiusL = 16.0;
   static const double radiusXL = 24.0;
-  
+
   // App Typography
   static TextTheme getTextTheme() {
     return TextTheme(
@@ -86,7 +86,7 @@ class AppConstants {
       ),
     );
   }
-  
+
   // App Theme
   static ThemeData getThemeData() {
     return ThemeData(
@@ -133,9 +133,7 @@ class AppConstants {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-        ),
+        style: TextButton.styleFrom(foregroundColor: primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -167,7 +165,7 @@ class AppConstants {
       ),
     );
   }
-  
+
   // Dark App Theme
   static ThemeData getDarkThemeData() {
     return ThemeData(
@@ -180,10 +178,9 @@ class AppConstants {
         onSecondary: Colors.white,
         error: errorColor,
         surface: Color(0xFF1E1E1E),
-        background: Color(0xFF121212),
       ),
       textTheme: getTextTheme().apply(
-        bodyColor: Colors.white, 
+        bodyColor: Colors.white,
         displayColor: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
@@ -219,9 +216,7 @@ class AppConstants {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-        ),
+        style: TextButton.styleFrom(foregroundColor: primaryColor),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -260,9 +255,9 @@ class AppConstants {
       ),
     );
   }
-  
+
   // App Animations
   static const Duration animationDurationShort = Duration(milliseconds: 200);
   static const Duration animationDurationMedium = Duration(milliseconds: 500);
   static const Duration animationDurationLong = Duration(milliseconds: 800);
-} 
+}

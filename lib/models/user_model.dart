@@ -1,3 +1,5 @@
+import 'user_location_model.dart';
+
 class UserModel {
   final String id;
   final String name;
@@ -8,6 +10,7 @@ class UserModel {
   final String imageUrl;
   final bool isAvailableToDonate;
   final DateTime lastDonationDate;
+  final UserLocationModel? location;
 
   UserModel({
     required this.id,
@@ -19,6 +22,7 @@ class UserModel {
     this.imageUrl = '',
     this.isAvailableToDonate = true,
     DateTime? lastDonationDate,
+    this.location,
   }) : lastDonationDate = lastDonationDate ?? DateTime.now().subtract(const Duration(days: 90));
 
   factory UserModel.dummy() {
@@ -55,6 +59,7 @@ class UserModel {
     String? imageUrl,
     bool? isAvailableToDonate,
     DateTime? lastDonationDate,
+    UserLocationModel? location,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -66,6 +71,7 @@ class UserModel {
       imageUrl: imageUrl ?? this.imageUrl,
       isAvailableToDonate: isAvailableToDonate ?? this.isAvailableToDonate,
       lastDonationDate: lastDonationDate ?? this.lastDonationDate,
+      location: location ?? this.location,
     );
   }
 

@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 class FirebaseService {
@@ -22,11 +21,11 @@ class FirebaseService {
         // Native platforms (Android, iOS, etc.)
         await Firebase.initializeApp();
       }
-      
+
       debugPrint('Firebase initialized successfully');
     } catch (e) {
       debugPrint('Failed to initialize Firebase: $e');
       rethrow;
     }
   }
-} 
+}

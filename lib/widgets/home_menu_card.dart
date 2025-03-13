@@ -11,20 +11,21 @@ class HomeMenuCard extends StatefulWidget {
   final int index;
 
   const HomeMenuCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.onTap,
     this.backgroundColor,
     this.iconColor,
     this.index = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<HomeMenuCard> createState() => _HomeMenuCardState();
 }
 
-class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderStateMixin {
+class _HomeMenuCardState extends State<HomeMenuCard>
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
   bool _isHovered = false;
   late AnimationController _animationController;
@@ -45,21 +46,21 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
       vsync: this,
       duration: Duration(milliseconds: 600),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Interval(0.0, 0.5, curve: Curves.easeOut),
       ),
     );
-    
+
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Interval(0.5, 1.0, curve: Curves.easeInOut),
       ),
     );
-    
+
     // Staggered animation based on card index
     Future.delayed(Duration(milliseconds: widget.index * 100), () {
       if (mounted) {
@@ -74,21 +75,25 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
     super.dispose();
   }
 
-  List<Color> get _cardGradient => widget.index < _gradients.length 
-      ? _gradients[widget.index]
-      : [AppConstants.primaryColor, AppConstants.primaryColor.withOpacity(0.7)];
+  List<Color> get _cardGradient =>
+      widget.index < _gradients.length
+          ? _gradients[widget.index]
+          : [
+            AppConstants.primaryColor,
+            AppConstants.primaryColor.withOpacity(0.7),
+          ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    
+
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
-    
+
     // Determine if we're on a small screen
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate responsive sizes
     final double iconSize = isSmallScreen ? 24.0 : 28.0;
     final double titleFontSize = isSmallScreen ? 10.0 : 12.0;
@@ -96,12 +101,12 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
     final double iconPadding = isSmallScreen ? 10.0 : 14.0;
     final double contentPadding = isSmallScreen ? 12.0 : 16.0;
     final double spacingHeight = isSmallScreen ? 8.0 : 12.0;
-    
+
     // Calculate decorative element sizes
     final double largeBubbleSize = isSmallScreen ? 60.0 : 80.0;
     final double mediumBubbleSize = isSmallScreen ? 60.0 : 70.0;
     final double smallBubbleSize = isSmallScreen ? 16.0 : 20.0;
-    
+
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -123,23 +128,32 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: _isPressed 
-                          ? [isDark ? const Color(0xFF1E1E1E) : Colors.white, 
-                             isDark ? const Color(0xFF1E1E1E) : Colors.white]
-                          : _cardGradient,
+                      colors:
+                          _isPressed
+                              ? [
+                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                              ]
+                              : _cardGradient,
                     ),
                     borderRadius: BorderRadius.circular(AppConstants.radiusL),
                     boxShadow: [
                       BoxShadow(
-                        color: _cardGradient.first.withOpacity(_isPressed ? 0.1 : (_isHovered ? 0.5 : 0.3)),
+                        color: _cardGradient.first.withOpacity(
+                          _isPressed ? 0.1 : (_isHovered ? 0.5 : 0.3),
+                        ),
                         spreadRadius: _isPressed ? 0 : (_isHovered ? 2 : 1),
                         blurRadius: _isPressed ? 3 : (_isHovered ? 12 : 8),
-                        offset: Offset(0, _isPressed ? 1 : (_isHovered ? 6 : 4)),
+                        offset: Offset(
+                          0,
+                          _isPressed ? 1 : (_isHovered ? 6 : 4),
+                        ),
                       ),
                     ],
                   ),
-                  transform: Matrix4.identity()
-                    ..scale(_isPressed ? 0.97 : (_isHovered ? 1.02 : 1.0)),
+                  transform:
+                      Matrix4.identity()
+                        ..scale(_isPressed ? 0.97 : (_isHovered ? 1.02 : 1.0)),
                   child: Stack(
                     children: [
                       // Decorative elements and pattern
@@ -191,11 +205,16 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                               duration: const Duration(milliseconds: 200),
                               padding: EdgeInsets.all(iconPadding),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                                color:
+                                    isDark
+                                        ? const Color(0xFF2C2C2C)
+                                        : Colors.white,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _cardGradient.first.withOpacity(_isHovered ? 0.3 : 0.1),
+                                    color: _cardGradient.first.withOpacity(
+                                      _isHovered ? 0.3 : 0.1,
+                                    ),
                                     blurRadius: _isHovered ? 8 : 5,
                                     spreadRadius: _isHovered ? 2 : 0,
                                     offset: Offset(0, _isHovered ? 3 : 2),
@@ -211,7 +230,9 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                             SizedBox(height: spacingHeight),
                             Flexible(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
@@ -245,12 +266,14 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
                           right: isSmallScreen ? 8 : 10,
                           child: Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: isSmallScreen ? 6 : 8, 
-                              vertical: isSmallScreen ? 3 : 4
+                              horizontal: isSmallScreen ? 6 : 8,
+                              vertical: isSmallScreen ? 3 : 4,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                              borderRadius: BorderRadius.circular(
+                                isSmallScreen ? 10 : 12,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -280,4 +303,4 @@ class _HomeMenuCardState extends State<HomeMenuCard> with SingleTickerProviderSt
       },
     );
   }
-} 
+}

@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/user_model.dart';
+import '../models/notification_model.dart';
+import '../models/emergency_contact_model.dart';
+import '../models/user_location_model.dart';
+import '../firebase/firebase_notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/donation_model.dart';
 import '../models/blood_request_model.dart';
 import '../models/blood_bank_model.dart';
 import '../models/data_usage_model.dart';
-import '../models/emergency_contact_model.dart';
 import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
 import '../firebase/firebase_auth_service.dart';
 import '../firebase/firebase_user_service.dart';
 import '../firebase/firebase_donation_service.dart';
 import '../firebase/firebase_emergency_contact_service.dart';
+import '../firebase/firebase_notification_service.dart';
 
 class AppProvider extends ChangeNotifier {
   // Firebase services - lazy initialization
@@ -20,6 +26,8 @@ class AppProvider extends ChangeNotifier {
   late final FirebaseUserService _userService;
   late final FirebaseDonationService _donationService;
   late final FirebaseEmergencyContactService _emergencyContactService;
+  late final FirebaseNotificationService _notificationService;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // User data
   UserModel? _currentUser;
@@ -47,20 +55,22 @@ class AppProvider extends ChangeNotifier {
   bool get isLocationEnabled => _isLocationEnabled;
 
   // Notification settings
-  bool _notificationsEnabled = false;
+  bool _notificationsEnabled = true;
   bool get notificationsEnabled => _notificationsEnabled;
   bool _emailNotificationsEnabled = false;
   bool get emailNotificationsEnabled => _emailNotificationsEnabled;
-  bool _pushNotificationsEnabled = false;
+  bool _pushNotificationsEnabled = true;
   bool get pushNotificationsEnabled => _pushNotificationsEnabled;
+  bool _hasUnreadNotifications = false;
+  bool get hasUnreadNotifications => _hasUnreadNotifications;
+  List<NotificationModel> _userNotifications = [];
+  List<NotificationModel> get userNotifications => _userNotifications;
+  bool _isLoadingNotifications = false;
+  bool get isLoadingNotifications => _isLoadingNotifications;
 
   // Profile image error handling
   bool _profileImageLoadError = false;
   bool get profileImageLoadError => _profileImageLoadError;
-
-  // Notification indicators
-  bool _hasUnreadNotifications = true;
-  bool get hasUnreadNotifications => _hasUnreadNotifications;
 
   // Data usage tracking
   DataUsageModel _dataUsage = DataUsageModel.empty();
@@ -107,6 +117,7 @@ class AppProvider extends ChangeNotifier {
       _userService = FirebaseUserService();
       _donationService = FirebaseDonationService();
       _emergencyContactService = FirebaseEmergencyContactService();
+      _notificationService = FirebaseNotificationService();
       
       // Load data
       _loadDummyData();
@@ -658,10 +669,146 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Mark all notifications as read
-  void markAllNotificationsAsRead() {
-    _hasUnreadNotifications = false;
+  // Notification settings methods
+  Future<void> checkNotificationSettings() async {
+    final notificationService = NotificationService();
+    _notificationsEnabled = await notificationService.areNotificationsEnabled();
+    _emailNotificationsEnabled = await notificationService.areEmailNotificationsEnabled();
+    _pushNotificationsEnabled = await notificationService.arePushNotificationsEnabled();
+    
+    // Check for unread notifications
+    _hasUnreadNotifications = _userNotifications.any((notification) => !notification.read);
+    
     notifyListeners();
+  }
+
+  Future<void> toggleNotifications(bool enabled) async {
+    final notificationService = NotificationService();
+    await notificationService.setNotificationsEnabled(enabled);
+    _notificationsEnabled = enabled;
+    
+    // If turning off notifications, all sub-settings get disabled
+    if (!enabled) {
+      await toggleEmailNotifications(false);
+      await togglePushNotifications(false);
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> toggleEmailNotifications(bool enabled) async {
+    final notificationService = NotificationService();
+    await notificationService.setEmailNotificationsEnabled(enabled);
+    _emailNotificationsEnabled = enabled;
+    notifyListeners();
+  }
+
+  Future<void> togglePushNotifications(bool enabled) async {
+    final notificationService = NotificationService();
+    await notificationService.setPushNotificationsEnabled(enabled);
+    _pushNotificationsEnabled = enabled;
+    notifyListeners();
+  }
+
+  // Notification retrieval and management methods
+  Future<void> refreshNotifications() async {
+    _isLoadingNotifications = true;
+    notifyListeners();
+    
+    try {
+      final notifications = await _notificationService.getUserNotifications();
+      _userNotifications = notifications;
+      _hasUnreadNotifications = notifications.any((notification) => !notification.read);
+    } catch (e) {
+      debugPrint('Error refreshing notifications: $e');
+    } finally {
+      _isLoadingNotifications = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<NotificationModel>> getUserNotifications() async {
+    _isLoadingNotifications = true;
+    notifyListeners();
+    
+    try {
+      final notifications = await _notificationService.getUserNotifications();
+      _userNotifications = notifications;
+      _hasUnreadNotifications = notifications.any((notification) => !notification.read);
+      notifyListeners();
+      return notifications;
+    } catch (e) {
+      debugPrint('Error getting user notifications: $e');
+      return [];
+    } finally {
+      _isLoadingNotifications = false;
+      notifyListeners();
+    }
+  }
+
+  Stream<List<NotificationModel>> getUserNotificationsStream() {
+    return _notificationService.getUserNotificationsStream();
+  }
+
+  Future<void> markAllNotificationsAsRead() async {
+    try {
+      await _notificationService.markAllNotificationsAsRead();
+      
+      // Update local state
+      if (_userNotifications.isNotEmpty) {
+        _userNotifications = _userNotifications
+            .map((notification) => notification.copyWith(read: true))
+            .toList();
+        _hasUnreadNotifications = false;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error marking all notifications as read: $e');
+    }
+  }
+  
+  // Mark a single notification as read
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      await _notificationService.markNotificationAsRead(notificationId);
+      
+      // Update local state
+      final index = _userNotifications.indexWhere((n) => n.id == notificationId);
+      if (index != -1) {
+        _userNotifications[index] = _userNotifications[index].copyWith(read: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error marking notification as read: $e');
+    }
+  }
+
+  // Send a test notification (used in settings screen)
+  Future<void> sendTestNotification() async {
+    if (!_notificationsEnabled || !_pushNotificationsEnabled) return;
+    
+    try {
+      final userId = _currentUser?.id;
+      if (userId != null) {
+        await _notificationService.addNotification(
+          NotificationModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            userId: userId,
+            title: 'Test Notification',
+            body: 'This is a test notification',
+            type: 'test',
+            read: false,
+            createdAt: DateTime.now().toIso8601String(),
+            metadata: {},
+          ),
+        );
+        
+        // Refresh notifications after adding a new one
+        await refreshNotifications();
+      }
+    } catch (e) {
+      debugPrint('Error sending test notification: $e');
+    }
   }
 
   // Location methods
@@ -684,54 +831,6 @@ class AppProvider extends ChangeNotifier {
     await locationService.disableLocation();
     _isLocationEnabled = false;
     notifyListeners();
-  }
-
-  // Notification methods
-  Future<void> checkNotificationSettings() async {
-    final notificationService = NotificationService();
-    _notificationsEnabled = await notificationService.areNotificationsEnabled();
-    _emailNotificationsEnabled = await notificationService.areEmailNotificationsEnabled();
-    _pushNotificationsEnabled = await notificationService.arePushNotificationsEnabled();
-    notifyListeners();
-  }
-
-  Future<void> toggleNotifications(bool enabled) async {
-    final notificationService = NotificationService();
-    await notificationService.setNotificationsEnabled(enabled);
-    _notificationsEnabled = enabled;
-    
-    // If turning off notifications, all sub-settings get disabled
-    if (!enabled) {
-      _emailNotificationsEnabled = false;
-      _pushNotificationsEnabled = false;
-    }
-    
-    notifyListeners();
-  }
-
-  Future<void> toggleEmailNotifications(bool enabled) async {
-    if (!_notificationsEnabled) return;
-    
-    final notificationService = NotificationService();
-    await notificationService.setEmailNotificationsEnabled(enabled);
-    _emailNotificationsEnabled = enabled;
-    notifyListeners();
-  }
-
-  Future<void> togglePushNotifications(bool enabled) async {
-    if (!_notificationsEnabled) return;
-    
-    final notificationService = NotificationService();
-    await notificationService.setPushNotificationsEnabled(enabled);
-    _pushNotificationsEnabled = enabled;
-    notifyListeners();
-  }
-
-  Future<void> sendTestNotification() async {
-    if (!_notificationsEnabled) return;
-    
-    final notificationService = NotificationService();
-    await notificationService.sendTestNotification();
   }
 
   // Add to the initialize method
@@ -915,4 +1014,82 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-} 
+
+  // Send a notification to another user
+  Future<bool> sendNotification(NotificationModel notification) async {
+    try {
+      final result = await _notificationService.addNotification(notification);
+      debugPrint('Notification sent successfully: ${result.id}');
+      return true;
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+      return false;
+    }
+  }
+
+  // Get user details by ID
+  Future<UserModel?> getUserDetailsById(String userId) async {
+    try {
+      final userData = await _userService.getUserData(userId);
+      return userData;
+    } catch (e) {
+      debugPrint('Error getting user details: $e');
+      return null;
+    }
+  }
+
+  // Get emergency contacts for a user
+  Future<List<EmergencyContactModel>> getEmergencyContactsForUser(String userId) async {
+    try {
+      final contacts = await _emergencyContactService.getAllEmergencyContacts(userId);
+      return contacts;
+    } catch (e) {
+      debugPrint('Error getting emergency contacts: $e');
+      return [];
+    }
+  }
+
+  // Accept blood request response
+  Future<bool> acceptBloodRequestResponse(String requestId, String responderId) async {
+    try {
+      // Update request status to accepted
+      await _firestore.collection('blood_requests').doc(requestId).update({
+        'status': 'Accepted',
+        'acceptedAt': DateTime.now().toIso8601String(),
+      });
+      
+      // Get the current user (requester)
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) return false;
+      
+      // Get user details
+      final requesterDetails = await getUserDetailsById(currentUser.uid);
+      if (requesterDetails == null) return false;
+      
+      // Create notification model
+      final notification = NotificationModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: responderId,
+        title: 'Blood Donation Request Accepted',
+        body: '${requesterDetails.name} has accepted your offer to donate blood.',
+        type: 'blood_request_accepted',
+        read: false,
+        createdAt: DateTime.now().toIso8601String(),
+        metadata: {
+          'requesterId': currentUser.uid,
+          'requesterName': requesterDetails.name,
+          'requesterPhone': requesterDetails.phone,
+          'requestId': requestId,
+        },
+      );
+      
+      // Add notification
+      await _notificationService.addNotification(notification);
+      
+      return true;
+    } catch (e) {
+      debugPrint('Error accepting blood request response: $e');
+      return false;
+    }
+  }
+}

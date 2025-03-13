@@ -7,30 +7,32 @@ import '../widgets/blood_type_badge.dart';
 import '../utils/theme_helper.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final currentUser = appProvider.currentUser;
-    
+
     // Debug logging for user data
     debugPrint('Home Screen - Current User: ${currentUser.toString()}');
-    
+
     // Check if this is a dummy user
     final bool isDummyUser = currentUser.id == 'user123';
     if (isDummyUser) {
-      debugPrint('WARNING: Home screen showing DUMMY USER - not logged in properly!');
+      debugPrint(
+        'WARNING: Home screen showing DUMMY USER - not logged in properly!',
+      );
     }
-    
+
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
     final double screenHeight = screenSize.height;
-    
+
     // Determine if we're on a small screen
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate responsive sizes
     final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
     final double headerFontSize = isSmallScreen ? 20.0 : 24.0;
@@ -39,7 +41,7 @@ class HomeScreen extends StatelessWidget {
     final double iconSize = isSmallScreen ? 20.0 : 24.0;
     final double smallIconSize = isSmallScreen ? 12.0 : 14.0;
     final double badgeSize = isSmallScreen ? 40.0 : 45.0;
-    
+
     // Calculate padding based on screen size
     final double horizontalPadding = screenWidth * 0.05;
     final double verticalPadding = screenHeight * 0.02;
@@ -75,7 +77,8 @@ class HomeScreen extends StatelessWidget {
             icon: Stack(
               children: [
                 Icon(Icons.notifications, size: isSmallScreen ? 22 : 24),
-                if (appProvider.hasUnreadNotifications) // Add notification indicator
+                if (appProvider
+                    .hasUnreadNotifications) // Add notification indicator
                   Positioned(
                     right: 0,
                     top: 0,
@@ -91,10 +94,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       child: const Text(
                         '',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 8),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -117,25 +117,30 @@ class HomeScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: isSmallScreen ? 14 : 16,
                   backgroundColor: Colors.white,
-                  backgroundImage: currentUser.imageUrl.isNotEmpty && !appProvider.profileImageLoadError
-                      ? NetworkImage(
-                          currentUser.imageUrl,
-                          scale: 1.0,
-                        )
-                      : null,
-                  onBackgroundImageError: currentUser.imageUrl.isNotEmpty && !appProvider.profileImageLoadError
-                      ? (exception, stackTrace) {
-                          debugPrint('Failed to load profile image: $exception');
-                          appProvider.setProfileImageLoadError(true);
-                        }
-                      : null,
-                  child: currentUser.imageUrl.isEmpty || appProvider.profileImageLoadError
-                      ? Icon(
-                          Icons.person,
-                          color: AppConstants.primaryColor,
-                          size: isSmallScreen ? 14 : 16,
-                        )
-                      : null,
+                  backgroundImage:
+                      currentUser.imageUrl.isNotEmpty &&
+                              !appProvider.profileImageLoadError
+                          ? NetworkImage(currentUser.imageUrl, scale: 1.0)
+                          : null,
+                  onBackgroundImageError:
+                      currentUser.imageUrl.isNotEmpty &&
+                              !appProvider.profileImageLoadError
+                          ? (exception, stackTrace) {
+                            debugPrint(
+                              'Failed to load profile image: $exception',
+                            );
+                            appProvider.setProfileImageLoadError(true);
+                          }
+                          : null,
+                  child:
+                      currentUser.imageUrl.isEmpty ||
+                              appProvider.profileImageLoadError
+                          ? Icon(
+                            Icons.person,
+                            color: AppConstants.primaryColor,
+                            size: isSmallScreen ? 14 : 16,
+                          )
+                          : null,
                 ),
               ),
             ),
@@ -223,9 +228,10 @@ class HomeScreen extends StatelessWidget {
                             horizontal: horizontalPadding * 0.8,
                           ),
                           decoration: BoxDecoration(
-                            color: currentUser.isEligibleToDonate
-                                ? AppConstants.successColor
-                                : Colors.orange,
+                            color:
+                                currentUser.isEligibleToDonate
+                                    ? AppConstants.successColor
+                                    : Colors.orange,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
@@ -288,7 +294,9 @@ class HomeScreen extends StatelessWidget {
                               onPressed: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Tap on any card to access the service'),
+                                    content: Text(
+                                      'Tap on any card to access the service',
+                                    ),
                                     duration: Duration(seconds: 2),
                                   ),
                                 );
@@ -316,7 +324,10 @@ class HomeScreen extends StatelessWidget {
                                 title: 'Request Blood',
                                 icon: Icons.bloodtype,
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/blood_request');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/blood_request',
+                                  );
                                 },
                                 index: 1,
                               ),
@@ -324,7 +335,7 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: verticalPadding),
-                        
+
                         // Second row of cards (2 cards)
                         Row(
                           children: [
@@ -333,7 +344,10 @@ class HomeScreen extends StatelessWidget {
                                 title: 'Blood Requests',
                                 icon: Icons.format_list_bulleted,
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/blood_requests_list');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/blood_requests_list',
+                                  );
                                 },
                                 index: 2,
                               ),
@@ -352,7 +366,7 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: verticalPadding),
-                        
+
                         // Third row (1 card)
                         Row(
                           children: [
@@ -361,7 +375,10 @@ class HomeScreen extends StatelessWidget {
                                 title: 'Donation History',
                                 icon: Icons.history,
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/donation_history');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/donation_history',
+                                  );
                                 },
                                 index: 4,
                               ),
@@ -369,7 +386,7 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: verticalPadding),
-                        
+
                         // Fourth row (1 card)
                         Row(
                           children: [
@@ -378,7 +395,10 @@ class HomeScreen extends StatelessWidget {
                                 title: 'Emergency Contacts',
                                 icon: Icons.emergency,
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/emergency_contacts');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/emergency_contacts',
+                                  );
                                 },
                                 index: 5,
                               ),
@@ -409,13 +429,20 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: verticalPadding * 0.8),
                         Card(
-                          margin: EdgeInsets.only(bottom: verticalPadding * 0.8),
+                          margin: EdgeInsets.only(
+                            bottom: verticalPadding * 0.8,
+                          ),
                           elevation: 2,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusM,
+                            ),
                           ),
                           color: context.cardColor,
-                          shadowColor: context.isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
+                          shadowColor:
+                              context.isDarkMode
+                                  ? Colors.black26
+                                  : Colors.grey.withOpacity(0.2),
                           child: Padding(
                             padding: EdgeInsets.all(horizontalPadding * 0.8),
                             child: Column(
@@ -492,7 +519,7 @@ class HomeScreen extends StatelessWidget {
   String _getTimeAgo(DateTime requestDate) {
     final now = DateTime.now();
     final difference = now.difference(requestDate);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
     } else if (difference.inHours > 0) {
@@ -503,4 +530,4 @@ class HomeScreen extends StatelessWidget {
       return 'Just now';
     }
   }
-} 
+}

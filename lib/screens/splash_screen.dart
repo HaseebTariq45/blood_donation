@@ -3,13 +3,14 @@ import 'package:animate_do/animate_do.dart';
 import '../constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -45,11 +46,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final double screenWidth = screenSize.width;
     final double screenHeight = screenSize.height;
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate logo size based on screen size
     final double logoSize = screenWidth * 0.35;
     final double iconSize = logoSize * 0.5;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       // Use SafeArea to avoid system UI overlays
@@ -132,7 +133,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       width: screenWidth * 0.1,
                       height: screenWidth * 0.1,
                       child: const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primaryColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppConstants.primaryColor,
+                        ),
                         strokeWidth: 3,
                       ),
                     ),
@@ -145,4 +148,4 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
     );
   }
-} 
+}

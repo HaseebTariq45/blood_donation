@@ -9,7 +9,7 @@ import '../widgets/custom_app_bar.dart';
 import '../services/service_locator.dart';
 
 class DataUsageScreen extends StatefulWidget {
-  const DataUsageScreen({Key? key}) : super(key: key);
+  const DataUsageScreen({super.key});
 
   @override
   State<DataUsageScreen> createState() => _DataUsageScreenState();
@@ -23,7 +23,7 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
       _refreshDataUsage();
     });
   }
-  
+
   Future<void> _refreshDataUsage() async {
     await serviceLocator.networkTracker.refreshDataUsage();
     if (mounted) {
@@ -36,15 +36,15 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final dataUsage = appProvider.dataUsage;
     final isDarkMode = context.isDarkMode;
-    
+
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
     final double screenHeight = screenSize.height;
-    
+
     // Determine if we're on a small screen
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate responsive sizes
     final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
     final double subtitleFontSize = isSmallScreen ? 14.0 : 16.0;
@@ -53,7 +53,7 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     final double dateFontSize = isSmallScreen ? 12.0 : 14.0;
     final double valueTextFontSize = isSmallScreen ? 14.0 : 16.0;
     final double percentTextFontSize = isSmallScreen ? 10.0 : 12.0;
-    
+
     // Calculate padding based on screen size
     final double horizontalPadding = screenWidth * 0.04;
     final double verticalPadding = isSmallScreen ? 12.0 : 16.0;
@@ -92,23 +92,23 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTotalUsageCard(
-                    context, 
-                    dataUsage, 
-                    titleFontSize, 
-                    totalUsageFontSize, 
-                    dateFontSize, 
-                    cardPadding
+                    context,
+                    dataUsage,
+                    titleFontSize,
+                    totalUsageFontSize,
+                    dateFontSize,
+                    cardPadding,
                   ),
                   SizedBox(height: spacingBetweenCards),
                   _buildUsageBreakdown(
-                    context, 
-                    dataUsage, 
-                    titleFontSize, 
-                    valueTextFontSize, 
-                    percentTextFontSize, 
-                    iconSize, 
-                    progressBarHeight, 
-                    cardPadding
+                    context,
+                    dataUsage,
+                    titleFontSize,
+                    valueTextFontSize,
+                    percentTextFontSize,
+                    iconSize,
+                    progressBarHeight,
+                    cardPadding,
                   ),
                   SizedBox(height: spacingBetweenCards),
                   _buildResetButton(context, appProvider, subtitleFontSize),
@@ -119,25 +119,25 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
                     subtitleFontSize,
                     bodyTextFontSize,
                     cardPadding,
-                    iconSize
+                    iconSize,
                   ),
                   SizedBox(height: verticalPadding),
                 ],
               ),
             );
-          }
+          },
         ),
       ),
     );
   }
 
   Widget _buildTotalUsageCard(
-    BuildContext context, 
-    DataUsageModel dataUsage, 
-    double titleFontSize, 
-    double totalUsageFontSize, 
-    double dateFontSize, 
-    double padding
+    BuildContext context,
+    DataUsageModel dataUsage,
+    double titleFontSize,
+    double totalUsageFontSize,
+    double dateFontSize,
+    double padding,
   ) {
     return Container(
       width: double.infinity,
@@ -147,9 +147,10 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: context.isDarkMode
-                ? Colors.black12
-                : Colors.grey.withOpacity(0.2),
+            color:
+                context.isDarkMode
+                    ? Colors.black12
+                    : Colors.grey.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -191,22 +192,24 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
   }
 
   Widget _buildUsageBreakdown(
-    BuildContext context, 
-    DataUsageModel dataUsage, 
-    double titleFontSize, 
-    double valueTextFontSize, 
-    double percentTextFontSize, 
-    double iconSize, 
-    double progressBarHeight, 
-    double padding
+    BuildContext context,
+    DataUsageModel dataUsage,
+    double titleFontSize,
+    double valueTextFontSize,
+    double percentTextFontSize,
+    double iconSize,
+    double progressBarHeight,
+    double padding,
   ) {
     final totalBytes = dataUsage.totalBytes.toDouble();
     final wifiBytes = dataUsage.wifiBytes.toDouble();
     final mobileBytes = dataUsage.mobileBytes.toDouble();
-    
+
     // Ensure we don't divide by zero
-    final wifiPercentage = totalBytes > 0 ? (wifiBytes / totalBytes * 100) : 0.0;
-    final mobilePercentage = totalBytes > 0 ? (mobileBytes / totalBytes * 100) : 0.0;
+    final wifiPercentage =
+        totalBytes > 0 ? (wifiBytes / totalBytes * 100) : 0.0;
+    final mobilePercentage =
+        totalBytes > 0 ? (mobileBytes / totalBytes * 100) : 0.0;
 
     return Container(
       width: double.infinity,
@@ -216,9 +219,10 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: context.isDarkMode
-                ? Colors.black12
-                : Colors.grey.withOpacity(0.2),
+            color:
+                context.isDarkMode
+                    ? Colors.black12
+                    : Colors.grey.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -236,18 +240,14 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
             ),
           ),
           SizedBox(height: padding),
-          
+
           // WiFi usage
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.wifi,
-                    color: Colors.blue,
-                    size: iconSize,
-                  ),
+                  Icon(Icons.wifi, color: Colors.blue, size: iconSize),
                   SizedBox(width: padding * 0.6),
                   Text(
                     'WiFi',
@@ -286,9 +286,9 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
               color: context.secondaryTextColor,
             ),
           ),
-          
+
           SizedBox(height: padding * 0.8),
-          
+
           // Mobile data usage
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -343,7 +343,11 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     );
   }
 
-  Widget _buildResetButton(BuildContext context, AppProvider appProvider, double fontSize) {
+  Widget _buildResetButton(
+    BuildContext context,
+    AppProvider appProvider,
+    double fontSize,
+  ) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -353,9 +357,7 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
         icon: const Icon(Icons.refresh),
         label: Text(
           'Reset Data Usage Statistics',
-          style: TextStyle(
-            fontSize: fontSize,
-          ),
+          style: TextStyle(fontSize: fontSize),
         ),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -368,12 +370,12 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
   }
 
   Widget _buildDataUsageInfo(
-    BuildContext context, 
-    double titleFontSize, 
-    double subtitleFontSize, 
-    double bodyTextFontSize, 
+    BuildContext context,
+    double titleFontSize,
+    double subtitleFontSize,
+    double bodyTextFontSize,
     double padding,
-    double iconSize
+    double iconSize,
   ) {
     return Container(
       width: double.infinity,
@@ -382,9 +384,8 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: context.isDarkMode
-              ? Colors.grey.shade800
-              : Colors.grey.shade300,
+          color:
+              context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
         ),
       ),
       child: Column(
@@ -430,18 +431,11 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.amber,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.amber, width: 1),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.amber,
-                    size: iconSize,
-                  ),
+                  Icon(Icons.info_outline, color: Colors.amber, size: iconSize),
                   SizedBox(width: padding * 0.6),
                   Expanded(
                     child: Text(
@@ -461,11 +455,14 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
     );
   }
 
-  void _showResetConfirmationDialog(BuildContext context, AppProvider appProvider) {
+  void _showResetConfirmationDialog(
+    BuildContext context,
+    AppProvider appProvider,
+  ) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 360;
     final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
     final double bodyTextFontSize = isSmallScreen ? 12.0 : 14.0;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -473,15 +470,12 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
           backgroundColor: context.cardColor,
           title: Text(
             'Reset Data Usage',
-            style: TextStyle(
-              fontSize: titleFontSize, 
-              color: context.textColor,
-            ),
+            style: TextStyle(fontSize: titleFontSize, color: context.textColor),
           ),
           content: Text(
             'Are you sure you want to reset all data usage statistics? This action cannot be undone.',
             style: TextStyle(
-              fontSize: bodyTextFontSize, 
+              fontSize: bodyTextFontSize,
               color: context.secondaryTextColor,
             ),
           ),
@@ -514,7 +508,7 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
   bool _isPlatformWithLimitedConnectivityDetection() {
     // Desktop platforms (except macOS) and web have limited connectivity detection
     if (kIsWeb) return true;
-    
+
     try {
       return Platform.isWindows || Platform.isLinux;
     } catch (e) {
@@ -522,10 +516,10 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
       return true;
     }
   }
-  
+
   String _getPlatformName() {
     if (kIsWeb) return 'Web';
-    
+
     try {
       if (Platform.isWindows) return 'Windows';
       if (Platform.isLinux) return 'Linux';
@@ -538,4 +532,4 @@ class _DataUsageScreenState extends State<DataUsageScreen> {
       return 'this platform';
     }
   }
-} 
+}

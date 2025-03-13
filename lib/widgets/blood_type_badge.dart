@@ -5,11 +5,7 @@ class BloodTypeBadge extends StatelessWidget {
   final String bloodType;
   final double size;
 
-  const BloodTypeBadge({
-    Key? key,
-    required this.bloodType,
-    this.size = 40.0,
-  }) : super(key: key);
+  const BloodTypeBadge({super.key, required this.bloodType, this.size = 40.0});
 
   @override
   Widget build(BuildContext context) {
@@ -40,4 +36,4 @@ class BloodTypeBadge extends StatelessWidget {
       ),
     );
   }
-} 
+}

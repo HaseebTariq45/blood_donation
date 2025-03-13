@@ -10,9 +10,9 @@ class CustomAlertDialog extends StatelessWidget {
   final VoidCallback? onCancel;
   final Color? confirmColor;
   final Color? cancelColor;
-  
+
   const CustomAlertDialog({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     required this.confirmText,
@@ -21,7 +21,7 @@ class CustomAlertDialog extends StatelessWidget {
     this.onCancel,
     this.confirmColor,
     this.cancelColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +29,7 @@ class CustomAlertDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       content: Text(content),
       actions: [
         // Cancel button
@@ -40,12 +37,10 @@ class CustomAlertDialog extends StatelessWidget {
           onPressed: onCancel ?? () => Navigator.pop(context),
           child: Text(
             cancelText,
-            style: TextStyle(
-              color: cancelColor ?? Colors.grey[600],
-            ),
+            style: TextStyle(color: cancelColor ?? Colors.grey[600]),
           ),
         ),
-        
+
         // Confirm button
         TextButton(
           onPressed: onConfirm,
@@ -60,4 +55,4 @@ class CustomAlertDialog extends StatelessWidget {
       ],
     );
   }
-} 
+}

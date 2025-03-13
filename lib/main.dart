@@ -34,7 +34,7 @@ import 'services/firebase_notification_service.dart';
 Future<void> _initializeApp() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase first
   try {
     await FirebaseService.initialize();
@@ -43,7 +43,7 @@ Future<void> _initializeApp() async {
     debugPrint('Failed to initialize Firebase: $e');
     // Continue execution despite the error
   }
-  
+
   // Load environment variables but don't halt execution if file is missing
   try {
     await dotenv.load(fileName: ".env");
@@ -57,34 +57,32 @@ Future<void> _initializeApp() async {
 void main() async {
   // Initialize app components
   await _initializeApp();
-  
+
   // Create the app provider
   final appProvider = AppProvider();
-  
+
   // Initialize services
   serviceLocator.initialize(appProvider);
-  
+
   // Initialize notification service - moved to widget's initState
   // to ensure we have context available
-  
+
   runApp(
-    ChangeNotifierProvider.value(
-      value: appProvider,
-      child: const MyApp(),
-    ),
+    ChangeNotifierProvider.value(value: appProvider, child: const MyApp()),
   );
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final FirebaseNotificationService _notificationService = FirebaseNotificationService();
-  
+  final FirebaseNotificationService _notificationService =
+      FirebaseNotificationService();
+
   @override
   void initState() {
     super.initState();
@@ -93,7 +91,7 @@ class _MyAppState extends State<MyApp> {
       _initializeNotifications();
     });
   }
-  
+
   Future<void> _initializeNotifications() async {
     await _notificationService.initialize(context);
   }
@@ -101,14 +99,16 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    
+
     // Determine if the current language requires right-to-left layout
-    final isRtl = appProvider.locale.languageCode == 'ar' || appProvider.locale.languageCode == 'ur';
-    
+    final isRtl =
+        appProvider.locale.languageCode == 'ar' ||
+        appProvider.locale.languageCode == 'ur';
+
     return MaterialApp(
       title: 'BloodLine',
       debugShowCheckedModeBanner: false,
-      
+
       // Localization support
       locale: appProvider.locale,
       supportedLocales: const [
@@ -124,7 +124,7 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      
+
       // Set text direction based on language
       builder: (context, child) {
         return Directionality(
@@ -132,7 +132,7 @@ class _MyAppState extends State<MyApp> {
           child: child!,
         );
       },
-      
+
       theme: AppConstants.getThemeData(),
       darkTheme: AppConstants.getDarkThemeData(),
       themeMode: appProvider.themeMode,
@@ -147,7 +147,8 @@ class _MyAppState extends State<MyApp> {
         '/blood_requests_list': (context) => const BloodRequestsListScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
-        '/notification_settings': (context) => const NotificationSettingsScreen(),
+        '/notification_settings':
+            (context) => const NotificationSettingsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/blood_banks': (context) => const BloodBanksScreen(),
         '/donation_history': (context) => const DonationHistoryScreen(),

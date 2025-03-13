@@ -4,7 +4,7 @@ import '../constants/app_constants.dart';
 import '../utils/localization/app_localization.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
-  const PrivacyPolicyScreen({Key? key}) : super(key: key);
+  const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,23 +12,23 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
     final double screenHeight = screenSize.height;
-    
+
     // Determine if we're on a small screen
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate responsive sizes
     final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
     final double subTitleFontSize = isSmallScreen ? 14.0 : 16.0;
     final double paragraphFontSize = isSmallScreen ? 13.0 : 15.0;
     final double bulletFontSize = isSmallScreen ? 13.0 : 15.0;
     final double lastUpdatedFontSize = isSmallScreen ? 12.0 : 14.0;
-    
+
     // Calculate padding based on screen size
     final double horizontalPadding = screenWidth * 0.05;
     final double verticalPadding = screenHeight * 0.02;
     final double sectionSpacing = isSmallScreen ? 12.0 : 16.0;
     final double bulletLeftPadding = isSmallScreen ? 12.0 : 16.0;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
@@ -55,18 +55,38 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: verticalPadding * 1.2),
 
                   // Introduction
-                  _buildSectionTitle(context, 'privacy_intro_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_intro_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_intro_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_intro_content',
+                    paragraphFontSize,
+                  ),
                   SizedBox(height: sectionSpacing),
 
                   // Information We Collect
-                  _buildSectionTitle(context, 'privacy_collect_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_collect_content', paragraphFontSize),
-                  
+                  _buildSectionTitle(
+                    context,
+                    'privacy_collect_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_collect_content',
+                    paragraphFontSize,
+                  ),
+
                   // Personal Information
-                  _buildSubSectionTitle(context, 'privacy_personal_title', subTitleFontSize),
+                  _buildSubSectionTitle(
+                    context,
+                    'privacy_personal_title',
+                    subTitleFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_personal_point1',
                       'privacy_personal_point2',
@@ -77,11 +97,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     bulletFontSize,
                     bulletLeftPadding,
                   ),
-                  
+
                   // Health Information
-                  _buildSubSectionTitle(context, 'privacy_health_title', subTitleFontSize),
+                  _buildSubSectionTitle(
+                    context,
+                    'privacy_health_title',
+                    subTitleFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_health_point1',
                       'privacy_health_point2',
@@ -91,11 +115,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     bulletFontSize,
                     bulletLeftPadding,
                   ),
-                  
+
                   // Usage Information
-                  _buildSubSectionTitle(context, 'privacy_usage_title', subTitleFontSize),
+                  _buildSubSectionTitle(
+                    context,
+                    'privacy_usage_title',
+                    subTitleFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_usage_point1',
                       'privacy_usage_point2',
@@ -107,10 +135,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: sectionSpacing),
 
                   // How We Use Your Information
-                  _buildSectionTitle(context, 'privacy_use_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_use_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_use_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_use_content',
+                    paragraphFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_use_point1',
                       'privacy_use_point2',
@@ -125,10 +161,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: sectionSpacing),
 
                   // Sharing Your Information
-                  _buildSectionTitle(context, 'privacy_share_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_share_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_share_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_share_content',
+                    paragraphFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_share_point1',
                       'privacy_share_point2',
@@ -141,10 +185,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: sectionSpacing),
 
                   // Data Security
-                  _buildSectionTitle(context, 'privacy_security_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_security_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_security_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_security_content',
+                    paragraphFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_security_point1',
                       'privacy_security_point2',
@@ -156,15 +208,31 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: sectionSpacing),
 
                   // Data Retention
-                  _buildSectionTitle(context, 'privacy_retention_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_retention_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_retention_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_retention_content',
+                    paragraphFontSize,
+                  ),
                   SizedBox(height: sectionSpacing),
 
                   // Your Rights
-                  _buildSectionTitle(context, 'privacy_rights_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_rights_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_rights_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_rights_content',
+                    paragraphFontSize,
+                  ),
                   _buildBulletPoints(
-                    context, 
+                    context,
                     [
                       'privacy_rights_point1',
                       'privacy_rights_point2',
@@ -178,18 +246,42 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   SizedBox(height: sectionSpacing),
 
                   // Children's Privacy
-                  _buildSectionTitle(context, 'privacy_children_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_children_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_children_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_children_content',
+                    paragraphFontSize,
+                  ),
                   SizedBox(height: sectionSpacing),
 
                   // Changes to Privacy Policy
-                  _buildSectionTitle(context, 'privacy_changes_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_changes_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_changes_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_changes_content',
+                    paragraphFontSize,
+                  ),
                   SizedBox(height: sectionSpacing),
 
                   // Contact Information
-                  _buildSectionTitle(context, 'privacy_contact_title', titleFontSize),
-                  _buildParagraph(context, 'privacy_contact_content', paragraphFontSize),
+                  _buildSectionTitle(
+                    context,
+                    'privacy_contact_title',
+                    titleFontSize,
+                  ),
+                  _buildParagraph(
+                    context,
+                    'privacy_contact_content',
+                    paragraphFontSize,
+                  ),
                   SizedBox(height: verticalPadding * 1.6),
                 ],
               ),
@@ -214,7 +306,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSubSectionTitle(BuildContext context, String key, double fontSize) {
+  Widget _buildSubSectionTitle(
+    BuildContext context,
+    String key,
+    double fontSize,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
       child: Text(
@@ -233,20 +329,25 @@ class PrivacyPolicyScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         key.tr(context),
-        style: TextStyle(
-          fontSize: fontSize,
-          height: 1.5,
-        ),
+        style: TextStyle(fontSize: fontSize, height: 1.5),
       ),
     );
   }
 
-  Widget _buildBulletPoints(BuildContext context, List<String> points, double fontSize, double leftPadding) {
+  Widget _buildBulletPoints(
+    BuildContext context,
+    List<String> points,
+    double fontSize,
+    double leftPadding,
+  ) {
     return Padding(
       padding: EdgeInsets.only(left: leftPadding, top: 8.0, bottom: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: points.map((point) => _buildBulletPoint(context, point, fontSize)).toList(),
+        children:
+            points
+                .map((point) => _buildBulletPoint(context, point, fontSize))
+                .toList(),
       ),
     );
   }
@@ -268,14 +369,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Expanded(
             child: Text(
               key.tr(context),
-              style: TextStyle(
-                fontSize: fontSize,
-                height: 1.5,
-              ),
+              style: TextStyle(fontSize: fontSize, height: 1.5),
             ),
           ),
         ],
       ),
     );
   }
-} 
+}

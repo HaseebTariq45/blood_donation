@@ -10,7 +10,7 @@ import '../models/donation_model.dart';
 import '../utils/theme_helper.dart';
 
 class DonationHistoryScreen extends StatefulWidget {
-  const DonationHistoryScreen({Key? key}) : super(key: key);
+  const DonationHistoryScreen({super.key});
 
   @override
   State<DonationHistoryScreen> createState() => _DonationHistoryScreenState();
@@ -19,7 +19,12 @@ class DonationHistoryScreen extends StatefulWidget {
 class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
   List<DonationModel> _filteredDonations = [];
   String _filterStatus = 'All';
-  final List<String> _statusFilters = ['All', 'Completed', 'Pending', 'Cancelled'];
+  final List<String> _statusFilters = [
+    'All',
+    'Completed',
+    'Pending',
+    'Cancelled',
+  ];
   bool _isLoading = true;
 
   @override
@@ -37,7 +42,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
     try {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
       await appProvider.loadUserDonations();
-      
+
       _filterDonations();
     } catch (e) {
       debugPrint('Error loading donations: $e');
@@ -55,9 +60,10 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
       if (_filterStatus == 'All') {
         _filteredDonations = List.from(appProvider.userDonations);
       } else {
-        _filteredDonations = appProvider.userDonations
-            .where((donation) => donation.status == _filterStatus)
-            .toList();
+        _filteredDonations =
+            appProvider.userDonations
+                .where((donation) => donation.status == _filterStatus)
+                .toList();
       }
     });
   }
@@ -75,19 +81,17 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
 
   Future<void> _cancelDonation(String donationId) async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    
+
     // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
       final success = await appProvider.cancelDonation(donationId);
-      
+
       // Close the loading dialog
       Navigator.of(context).pop();
 
@@ -98,7 +102,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Update filtered list
         _filterDonations();
       } else {
@@ -112,12 +116,9 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
     } catch (e) {
       // Close the loading dialog
       Navigator.of(context).pop();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -125,19 +126,20 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.isDarkMode;
-    
+
     return Scaffold(
       backgroundColor: context.backgroundColor,
-      appBar: const CustomAppBar(
-        title: 'Donation History',
-      ),
+      appBar: const CustomAppBar(title: 'Donation History'),
       body: RefreshIndicator(
         onRefresh: _loadDonations,
         child: Column(
           children: [
             // Filter chip row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: SizedBox(
                 height: 48,
                 child: ListView.builder(
@@ -152,14 +154,17 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                         showCheckmark: false,
                         label: Text(status),
                         labelStyle: TextStyle(
-                          color: _filterStatus == status
-                              ? Colors.white
-                              : context.textColor,
-                          fontWeight: _filterStatus == status
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          color:
+                              _filterStatus == status
+                                  ? Colors.white
+                                  : context.textColor,
+                          fontWeight:
+                              _filterStatus == status
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                         ),
-                        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[800] : Colors.grey[100],
                         selectedColor: AppConstants.primaryColor,
                         onSelected: (selected) {
                           _applyFilter(status);
@@ -178,7 +183,8 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                 return StreamBuilder<List<DonationModel>>(
                   stream: appProvider.getUserDonationsStream(),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        _isLoading) {
                       return const Padding(
                         padding: EdgeInsets.all(16.0),
                         child: Center(child: CircularProgressIndicator()),
@@ -186,22 +192,23 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                     }
 
                     // Use snapshot data if available, otherwise fall back to appProvider
-                    final donations = snapshot.hasData 
-                        ? snapshot.data! 
-                        : appProvider.userDonations;
-                    
+                    final donations =
+                        snapshot.hasData
+                            ? snapshot.data!
+                            : appProvider.userDonations;
+
                     final totalDonations = donations.length;
-                    final completedDonations = donations
-                        .where((d) => d.status == 'Completed')
-                        .length;
-                    
+                    final completedDonations =
+                        donations.where((d) => d.status == 'Completed').length;
+
                     // Update filtered donations if we got new data
-                    if (snapshot.hasData && snapshot.data != appProvider.userDonations) {
+                    if (snapshot.hasData &&
+                        snapshot.data != appProvider.userDonations) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         _filterDonations();
                       });
                     }
-                    
+
                     return Column(
                       children: [
                         Padding(
@@ -226,7 +233,9 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                                 const SizedBox(width: 12),
                                 _buildStatCard(
                                   'Blood Saved (L)',
-                                  (completedDonations * 0.45).toStringAsFixed(1),
+                                  (completedDonations * 0.45).toStringAsFixed(
+                                    1,
+                                  ),
                                   Icons.water_drop,
                                   AppConstants.primaryColor,
                                 ),
@@ -234,7 +243,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                             ),
                           ),
                         ),
-                        
+
                         // Only show chart if we have enough donations
                         if (donations.length > 1)
                           Padding(
@@ -279,167 +288,179 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
 
             // Donations list
             Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredDonations.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      itemCount: _filteredDonations.length,
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        final donation = _filteredDonations[index];
-                        return Card(
-                          elevation: 1,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          color: context.cardColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredDonations.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                        itemCount: _filteredDonations.length,
+                        padding: const EdgeInsets.all(16),
+                        itemBuilder: (context, index) {
+                          final donation = _filteredDonations[index];
+                          return Card(
+                            elevation: 1,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            color: context.cardColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _getStatusColor(
+                                            donation.status,
+                                          ).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          donation.status,
+                                          style: TextStyle(
+                                            color: _getStatusColor(
+                                              donation.status,
+                                            ),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: _getStatusColor(donation.status)
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Text(
-                                        donation.status,
+                                      const Spacer(),
+                                      Text(
+                                        _formatDate(donation.date),
                                         style: TextStyle(
-                                          color: _getStatusColor(donation.status),
-                                          fontWeight: FontWeight.w600,
+                                          color: context.secondaryTextColor,
                                           fontSize: 12,
                                         ),
                                       ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      _formatDate(donation.date),
-                                      style: TextStyle(
-                                        color: context.secondaryTextColor,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: AppConstants.primaryColor
-                                            .withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          donation.bloodType,
-                                          style: const TextStyle(
-                                            color: AppConstants.primaryColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                          ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: AppConstants.primaryColor
+                                              .withOpacity(0.1),
+                                          shape: BoxShape.circle,
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            donation.centerName,
-                                            style: TextStyle(
+                                        child: Center(
+                                          child: Text(
+                                            donation.bloodType,
+                                            style: const TextStyle(
+                                              color: AppConstants.primaryColor,
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: context.textColor,
+                                              fontSize: 18,
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            donation.address,
-                                            style: TextStyle(
-                                              color: context.secondaryTextColor,
-                                              fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              donation.centerName,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: context.textColor,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        '1 Unit (450ml)',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: context.textColor,
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              donation.address,
+                                              style: TextStyle(
+                                                color:
+                                                    context.secondaryTextColor,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                    if (donation.status == 'Pending')
-                                      TextButton.icon(
-                                        onPressed: () => _cancelDonation(donation.id),
-                                        icon: const Icon(
-                                          Icons.cancel,
-                                          color: AppConstants.errorColor,
-                                          size: 18,
-                                        ),
-                                        label: const Text(
-                                          'Cancel',
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '1 Unit (450ml)',
                                           style: TextStyle(
-                                            color: AppConstants.errorColor,
-                                          ),
-                                        ),
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: context.textColor,
                                           ),
                                         ),
                                       ),
-                                    if (donation.status == 'Completed')
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.verified,
-                                            color: Colors.green,
-                                            size: 16,
+                                      if (donation.status == 'Pending')
+                                        TextButton.icon(
+                                          onPressed:
+                                              () =>
+                                                  _cancelDonation(donation.id),
+                                          icon: const Icon(
+                                            Icons.cancel,
+                                            color: AppConstants.errorColor,
+                                            size: 18,
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Verified',
+                                          label: const Text(
+                                            'Cancel',
                                             style: TextStyle(
-                                              color: context.isDarkMode ? Colors.green[400] : Colors.green[700],
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
+                                              color: AppConstants.errorColor,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                  ],
-                                ),
-                              ],
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                            ),
+                                          ),
+                                        ),
+                                      if (donation.status == 'Completed')
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.verified,
+                                              color: Colors.green,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Verified',
+                                              style: TextStyle(
+                                                color:
+                                                    context.isDarkMode
+                                                        ? Colors.green[400]
+                                                        : Colors.green[700],
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),
@@ -559,12 +580,19 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
   }
 
   Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.isDarkMode ? color.withOpacity(0.15) : color.withOpacity(0.1),
+        color:
+            context.isDarkMode
+                ? color.withOpacity(0.15)
+                : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -580,11 +608,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
+              Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -630,25 +654,25 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
     // Sort donations by date (oldest first)
     final sortedDonations = List<DonationModel>.from(donations)
       ..sort((a, b) => a.date.compareTo(b.date));
-    
+
     if (sortedDonations.isEmpty) return const SizedBox();
-    
+
     // Group donations by month for the bar chart
     final Map<String, int> donationsByMonth = {};
-    
+
     for (final donation in sortedDonations) {
       final month = DateFormat('MMM yyyy').format(donation.date);
       donationsByMonth[month] = (donationsByMonth[month] ?? 0) + 1;
     }
-    
+
     // Convert to list of FlSpot for the chart
     final List<BarChartGroupData> barGroups = [];
     final months = donationsByMonth.keys.toList();
-    
+
     for (int i = 0; i < months.length; i++) {
       final month = months[i];
       final count = donationsByMonth[month] ?? 0;
-      
+
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -666,11 +690,16 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
         ),
       );
     }
-    
+
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: donationsByMonth.values.fold(0, (max, value) => value > max ? value : max) + 1,
+        maxY:
+            donationsByMonth.values.fold(
+              0,
+              (max, value) => value > max ? value : max,
+            ) +
+            1,
         titlesData: FlTitlesData(
           show: true,
           bottomTitles: AxisTitles(
@@ -722,4 +751,4 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
       ),
     );
   }
-} 
+}

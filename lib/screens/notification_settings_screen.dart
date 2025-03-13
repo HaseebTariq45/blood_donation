@@ -5,19 +5,24 @@ import '../constants/app_constants.dart';
 import '../widgets/custom_app_bar.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
-  const NotificationSettingsScreen({Key? key}) : super(key: key);
+  const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+  State<NotificationSettingsScreen> createState() =>
+      _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState
+    extends State<NotificationSettingsScreen> {
   @override
   void initState() {
     super.initState();
     // Check notification settings when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AppProvider>(context, listen: false).checkNotificationSettings();
+      Provider.of<AppProvider>(
+        context,
+        listen: false,
+      ).checkNotificationSettings();
     });
   }
 
@@ -55,17 +60,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Card(
       elevation: 0,
       color: AppConstants.primaryColor.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              Icons.info_outline,
-              color: AppConstants.primaryColor,
-            ),
+            Icon(Icons.info_outline, color: AppConstants.primaryColor),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -84,9 +84,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   Widget _buildMainToggle(AppProvider appProvider) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
@@ -99,17 +97,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 children: [
                   const Text(
                     'Enable Notifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Turn on or off all notifications',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -129,7 +121,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   Widget _buildNotificationTypeToggles(AppProvider appProvider) {
     bool mainEnabled = appProvider.notificationsEnabled;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,10 +129,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           padding: EdgeInsets.only(left: 16, bottom: 8),
           child: Text(
             'Notification Types',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
         // Email notifications
@@ -167,19 +156,19 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       ),
                       Text(
                         'Receive notifications via email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
                 ),
                 Switch(
                   value: appProvider.emailNotificationsEnabled,
-                  onChanged: mainEnabled ? (value) async {
-                    await appProvider.toggleEmailNotifications(value);
-                  } : null,
+                  onChanged:
+                      mainEnabled
+                          ? (value) async {
+                            await appProvider.toggleEmailNotifications(value);
+                          }
+                          : null,
                   activeColor: AppConstants.primaryColor,
                 ),
               ],
@@ -211,19 +200,19 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       ),
                       Text(
                         'Receive notifications on your device',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
                 ),
                 Switch(
                   value: appProvider.pushNotificationsEnabled,
-                  onChanged: mainEnabled ? (value) async {
-                    await appProvider.togglePushNotifications(value);
-                  } : null,
+                  onChanged:
+                      mainEnabled
+                          ? (value) async {
+                            await appProvider.togglePushNotifications(value);
+                          }
+                          : null,
                   activeColor: AppConstants.primaryColor,
                 ),
               ],
@@ -238,17 +227,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: appProvider.notificationsEnabled
-            ? () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Test notification sent!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                await appProvider.sendTestNotification();
-              }
-            : null,
+        onPressed:
+            appProvider.notificationsEnabled
+                ? () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Test notification sent!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  await appProvider.sendTestNotification();
+                }
+                : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppConstants.primaryColor,
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -267,4 +257,4 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       ),
     );
   }
-} 
+}

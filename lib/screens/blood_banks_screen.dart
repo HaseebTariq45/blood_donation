@@ -13,7 +13,7 @@ import '../models/donation_model.dart';
 import 'package:intl/intl.dart';
 
 class BloodBanksScreen extends StatefulWidget {
-  const BloodBanksScreen({Key? key}) : super(key: key);
+  const BloodBanksScreen({super.key});
 
   @override
   State<BloodBanksScreen> createState() => _BloodBanksScreenState();
@@ -29,7 +29,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   double _maxDistance = 5000; // 5 km default
   Position? _currentPosition;
   List<BloodBankModel> _nearbyBloodBanks = [];
-  
+
   // Default camera position (will be updated with user's location)
   CameraPosition _initialCameraPosition = const CameraPosition(
     target: LatLng(37.7749, -122.4194), // Sample location (San Francisco)
@@ -45,7 +45,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   Future<void> _checkLocationPermission() async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     await appProvider.checkLocationStatus();
-    
+
     if (appProvider.isLocationEnabled) {
       setState(() {
         _isLocationEnabled = true;
@@ -63,10 +63,10 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   Future<void> _getCurrentLocation() async {
     try {
       final locationService = LocationService();
-      
+
       // Get current position
       Position? position = await locationService.getCurrentPosition();
-      
+
       if (position == null) {
         setState(() {
           _isLocationEnabled = false;
@@ -75,7 +75,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         _showLocationServiceDialog();
         return;
       }
-      
+
       setState(() {
         _currentPosition = position;
         _initialCameraPosition = CameraPosition(
@@ -84,14 +84,14 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         );
         _isLoading = false;
       });
-      
+
       // Move camera to current position
       if (_mapController != null) {
         _mapController!.animateCamera(
           CameraUpdate.newCameraPosition(_initialCameraPosition),
         );
       }
-      
+
       // Add marker for current location
       _addMarker(
         LatLng(position.latitude, position.longitude),
@@ -99,7 +99,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         "Your Location",
         BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
       );
-      
+
       // Search for nearby blood banks
       await _searchNearbyBloodBanks();
     } catch (e) {
@@ -112,25 +112,27 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
 
   Future<void> _searchNearbyBloodBanks() async {
     if (_currentPosition == null) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // In a real app, you would fetch from Google Places API
       // For now, we'll simulate with dummy data but with real coordinates
       final appProvider = Provider.of<AppProvider>(context, listen: false);
       final dummyBanks = appProvider.bloodBanks;
-      
+
       // Create a list of blood banks with current location-based positions
       List<BloodBankModel> nearbyBanks = [];
-      
+
       for (int i = 0; i < dummyBanks.length; i++) {
         // Generate positions around the user's current location
-        double lat = _currentPosition!.latitude + (i * 0.005) * (i % 2 == 0 ? 1 : -1);
-        double lng = _currentPosition!.longitude + (i * 0.005) * (i % 3 == 0 ? 1 : -1);
-        
+        double lat =
+            _currentPosition!.latitude + (i * 0.005) * (i % 2 == 0 ? 1 : -1);
+        double lng =
+            _currentPosition!.longitude + (i * 0.005) * (i % 3 == 0 ? 1 : -1);
+
         // Calculate actual distance
         double distanceInMeters = Geolocator.distanceBetween(
           _currentPosition!.latitude,
@@ -138,7 +140,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
           lat,
           lng,
         );
-        
+
         // Create new blood bank with updated coordinates and distance
         BloodBankModel bank = BloodBankModel(
           id: dummyBanks[i].id,
@@ -153,18 +155,18 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
           distance: distanceInMeters.toInt(),
           availableBloodTypes: dummyBanks[i].availableBloodTypes,
         );
-        
+
         nearbyBanks.add(bank);
       }
-      
+
       // Sort by distance
       nearbyBanks.sort((a, b) => a.distance.compareTo(b.distance));
-      
+
       setState(() {
         _nearbyBloodBanks = nearbyBanks;
         _isLoading = false;
       });
-      
+
       // Add markers for blood banks
       for (var bank in nearbyBanks.where((b) => b.distance <= _maxDistance)) {
         _addMarker(
@@ -185,8 +187,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
     }
   }
 
-  void _addMarker(LatLng position, String markerId, String title, 
-      BitmapDescriptor icon, {BloodBankModel? bank}) {
+  void _addMarker(
+    LatLng position,
+    String markerId,
+    String title,
+    BitmapDescriptor icon, {
+    BloodBankModel? bank,
+  }) {
     final marker = Marker(
       markerId: MarkerId(markerId),
       position: position,
@@ -198,7 +205,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
       icon: icon,
       onTap: bank != null ? () => _showBloodBankInfo(bank) : null,
     );
-    
+
     setState(() {
       _markers[MarkerId(markerId)] = marker;
     });
@@ -206,9 +213,9 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
 
   void _getPolyline(BloodBankModel bank) async {
     if (_currentPosition == null) return;
-    
+
     PolylineId id = PolylineId(bank.id);
-    
+
     // Clear existing polylines
     setState(() {
       _polylines.clear();
@@ -220,14 +227,14 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
       LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
       LatLng(bank.latitude, bank.longitude),
     ];
-    
+
     Polyline polyline = Polyline(
       polylineId: id,
       color: AppConstants.primaryColor,
       points: polylineCoordinates,
       width: 3,
     );
-    
+
     setState(() {
       _polylines[id] = polyline;
     });
@@ -236,15 +243,18 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   void _filterByDistance(double value) {
     setState(() {
       _maxDistance = value;
-      _markers.removeWhere((id, marker) => 
-        id.value != "current_location" && 
-        _nearbyBloodBanks.any((bank) => 
-          bank.id == id.value && bank.distance > _maxDistance
-        )
+      _markers.removeWhere(
+        (id, marker) =>
+            id.value != "current_location" &&
+            _nearbyBloodBanks.any(
+              (bank) => bank.id == id.value && bank.distance > _maxDistance,
+            ),
       );
 
       // Add back any blood banks that are now within range
-      for (var bank in _nearbyBloodBanks.where((b) => b.distance <= _maxDistance)) {
+      for (var bank in _nearbyBloodBanks.where(
+        (b) => b.distance <= _maxDistance,
+      )) {
         if (!_markers.containsKey(MarkerId(bank.id))) {
           _addMarker(
             LatLng(bank.latitude, bank.longitude),
@@ -318,7 +328,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   void _showBloodBankInfo(BloodBankModel bank) {
     // Draw route to this blood bank
     _getPolyline(bank);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -327,228 +337,228 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
           top: Radius.circular(AppConstants.radiusL),
         ),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(AppConstants.paddingL),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(AppConstants.paddingL),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    bank.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        bank.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: bank.isOpen
-                        ? AppConstants.successColor.withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    bank.isOpen ? 'Open' : 'Closed',
-                    style: TextStyle(
-                      color: bank.isOpen
-                          ? AppConstants.successColor
-                          : Colors.grey,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            bank.isOpen
+                                ? AppConstants.successColor.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        bank.isOpen ? 'Open' : 'Closed',
+                        style: TextStyle(
+                          color:
+                              bank.isOpen
+                                  ? AppConstants.successColor
+                                  : Colors.grey,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on,
-                  size: 16,
-                  color: AppConstants.lightTextColor,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    bank.address,
-                    style: const TextStyle(
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 16,
                       color: AppConstants.lightTextColor,
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        bank.address,
+                        style: const TextStyle(
+                          color: AppConstants.lightTextColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      bank.formattedDistance,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppConstants.primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  bank.formattedDistance,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: AppConstants.primaryColor,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: AppConstants.lightTextColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      bank.openingHours,
+                      style: const TextStyle(
+                        color: AppConstants.lightTextColor,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: AppConstants.lightTextColor,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.phone,
+                      size: 16,
+                      color: AppConstants.lightTextColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      bank.phone,
+                      style: const TextStyle(
+                        color: AppConstants.lightTextColor,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  bank.openingHours,
-                  style: const TextStyle(
-                    color: AppConstants.lightTextColor,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.star, size: 16, color: Colors.amber),
+                    const SizedBox(width: 4),
+                    Text(
+                      bank.rating.toString(),
+                      style: const TextStyle(
+                        color: AppConstants.darkTextColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.phone,
-                  size: 16,
-                  color: AppConstants.lightTextColor,
+                const SizedBox(height: 16),
+                const Text(
+                  'Available Blood Types',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  bank.phone,
-                  style: const TextStyle(
-                    color: AppConstants.lightTextColor,
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      bank.availableBloodTypes.entries.map((entry) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            '${entry.key}: ${entry.value} units',
+                            style: const TextStyle(
+                              color: AppConstants.primaryColor,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.star,
-                  size: 16,
-                  color: Colors.amber,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  bank.rating.toString(),
-                  style: const TextStyle(
-                    color: AppConstants.darkTextColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Available Blood Types',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: bank.availableBloodTypes.entries.map((entry) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    '${entry.key}: ${entry.value} units',
-                    style: const TextStyle(
-                      color: AppConstants.primaryColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _scheduleDonation(bank),
+                    icon: const Icon(Icons.favorite),
+                    label: const Text('Schedule Donation'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _scheduleDonation(bank),
-                icon: const Icon(Icons.favorite),
-                label: const Text('Schedule Donation'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // Implement call action
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Calling blood bank...'),
-                      duration: Duration(seconds: 2),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Implement call action
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Calling blood bank...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.phone),
+                    label: const Text('Call Blood Bank'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.phone),
-                label: const Text('Call Blood Bank'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // Implement directions action
-                  Navigator.pop(context);
-                  _mapController?.animateCamera(
-                    CameraUpdate.newLatLngBounds(
-                      _getBounds([
-                        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-                        LatLng(bank.latitude, bank.longitude),
-                      ]),
-                      100, // Padding in pixels
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Implement directions action
+                      Navigator.pop(context);
+                      _mapController?.animateCamera(
+                        CameraUpdate.newLatLngBounds(
+                          _getBounds([
+                            LatLng(
+                              _currentPosition!.latitude,
+                              _currentPosition!.longitude,
+                            ),
+                            LatLng(bank.latitude, bank.longitude),
+                          ]),
+                          100, // Padding in pixels
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.directions),
+                    label: const Text('Get Directions'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.directions),
-                label: const Text('Get Directions'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   // Method to schedule a blood donation
   void _scheduleDonation(BloodBankModel bank) async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    
+
     if (!appProvider.isLoggedIn) {
       Navigator.of(context).pop(); // Close the blood bank info sheet
       ScaffoldMessenger.of(context).showSnackBar(
@@ -560,7 +570,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
       Navigator.of(context).pushNamed('/login');
       return;
     }
-    
+
     // Show date picker to select donation date
     final DateTime? selectedDate = await showDatePicker(
       context: context,
@@ -580,21 +590,19 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         );
       },
     );
-    
+
     if (selectedDate == null) {
       // User cancelled the date picker
       return;
     }
-    
+
     // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    
+
     try {
       // Create donation model
       final donation = DonationModel.create(
@@ -603,19 +611,17 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         bloodType: appProvider.currentUser.bloodType,
         centerName: bank.name,
         address: bank.address,
-      ).copyWith(
-        date: selectedDate,
-      );
-      
+      ).copyWith(date: selectedDate);
+
       // Add donation via AppProvider
       final success = await appProvider.addDonation(donation);
-      
+
       // Close loading indicator
       Navigator.of(context).pop();
-      
+
       // Close blood bank sheet
       Navigator.of(context).pop();
-      
+
       if (success) {
         // Show success dialog with animation
         _showDonationScheduledDialog(donation);
@@ -630,16 +636,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
     } catch (e) {
       // Close loading indicator
       Navigator.of(context).pop();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
-  
+
   // Show success dialog for scheduled donation
   void _showDonationScheduledDialog(DonationModel donation) {
     showDialog(
@@ -670,10 +673,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
               const SizedBox(height: 24),
               const Text(
                 'Donation Scheduled!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -720,14 +720,14 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
     double maxLat = points.first.latitude;
     double minLng = points.first.longitude;
     double maxLng = points.first.longitude;
-    
+
     for (var point in points) {
       if (point.latitude < minLat) minLat = point.latitude;
       if (point.latitude > maxLat) maxLat = point.latitude;
       if (point.longitude < minLng) minLng = point.longitude;
       if (point.longitude > maxLng) maxLng = point.longitude;
     }
-    
+
     return LatLngBounds(
       northeast: LatLng(maxLat, maxLng),
       southwest: LatLng(minLat, minLng),
@@ -736,180 +736,213 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredBloodBanks = _nearbyBloodBanks
-        .where((bank) => bank.distance <= _maxDistance)
-        .toList();
+    final filteredBloodBanks =
+        _nearbyBloodBanks
+            .where((bank) => bank.distance <= _maxDistance)
+            .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const CustomAppBar(
-        title: 'Nearby Blood Banks',
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !_isLocationEnabled
+      appBar: const CustomAppBar(title: 'Nearby Blood Banks'),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : !_isLocationEnabled
               ? _buildLocationDisabledView()
               : Column(
-                  children: [
-                    // Filter section
-                    Container(
-                      padding: const EdgeInsets.all(AppConstants.paddingM),
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Distance Filter',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 16,
-                                ),
+                children: [
+                  // Filter section
+                  Container(
+                    padding: const EdgeInsets.all(AppConstants.paddingM),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Distance Filter',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
                               ),
-                              Text(
+                            ),
+                            Text(
+                              '${(_maxDistance / 1000).toStringAsFixed(1)} km',
+                              style: const TextStyle(
+                                color: AppConstants.primaryColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 8,
+                            ),
+                            overlayShape: const RoundSliderOverlayShape(
+                              overlayRadius: 16,
+                            ),
+                            valueIndicatorShape:
+                                const PaddleSliderValueIndicatorShape(),
+                            valueIndicatorTextStyle: const TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          child: Slider(
+                            value: _maxDistance,
+                            min: 1000, // 1 km
+                            max: 10000, // 10 km
+                            divisions: 9,
+                            label:
                                 '${(_maxDistance / 1000).toStringAsFixed(1)} km',
-                                style: const TextStyle(
-                                  color: AppConstants.primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                            activeColor: AppConstants.primaryColor,
+                            inactiveColor: AppConstants.primaryColor
+                                .withOpacity(0.2),
+                            onChanged: (value) {
+                              _filterByDistance(value);
+                            },
                           ),
-                          const SizedBox(height: 8),
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                              valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
-                              valueIndicatorTextStyle: const TextStyle(color: Colors.white),
-                            ),
-                            child: Slider(
-                              value: _maxDistance,
-                              min: 1000, // 1 km
-                              max: 10000, // 10 km
-                              divisions: 9,
-                              label: '${(_maxDistance / 1000).toStringAsFixed(1)} km',
-                              activeColor: AppConstants.primaryColor,
-                              inactiveColor: AppConstants.primaryColor.withOpacity(0.2),
-                              onChanged: (value) {
-                                _filterByDistance(value);
-                              },
-                            ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('1 km'),
-                              const Text('10 km'),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Toggle Map/List view
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showListView = false;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: !_showListView
-                                          ? AppConstants.primaryColor
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [const Text('1 km'), const Text('10 km')],
+                        ),
+                        const SizedBox(height: 8),
+                        // Toggle Map/List view
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showListView = false;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        !_showListView
+                                            ? AppConstants.primaryColor
+                                            : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(
+                                      AppConstants.radiusM,
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.map,
-                                          color: !_showListView ? Colors.white : AppConstants.lightTextColor,
-                                          size: 18,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.map,
+                                        color:
+                                            !_showListView
+                                                ? Colors.white
+                                                : AppConstants.lightTextColor,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Map',
+                                        style: TextStyle(
+                                          color:
+                                              !_showListView
+                                                  ? Colors.white
+                                                  : AppConstants.lightTextColor,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Map',
-                                          style: TextStyle(
-                                            color: !_showListView ? Colors.white : AppConstants.lightTextColor,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showListView = true;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: _showListView
-                                          ? AppConstants.primaryColor
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showListView = true;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        _showListView
+                                            ? AppConstants.primaryColor
+                                            : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(
+                                      AppConstants.radiusM,
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.list,
-                                          color: _showListView ? Colors.white : AppConstants.lightTextColor,
-                                          size: 18,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.list,
+                                        color:
+                                            _showListView
+                                                ? Colors.white
+                                                : AppConstants.lightTextColor,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'List',
+                                        style: TextStyle(
+                                          color:
+                                              _showListView
+                                                  ? Colors.white
+                                                  : AppConstants.lightTextColor,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'List',
-                                          style: TextStyle(
-                                            color: _showListView ? Colors.white : AppConstants.lightTextColor,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Map or List View
+                  Expanded(
+                    child:
+                        _showListView
+                            ? _buildListView(filteredBloodBanks)
+                            : _buildMapView(),
+                  ),
+                ],
+              ),
+      floatingActionButton:
+          !_isLoading && _isLocationEnabled && !_showListView
+              ? FloatingActionButton(
+                onPressed: () {
+                  if (_currentPosition != null && _mapController != null) {
+                    _mapController!.animateCamera(
+                      CameraUpdate.newLatLng(
+                        LatLng(
+                          _currentPosition!.latitude,
+                          _currentPosition!.longitude,
+                        ),
                       ),
-                    ),
-                    // Map or List View
-                    Expanded(
-                      child: _showListView
-                          ? _buildListView(filteredBloodBanks)
-                          : _buildMapView(),
-                    ),
-                  ],
-                ),
-      floatingActionButton: !_isLoading && _isLocationEnabled && !_showListView
-          ? FloatingActionButton(
-              onPressed: () {
-                if (_currentPosition != null && _mapController != null) {
-                  _mapController!.animateCamera(
-                    CameraUpdate.newLatLng(
-                      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-                    ),
-                  );
-                }
-              },
-              backgroundColor: AppConstants.primaryColor,
-              child: const Icon(Icons.my_location),
-            )
-          : null,
+                    );
+                  }
+                },
+                backgroundColor: AppConstants.primaryColor,
+                child: const Icon(Icons.my_location),
+              )
+              : null,
     );
   }
 
@@ -920,11 +953,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_off,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.location_off, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 24),
             Text(
               'Location Services Required',
@@ -937,20 +966,20 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
             const SizedBox(height: 16),
             Text(
               'To find blood banks near you, we need access to your location.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () async {
-                final appProvider = Provider.of<AppProvider>(context, listen: false);
+                final appProvider = Provider.of<AppProvider>(
+                  context,
+                  listen: false,
+                );
                 setState(() {
                   _isLoading = true;
                 });
-                
+
                 bool success = await appProvider.enableLocation();
                 if (success) {
                   _getCurrentLocation();
@@ -962,7 +991,10 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 backgroundColor: AppConstants.primaryColor,
                 foregroundColor: Colors.white,
               ),
@@ -1001,11 +1033,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_off,
-              size: 70,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.location_off, size: 70, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No blood banks found',
@@ -1018,10 +1046,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
             const SizedBox(height: 8),
             Text(
               'Try increasing the distance filter',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -1094,7 +1119,10 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                       _buildInfoItem(
                         icon: Icons.access_time,
                         text: bank.isOpen ? 'Open Now' : 'Closed',
-                        color: bank.isOpen ? AppConstants.successColor : Colors.grey,
+                        color:
+                            bank.isOpen
+                                ? AppConstants.successColor
+                                : Colors.grey,
                       ),
                       const SizedBox(width: 16),
                       _buildInfoItem(
@@ -1115,7 +1143,9 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                           backgroundColor: AppConstants.primaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusM,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -1142,11 +1172,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 14,
-          color: color,
-        ),
+        Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
           text,
@@ -1165,4 +1191,4 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
     _mapController?.dispose();
     super.dispose();
   }
-} 
+}

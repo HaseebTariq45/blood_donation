@@ -15,7 +15,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onNotificationTap;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.showBackButton = true,
     this.actions,
@@ -24,7 +24,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.height,
     this.showNotificationIcon = true,
     this.onNotificationTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +35,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
-    
+
     // Determine if we're on a small screen
     final bool isSmallScreen = screenWidth < 360;
-    
+
     // Calculate responsive sizes
     final double titleFontSize = isSmallScreen ? 16.0 : 18.0;
     final double backIconSize = isSmallScreen ? 16.0 : 18.0;
@@ -53,7 +53,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     // Create a list that might include the notification button and all other actions
     List<Widget> allActions = [];
-    
+
     // Add notification icon if requested
     if (showNotificationIcon) {
       allActions.add(
@@ -62,10 +62,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              onPressed: onNotificationTap ?? () {
-                // Navigate to notifications screen
-                Navigator.pushNamed(context, '/notifications');
-              },
+              onPressed:
+                  onNotificationTap ??
+                  () {
+                    // Navigate to notifications screen
+                    Navigator.pushNamed(context, '/notifications');
+                  },
               iconSize: notificationIconSize,
             ),
             if (hasUnreadNotifications)
@@ -85,7 +87,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       );
     }
-    
+
     // Add profile picture if requested
     if (showProfilePicture) {
       allActions.add(
@@ -99,31 +101,34 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: CircleAvatar(
               radius: profileAvatarRadius,
               backgroundColor: Colors.white,
-              backgroundImage: currentUser.imageUrl.isNotEmpty
-                  ? NetworkImage(currentUser.imageUrl)
-                  : null,
-              child: currentUser.imageUrl.isEmpty
-                  ? Icon(
-                      Icons.person,
-                      color: AppConstants.primaryColor,
-                      size: profileIconSize,
-                    )
-                  : null,
+              backgroundImage:
+                  currentUser.imageUrl.isNotEmpty
+                      ? NetworkImage(currentUser.imageUrl)
+                      : null,
+              child:
+                  currentUser.imageUrl.isEmpty
+                      ? Icon(
+                        Icons.person,
+                        color: AppConstants.primaryColor,
+                        size: profileIconSize,
+                      )
+                      : null,
             ),
           ),
         ),
       );
     }
-    
+
     // Add all other actions
     if (actions != null) {
       allActions.addAll(actions!);
     }
 
     return AppBar(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-          ? Theme.of(context).appBarTheme.backgroundColor 
-          : AppConstants.primaryColor,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).appBarTheme.backgroundColor
+              : AppConstants.primaryColor,
       elevation: 0,
       title: FittedBox(
         fit: BoxFit.scaleDown,
@@ -132,40 +137,45 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: titleFontSize,
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white 
-                : Colors.white,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.white,
           ),
         ),
       ),
       centerTitle: true,
-      leading: showBackButton
-          ? Container(
-              margin: EdgeInsets.all(backButtonMargin),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.white
-                      : Colors.white,
-                  size: backIconSize,
+      leading:
+          showBackButton
+              ? Container(
+                margin: EdgeInsets.all(backButtonMargin),
+                decoration: BoxDecoration(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                padding: EdgeInsets.zero,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            )
-          : null,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.white,
+                    size: backIconSize,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              )
+              : null,
       actions: allActions,
-      toolbarHeight: height ?? (isSmallScreen ? kToolbarHeight * 0.9 : kToolbarHeight),
+      toolbarHeight:
+          height ?? (isSmallScreen ? kToolbarHeight * 0.9 : kToolbarHeight),
     );
   }
 
   @override
   Size get preferredSize => Size.fromHeight(height ?? kToolbarHeight);
-} 
+}
