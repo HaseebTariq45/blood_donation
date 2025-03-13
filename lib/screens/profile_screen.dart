@@ -194,69 +194,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 Navigator.pushNamed(context, '/settings');
               },
             ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return ScaleTransition(scale: animation, child: child);
-              },
-              child: IconButton(
-                key: ValueKey<bool>(_isEditing),
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isEditing ? Icons.close_rounded : Icons.edit_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                tooltip: _isEditing ? 'Cancel Editing' : 'Edit Profile',
-                onPressed: () {
-                  if (_isEditing) {
-                    // Show confirmation dialog if there are unsaved changes
-                    showDialog(
-                      context: context,
-                      builder: (dialogContext) => AlertDialog(
-                        backgroundColor: Theme.of(dialogContext).cardColor,
-                        title: Text(
-                          'Discard Changes?',
-                          style: TextStyle(color: Theme.of(dialogContext).textTheme.titleLarge?.color),
-                        ),
-                        content: Text(
-                          'Any unsaved changes will be lost. Do you want to continue?',
-                          style: TextStyle(color: Theme.of(dialogContext).textTheme.bodyMedium?.color),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(dialogContext),
-                            child: const Text('KEEP EDITING'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(dialogContext);
-                              // Reset to original values and exit edit mode
-                              _resetFormValues();
-                              setState(() {
-                                _isEditing = false;
-                              });
-                            },
-                            child: const Text('DISCARD'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    _toggleEdit();
-                  }
-                },
-              ),
-            ),
           ],
         ),
         floatingActionButton: _isEditing ? FloatingActionButton(
