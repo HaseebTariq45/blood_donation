@@ -25,7 +25,6 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
 
   late String _bloodType = 'A+';
   bool _isAvailableToDonate = true;
-  bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   late AnimationController _animationController;
@@ -58,48 +57,45 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _register() {
+  Future<void> _register() async {
+    // Validate form
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate network delay
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        // BACKEND IMPLEMENTATION NOTE:
-        // Here you would make an API call to register the user with the following data:
-        // - name: _nameController.text
-        // - email: _emailController.text
-        // - phone: _phoneController.text
-        // - address: _addressController.text
-        // - password: _passwordController.text
-        // - bloodType: _bloodType
-        // - isAvailableToDonate: _isAvailableToDonate
-        
-        // For now, we just create a local user object and update the app state
-        final appProvider = Provider.of<AppProvider>(context, listen: false);
-        
-        // Create a new user with a unique ID (in real app, this would come from backend)
-        final newUser = UserModel(
-          id: 'user${DateTime.now().millisecondsSinceEpoch}',
-          name: _nameController.text,
-          email: _emailController.text,
-          phone: _phoneController.text,
-          address: _addressController.text,
-          bloodType: _bloodType,
-          isAvailableToDonate: _isAvailableToDonate,
-          // In a real app, the lastDonationDate would be collected or set to a default
-          // Here we're setting it to 91 days ago so the user is eligible to donate
-          lastDonationDate: DateTime.now().subtract(const Duration(days: 91)),
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Passwords do not match!'),
+            backgroundColor: AppConstants.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
-        
-        // Update app state with the new user
-        appProvider.registerUser(newUser, _passwordController.text);
-        
-        setState(() {
-          _isLoading = false;
-        });
-        
+        return;
+      }
+      
+      // Create user model
+      final newUser = UserModel(
+        id: '', // Will be assigned by Firebase
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        bloodType: _bloodType,
+        address: _addressController.text.trim(),
+        isAvailableToDonate: _isAvailableToDonate,
+      );
+      
+      // Get provider
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      
+      // Register user
+      final success = await appProvider.registerUser(
+        newUser, 
+        _passwordController.text
+      );
+      
+      if (success && mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -114,13 +110,30 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
         );
         
         // Navigate to login or home screen
-        Navigator.of(context).pushReplacementNamed('/login');
-      });
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(appProvider.authError),
+            backgroundColor: AppConstants.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get app provider
+    final appProvider = Provider.of<AppProvider>(context);
+    final bool isAuthenticating = appProvider.isAuthenticating;
+    
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
@@ -199,39 +212,20 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                             ),
                             child: Column(
                               children: [
-                                Container(
-                                  padding: EdgeInsets.all(isSmallScreen ? 12 : 15),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.primaryColor.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.person_add_rounded,
-                                    color: AppConstants.primaryColor,
-                                    size: headerIconSize,
-                                  ),
+                                Icon(
+                                  Icons.person_add_rounded,
+                                  size: headerIconSize,
+                                  color: AppConstants.primaryColor,
                                 ),
-                                SizedBox(height: verticalPadding),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'Join the BloodLine Community',
-                                    style: TextStyle(
-                                      fontSize: headerFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.textColor,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                SizedBox(height: verticalPadding * 0.5),
+                                const SizedBox(height: 10),
                                 Text(
-                                  'Fill in your details to create your account',
-                                  style: TextStyle(
-                                    fontSize: subtitleFontSize,
-                                    color: context.secondaryTextColor,
-                                  ),
+                                  'Join our BloodLine community and help save lives',
                                   textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: headerFontSize,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -239,486 +233,397 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                         ),
                       ),
                       
-                      SizedBox(height: verticalPadding * 1.5),
+                      SizedBox(height: verticalPadding * 2),
                       
                       // Personal Information
-                      Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: verticalPadding),
-                        child: Text(
-                          'Personal Information',
-                          style: TextStyle(
-                            fontSize: sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      
-                      // Name Field
-                      _buildFormField(
-                        controller: _nameController,
-                        label: 'Full Name',
-                        icon: Icons.person_outline,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Email Field
-                      _buildFormField(
-                        controller: _emailController,
-                        label: 'Email Address',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Please enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Phone Field
-                      _buildFormField(
-                        controller: _phoneController,
-                        label: 'Phone Number',
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your phone number';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Address Field
-                      _buildFormField(
-                        controller: _addressController,
-                        label: 'Address',
-                        icon: Icons.location_on_outlined,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your address';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      SizedBox(height: verticalPadding * 1.5),
-                      
-                      // Blood Information
-                      Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: verticalPadding * 0.8),
-                        child: Text(
-                          'Blood Information',
-                          style: TextStyle(
-                            fontSize: sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      
-                      // Blood Type Selection
-                      Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: verticalPadding * 0.5),
-                        child: Text(
-                          'Blood Type',
-                          style: TextStyle(
-                            fontSize: formFontSize,
-                            fontWeight: FontWeight.w500,
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      
-                      // Blood Type Grid
-                      _buildBloodTypeGrid(
-                        fontSize: bloodTypeFontSize, 
-                        checkSize: bloodTypeCheckSize, 
-                        isSmallScreen: isSmallScreen
-                      ),
-                      
-                      SizedBox(height: verticalPadding * 1.2),
-                      
-                      // Availability Toggle
-                      Builder(
-                        builder: (context) => Container(
-                          padding: EdgeInsets.all(horizontalPadding),
-                          decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.isDarkMode
-                                    ? Colors.black.withOpacity(0.15)
-                                    : Colors.grey.withOpacity(0.07),
-                                blurRadius: 15,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                            border: _isAvailableToDonate
-                                ? Border.all(
-                                    color: AppConstants.successColor.withOpacity(0.5),
-                                    width: 1.5,
-                                  )
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(isSmallScreen ? 10 : 12),
-                                decoration: BoxDecoration(
-                                  color: _isAvailableToDonate
-                                      ? AppConstants.successColor.withOpacity(0.1)
-                                      : AppConstants.primaryColor.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.volunteer_activism,
-                                  color: _isAvailableToDonate
-                                      ? AppConstants.successColor
-                                      : AppConstants.primaryColor,
-                                  size: isSmallScreen ? 20 : 24,
-                                ),
-                              ),
-                              SizedBox(width: horizontalPadding * 0.8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Available to Donate',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isSmallScreen ? 14 : 16,
-                                        color: _isAvailableToDonate
-                                            ? AppConstants.successColor
-                                            : context.textColor,
-                                      ),
-                                    ),
-                                    SizedBox(height: verticalPadding * 0.2),
-                                    Text(
-                                      'Let others know if you are available for blood donation requests',
-                                      style: TextStyle(
-                                        color: context.secondaryTextColor,
-                                        fontSize: subtitleFontSize,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Switch.adaptive(
-                                value: _isAvailableToDonate,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _isAvailableToDonate = value;
-                                  });
-                                },
-                                activeColor: AppConstants.successColor,
-                                activeTrackColor: AppConstants.successColor.withOpacity(0.3),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: verticalPadding * 1.5),
-                      
-                      // Account Security
-                      Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: verticalPadding),
-                        child: Text(
-                          'Account Security',
-                          style: TextStyle(
-                            fontSize: sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      
-                      // Password Field
-                      _buildPasswordField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        obscureText: _obscurePassword,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        toggleVisibility: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Confirm Password Field
-                      _buildPasswordField(
-                        controller: _confirmPasswordController,
-                        label: 'Confirm Password',
-                        obscureText: _obscureConfirmPassword,
-                        fontSize: formFontSize,
-                        isSmallScreen: isSmallScreen,
-                        verticalPadding: verticalPadding,
-                        toggleVisibility: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      SizedBox(height: verticalPadding * 1.5),
-                      
-                      // Terms and Conditions Checkbox
-                      Container(
-                        margin: EdgeInsets.only(bottom: verticalPadding * 1.5),
-                        child: Row(
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // This is just a UI element for demonstration
-                            // In a real app, you'd add the checkbox state
-                            Container(
-                              width: isSmallScreen ? 18 : 20,
-                              height: isSmallScreen ? 18 : 20,
-                              decoration: BoxDecoration(
-                                color: AppConstants.primaryColor,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: isSmallScreen ? 14 : 16,
+                            Text(
+                              'Personal Information',
+                              style: TextStyle(
+                                fontSize: sectionTitleFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: context.textColor,
                               ),
                             ),
-                            SizedBox(width: horizontalPadding * 0.5),
-                            Expanded(
-                              child: Builder(
-                                builder: (context) => RichText(
-                                  text: TextSpan(
-                                    text: 'I agree to the ',
-                                    style: TextStyle(
-                                      color: context.secondaryTextColor,
-                                      fontSize: subtitleFontSize,
-                                    ),
-                                    children: const [
-                                      TextSpan(
-                                        text: 'Terms & Conditions',
-                                        style: TextStyle(
-                                          color: AppConstants.primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: ' and ',
-                                      ),
-                                      TextSpan(
-                                        text: 'Privacy Policy',
-                                        style: TextStyle(
-                                          color: AppConstants.primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                            SizedBox(height: verticalPadding),
+                            Text(
+                              'Please fill in your details',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                color: context.secondaryTextColor,
+                              ),
+                            ),
+                            SizedBox(height: verticalPadding * 1.5),
+                            
+                            // Name Field
+                            _buildTextField(
+                              controller: _nameController,
+                              label: 'Full Name',
+                              icon: Icons.person_outline,
+                              keyboardType: TextInputType.name,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your name';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                            
+                            // Email Field
+                            _buildTextField(
+                              controller: _emailController,
+                              label: 'Email',
+                              icon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                    .hasMatch(value)) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                            
+                            // Phone Field
+                            _buildTextField(
+                              controller: _phoneController,
+                              label: 'Phone Number',
+                              icon: Icons.phone_outlined,
+                              keyboardType: TextInputType.phone,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your phone number';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                            
+                            // Address Field
+                            _buildTextField(
+                              controller: _addressController,
+                              label: 'Address',
+                              icon: Icons.location_on_outlined,
+                              keyboardType: TextInputType.streetAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your address';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: verticalPadding * 3),
+                      
+                      // Donation Information
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 700),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Donation Information',
+                              style: TextStyle(
+                                fontSize: sectionTitleFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: context.textColor,
+                              ),
+                            ),
+                            SizedBox(height: verticalPadding),
+                            
+                            // Blood Type Selection
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(verticalPadding),
+                              decoration: BoxDecoration(
+                                color: context.cardColor,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: context.isDarkMode
+                                        ? Colors.black.withOpacity(0.15)
+                                        : Colors.grey.withOpacity(0.1),
+                                    spreadRadius: 1,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
                                   ),
-                                ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Blood Type',
+                                    style: TextStyle(
+                                      fontSize: bloodTypeFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.textColor,
+                                    ),
+                                  ),
+                                  SizedBox(height: verticalPadding),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: _bloodTypes.map((type) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _bloodType = type;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: horizontalPadding * 0.6,
+                                            vertical: verticalPadding * 0.8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _bloodType == type
+                                                ? AppConstants.primaryColor
+                                                : context.cardColor,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: _bloodType == type
+                                                  ? AppConstants.primaryColor
+                                                  : context.secondaryTextColor.withOpacity(0.3),
+                                              width: 1.5,
+                                            ),
+                                            boxShadow: _bloodType == type
+                                                ? [
+                                                    BoxShadow(
+                                                      color: AppConstants.primaryColor.withOpacity(0.2),
+                                                      spreadRadius: 1,
+                                                      blurRadius: 5,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ]
+                                                : [],
+                                          ),
+                                          child: Text(
+                                            type,
+                                            style: TextStyle(
+                                              fontSize: bloodTypeCheckSize,
+                                              color: _bloodType == type
+                                                  ? Colors.white
+                                                  : context.secondaryTextColor,
+                                              fontWeight: _bloodType == type
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            SizedBox(height: verticalPadding * 1.5),
+                            
+                            // Donation Availability
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(verticalPadding),
+                              decoration: BoxDecoration(
+                                color: context.cardColor,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: context.isDarkMode
+                                        ? Colors.black.withOpacity(0.15)
+                                        : Colors.grey.withOpacity(0.1),
+                                    spreadRadius: 1,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Available to donate blood',
+                                      style: TextStyle(
+                                        fontSize: bloodTypeCheckSize,
+                                        color: context.textColor,
+                                      ),
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _isAvailableToDonate,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _isAvailableToDonate = value;
+                                      });
+                                    },
+                                    activeColor: AppConstants.primaryColor,
+                                    activeTrackColor: AppConstants.primaryColor.withOpacity(0.5),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
                       
-                      // Register Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: _isLoading
-                            ? Center(
-                                child: SizedBox(
-                                  width: isSmallScreen ? 30 : 40,
-                                  height: isSmallScreen ? 30 : 40,
-                                  child: const CircularProgressIndicator(),
-                                ),
-                              )
-                            : CustomButton(
-                                text: 'CREATE ACCOUNT',
-                                onPressed: _register,
-                                fontSize: buttonFontSize,
-                                height: isSmallScreen ? 50 : 56,
+                      SizedBox(height: verticalPadding * 3),
+                      
+                      // Password
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 800),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Security',
+                              style: TextStyle(
+                                fontSize: sectionTitleFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: context.textColor,
                               ),
+                            ),
+                            SizedBox(height: verticalPadding),
+                            Text(
+                              'Choose a strong password',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                color: context.secondaryTextColor,
+                              ),
+                            ),
+                            SizedBox(height: verticalPadding * 1.5),
+                            
+                            // Password Field
+                            _buildPasswordField(
+                              controller: _passwordController,
+                              label: 'Password',
+                              isObscure: _obscurePassword,
+                              toggleObscure: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a password';
+                                }
+                                if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                            
+                            // Confirm Password Field
+                            _buildPasswordField(
+                              controller: _confirmPasswordController,
+                              label: 'Confirm Password',
+                              isObscure: _obscureConfirmPassword,
+                              toggleObscure: () {
+                                setState(() {
+                                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please confirm your password';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Passwords do not match';
+                                }
+                                return null;
+                              },
+                              fontSize: formFontSize,
+                              isSmallScreen: isSmallScreen,
+                              verticalPadding: verticalPadding,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: verticalPadding * 4),
+                      
+                      // Signup Button
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 900),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: isAuthenticating
+                              ? Center(
+                                  child: SizedBox(
+                                    width: isSmallScreen ? 30 : 40,
+                                    height: isSmallScreen ? 30 : 40,
+                                    child: const CircularProgressIndicator(),
+                                  ),
+                                )
+                              : CustomButton(
+                                  text: 'CREATE ACCOUNT',
+                                  onPressed: _register,
+                                  fontSize: buttonFontSize,
+                                  height: isSmallScreen ? 50 : 56,
+                                ),
+                        ),
                       ),
                       
                       SizedBox(height: verticalPadding),
                       
                       // Login Link
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Already have an account? ',
-                              style: TextStyle(
-                                color: context.secondaryTextColor,
-                                fontSize: subtitleFontSize,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacementNamed('/login');
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isSmallScreen ? 4 : 8,
-                                  vertical: isSmallScreen ? 2 : 4,
-                                ),
-                              ),
-                              child: Text(
-                                'Login',
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 1000),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: RichText(
+                              text: TextSpan(
+                                text: 'Already have an account? ',
                                 style: TextStyle(
-                                  color: context.isDarkMode ? 
-                                    AppConstants.primaryColor.withOpacity(0.9) : 
-                                    AppConstants.primaryColor,
-                                  fontWeight: FontWeight.bold,
+                                  color: context.secondaryTextColor,
                                   fontSize: subtitleFontSize,
                                 ),
+                                children: [
+                                  TextSpan(
+                                    text: 'Login',
+                                    style: TextStyle(
+                                      color: AppConstants.primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
                       
-                      SizedBox(height: verticalPadding * 1.5),
+                      SizedBox(height: verticalPadding * 2),
                     ],
                   ),
-                ),
-              ),
-            );
-          }
-        ),
-      ),
-    );
-  }
-  
-  // Build a grid of blood type options
-  Widget _buildBloodTypeGrid({
-    required double fontSize,
-    required double checkSize,
-    required bool isSmallScreen
-  }) {
-    return Builder(
-      builder: (context) => Container(
-        margin: EdgeInsets.only(bottom: isSmallScreen ? 15 : 20),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1,
-            crossAxisSpacing: isSmallScreen ? 8 : 10,
-            mainAxisSpacing: isSmallScreen ? 8 : 10,
-          ),
-          itemCount: _bloodTypes.length,
-          itemBuilder: (context, index) {
-            final bloodType = _bloodTypes[index];
-            final isSelected = _bloodType == bloodType;
-            
-            // Individual blood type card
-            return GestureDetector(
-              onTap: () {
-                // Update selected blood type when tapped
-                setState(() {
-                  _bloodType = bloodType;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: isSelected 
-                      ? AppConstants.primaryColor 
-                      : context.cardColor,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: isSelected 
-                        ? AppConstants.primaryColor 
-                        : context.isDarkMode
-                              ? Colors.grey.withOpacity(0.3)
-                        : Colors.grey.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isSelected 
-                          ? AppConstants.primaryColor.withOpacity(0.3) 
-                          : context.isDarkMode
-                                ? Colors.black.withOpacity(0.1)
-                          : Colors.grey.withOpacity(0.05),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Blood type display
-                    Text(
-                      bloodType,
-                      style: TextStyle(
-                        color: isSelected 
-                            ? Colors.white 
-                            : context.textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: fontSize,
-                      ),
-                    ),
-                    if (isSelected) ...[
-                      SizedBox(height: isSmallScreen ? 3 : 5),
-                      Icon(
-                        Icons.check_circle,
-                        color: Colors.white,
-                        size: checkSize,
-                      ),
-                    ],
-                  ],
                 ),
               ),
             );
@@ -728,16 +633,15 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
     );
   }
   
-  // Build form field with custom styling
-  Widget _buildFormField({
+  Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    required TextInputType keyboardType,
+    required String? Function(String?) validator,
     required double fontSize,
     required bool isSmallScreen,
     required double verticalPadding,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
   }) {
     return Builder(
       builder: (context) => Container(
@@ -792,54 +696,22 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                 width: 1.5,
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: AppConstants.primaryColor.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              vertical: isSmallScreen ? 14 : 16,
-              horizontal: isSmallScreen ? 14 : 16,
-            ),
-            fillColor: context.cardColor,
-            filled: true,
           ),
           validator: validator,
-          style: TextStyle(
-            fontSize: fontSize,
-            color: context.textColor,
-          ),
         ),
       ),
     );
   }
-
-  // Build password field with custom styling
+  
   Widget _buildPasswordField({
     required TextEditingController controller,
     required String label,
-    required bool obscureText,
-    required Function() toggleVisibility,
+    required bool isObscure,
+    required VoidCallback toggleObscure,
+    required String? Function(String?) validator,
     required double fontSize,
     required bool isSmallScreen,
     required double verticalPadding,
-    String? Function(String?)? validator,
   }) {
     return Builder(
       builder: (context) => Container(
@@ -860,7 +732,7 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
         ),
         child: TextFormField(
           controller: controller,
-          obscureText: obscureText,
+          obscureText: isObscure,
           decoration: InputDecoration(
             labelText: label,
             floatingLabelStyle: TextStyle(
@@ -883,13 +755,11 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                obscureText
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: context.secondaryTextColor,
+                isObscure ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
                 size: isSmallScreen ? 18 : 20,
               ),
-              onPressed: toggleVisibility,
+              onPressed: toggleObscure,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
@@ -904,39 +774,8 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                 width: 1.5,
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: AppConstants.primaryColor.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(
-                color: Colors.red.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              vertical: isSmallScreen ? 14 : 16,
-              horizontal: isSmallScreen ? 14 : 16,
-            ),
-            fillColor: context.cardColor,
-            filled: true,
           ),
           validator: validator,
-          style: TextStyle(
-            fontSize: fontSize,
-            color: context.textColor,
-          ),
         ),
       ),
     );

@@ -68,4 +68,12 @@ class UserModel {
       lastDonationDate: lastDonationDate ?? this.lastDonationDate,
     );
   }
+
+  // For debugging purposes
+  @override
+  String toString() {
+    return 'UserModel{id: $id, name: $name, email: $email, phone: $phone, bloodType: $bloodType, '
+           'address: $address, isAvailableToDonate: $isAvailableToDonate, '
+           'lastDonationDate: ${lastDonationDate.toIso8601String()}}';
+  }
 } 

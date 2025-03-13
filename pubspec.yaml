@@ -51,6 +51,12 @@ dependencies:
   url_launcher: ^6.2.5
   connectivity_plus: ^5.0.2
   http: ^1.2.0
+  
+  # Firebase dependencies
+  firebase_core: ^2.27.1
+  firebase_auth: ^4.18.1
+  cloud_firestore: ^4.15.9
+  firebase_storage: ^11.6.10
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'constants/app_constants.dart';
 import 'providers/app_provider.dart';
 import 'services/network_tracker_service.dart';
@@ -25,10 +26,21 @@ import 'screens/privacy_policy_screen.dart';
 import 'screens/terms_conditions_screen.dart';
 import 'screens/data_usage_screen.dart';
 import 'utils/localization/app_localization.dart';
+import 'firebase/firebase_service.dart';
 
-void main() async {
+// Create a separate function for initialization
+Future<void> _initializeApp() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase first
+  try {
+    await FirebaseService.initialize();
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Failed to initialize Firebase: $e');
+    // Continue execution despite the error
+  }
   
   // Load environment variables but don't halt execution if file is missing
   try {
@@ -38,6 +50,11 @@ void main() async {
     debugPrint('Failed to load .env file: $e');
     // Continue execution despite the error
   }
+}
+
+void main() async {
+  // Initialize app components
+  await _initializeApp();
   
   // Create the app provider
   final appProvider = AppProvider();

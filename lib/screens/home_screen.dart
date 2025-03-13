@@ -14,6 +14,15 @@ class HomeScreen extends StatelessWidget {
     final appProvider = Provider.of<AppProvider>(context);
     final currentUser = appProvider.currentUser;
     
+    // Debug logging for user data
+    debugPrint('Home Screen - Current User: ${currentUser.toString()}');
+    
+    // Check if this is a dummy user
+    final bool isDummyUser = currentUser.id == 'user123';
+    if (isDummyUser) {
+      debugPrint('WARNING: Home screen showing DUMMY USER - not logged in properly!');
+    }
+    
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;

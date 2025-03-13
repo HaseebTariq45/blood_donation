@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../models/donation_model.dart';
 import '../models/blood_request_model.dart';
@@ -7,12 +8,24 @@ import '../models/blood_bank_model.dart';
 import '../models/data_usage_model.dart';
 import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
+import '../firebase/firebase_auth_service.dart';
+import '../firebase/firebase_user_service.dart';
 
 class AppProvider extends ChangeNotifier {
+  // Firebase services - lazy initialization
+  late final FirebaseAuthService _authService;
+  late final FirebaseUserService _userService;
+  
   // User data
   UserModel? _currentUser;
   UserModel get currentUser => _currentUser ?? UserModel.dummy();
   bool get isLoggedIn => _currentUser != null;
+
+  // Authentication state
+  bool _isAuthenticating = false;
+  bool get isAuthenticating => _isAuthenticating;
+  String _authError = '';
+  String get authError => _authError;
 
   // App theme
   bool _isDarkMode = false;
@@ -74,13 +87,82 @@ class AppProvider extends ChangeNotifier {
 
   // Constructor - load dummy data for UI demo
   AppProvider() {
-    _loadDummyData();
-    _loadDataUsage();
+    _initializeServices();
+  }
+  
+  // Initialize services
+  void _initializeServices() {
+    try {
+      // Initialize Firebase services
+      _authService = FirebaseAuthService();
+      _userService = FirebaseUserService();
+      
+      // Load data
+      _loadDummyData();
+      _loadDataUsage();
+      _checkAuthState();
+    } catch (e) {
+      debugPrint('Error initializing AppProvider: $e');
+      // Fallback to dummy data if Firebase initialization fails
+      _loadDummyData();
+      _loadDataUsage();
+    }
+  }
+  
+  // Check authentication state on app startup
+  Future<void> _checkAuthState() async {
+    try {
+      if (_authService.isSignedIn) {
+        try {
+          // Ensure user data exists in Firestore
+          await ensureUserDataInFirestore();
+          
+          // Get the user data from Firestore
+          UserModel? userData = await _authService.getUserData();
+          if (userData != null) {
+            _currentUser = userData;
+            notifyListeners();
+          }
+        } catch (e) {
+          debugPrint('Error loading user data: $e');
+        }
+      }
+      
+      // Listen for auth state changes
+      _authService.authStateChanges.listen((User? user) {
+        if (user == null) {
+          // User signed out
+          _currentUser = null;
+        } else {
+          // User signed in, get their data from Firestore
+          ensureUserDataInFirestore().then((_) {
+            _authService.getUserData().then((userData) {
+              if (userData != null) {
+                _currentUser = userData;
+              }
+              notifyListeners();
+            });
+          });
+        }
+        notifyListeners();
+      });
+    } catch (e) {
+      debugPrint('Error checking auth state: $e');
+    }
   }
 
   // Load dummy data for demonstration
   void _loadDummyData() {
-    _currentUser = UserModel.dummy();
+    // Only load dummy user data if not signed in with Firebase
+    try {
+      if (!_authService.isSignedIn) {
+        _currentUser = UserModel.dummy();
+      }
+    } catch (e) {
+      // If Firebase is not initialized, use dummy data
+      _currentUser = UserModel.dummy();
+    }
+    
     _donations = DonationModel.getDummyList(10);
     _userDonations = DonationModel.getDummyList(5);
     _bloodRequests = BloodRequestModel.getDummyList();
@@ -103,9 +185,11 @@ class AppProvider extends ChangeNotifier {
     });
     
     // Set the current user to also have a local image
-    _currentUser = _currentUser!.copyWith(
-      imageUrl: 'assets/images/avatar_1.png',
-    );
+    if (_currentUser != null && _currentUser!.imageUrl.isEmpty) {
+      _currentUser = _currentUser!.copyWith(
+        imageUrl: 'assets/images/avatar_1.png',
+      );
+    }
   }
   
   // Load data usage from shared preferences
@@ -206,50 +290,156 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Login user
-  void login(String email, String password) {
-    // Simulated login - would connect to backend API in real app
-    _currentUser = UserModel.dummy();
+  // Login user with Firebase
+  Future<bool> login(String email, String password) async {
+    _isAuthenticating = true;
+    _authError = '';
     notifyListeners();
-  }
-  
-  // Register a new user
-  void registerUser(UserModel user, String password) {
-    // BACKEND IMPLEMENTATION NOTE:
-    // In a real app, this would make an API call to register the user
-    // with the provided information and password
     
-    // For this demo, we just store the user object locally
-    _currentUser = user;
-    
-    // Add the new user to the donors list as well
-    _donors.add(user);
-    
-    notifyListeners();
-  }
-
-  // Logout user
-  void logout() {
-    _currentUser = null;
-    notifyListeners();
-  }
-
-  // Update user profile
-  void updateUserProfile(UserModel updatedUser) {
-    _currentUser = updatedUser;
-    notifyListeners();
-  }
-
-  // Toggle user availability to donate
-  void toggleDonationAvailability() {
-    if (_currentUser != null) {
-      _currentUser = _currentUser!.copyWith(
-        isAvailableToDonate: !_currentUser!.isAvailableToDonate,
+    try {
+      debugPrint('Starting login process for: $email');
+      
+      // Sign in with Firebase Auth
+      final userCredential = await _authService.signInWithEmailAndPassword(
+        email,
+        password,
       );
+      
+      debugPrint('Successfully signed in with Firebase Auth. UID: ${userCredential.user?.uid}');
+      
+      // Ensure user data exists in Firestore
+      await ensureUserDataInFirestore();
+      
+      // Get user profile data from Firestore
+      final userData = await _authService.getUserData();
+      
+      if (userData != null) {
+        debugPrint('Successfully retrieved user data from Firestore');
+        _currentUser = userData;
+      } else {
+        debugPrint('WARNING: No user data found in Firestore after successful authentication');
+      }
+      
+      _isAuthenticating = false;
       notifyListeners();
+      return true;
+    } catch (e) {
+      _isAuthenticating = false;
+      _authError = _getFirebaseAuthErrorMessage(e);
+      debugPrint('Login error: $e');
+      notifyListeners();
+      return false;
     }
   }
   
+  // Register a new user with Firebase
+  Future<bool> registerUser(UserModel user, String password) async {
+    _isAuthenticating = true;
+    _authError = '';
+    notifyListeners();
+    
+    try {
+      debugPrint('Starting user registration process for: ${user.email}');
+      
+      // Register with Firebase Auth and save user data to Firestore
+      final registeredUser = await _authService.registerUser(user, password);
+      debugPrint('User registered successfully. User ID: ${registeredUser.id}');
+      
+      _currentUser = registeredUser;
+      
+      // Add the new user to the donors list as well
+      _donors.add(registeredUser);
+      
+      debugPrint('Current user set in app state and added to donors list');
+      
+      _isAuthenticating = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isAuthenticating = false;
+      _authError = _getFirebaseAuthErrorMessage(e);
+      debugPrint('Registration error: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Logout user
+  Future<void> logout() async {
+    try {
+      await _authService.signOut();
+      _currentUser = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error signing out: $e');
+    }
+  }
+
+  // Update user profile
+  Future<bool> updateUserProfile(UserModel updatedUser) async {
+    try {
+      await _authService.updateUserProfile(updatedUser);
+      _currentUser = updatedUser;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error updating profile: $e');
+      return false;
+    }
+  }
+
+  // Toggle user availability to donate
+  Future<void> toggleDonationAvailability() async {
+    if (_currentUser != null) {
+      final updatedUser = _currentUser!.copyWith(
+        isAvailableToDonate: !_currentUser!.isAvailableToDonate,
+      );
+      
+      await updateUserProfile(updatedUser);
+    }
+  }
+  
+  // Reset password
+  Future<bool> resetPassword(String email) async {
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      return true;
+    } catch (e) {
+      _authError = _getFirebaseAuthErrorMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  // Helper method to get readable error messages
+  String _getFirebaseAuthErrorMessage(dynamic error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'user-not-found':
+          return 'No user found with this email address.';
+        case 'wrong-password':
+          return 'Incorrect password.';
+        case 'email-already-in-use':
+          return 'This email is already registered.';
+        case 'weak-password':
+          return 'Password is too weak. Please use a stronger password.';
+        case 'invalid-email':
+          return 'Invalid email address format.';
+        case 'operation-not-allowed':
+          return 'Operation not allowed. Please contact support.';
+        case 'user-disabled':
+          return 'This account has been disabled. Please contact support.';
+        case 'too-many-requests':
+          return 'Too many requests. Please try again later.';
+        case 'network-request-failed':
+          return 'Network error. Please check your connection.';
+        default:
+          return 'Authentication error: ${error.message}';
+      }
+    }
+    return 'An unexpected error occurred. Please try again.';
+  }
+
   // Add a new donation for the current user
   void addDonation(DonationModel donation) {
     _userDonations.add(donation);
@@ -408,5 +598,68 @@ class AppProvider extends ChangeNotifier {
     // Initialize notification service
     final notificationService = NotificationService();
     await notificationService.initialize();
+  }
+
+  // Refresh user data from Firestore (useful after external auth changes)
+  Future<void> refreshUserData() async {
+    try {
+      // Get user profile data from Firestore
+      final userData = await _authService.getUserData();
+      if (userData != null) {
+        _currentUser = userData;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data: $e');
+    }
+  }
+
+  // Check and ensure user data exists in Firestore
+  Future<void> ensureUserDataInFirestore() async {
+    try {
+      // Only proceed if user is authenticated
+      if (_authService.isSignedIn) {
+        debugPrint('Checking if user data exists in Firestore...');
+        
+        // Get the current auth user
+        final User? firebaseUser = _authService.currentUser;
+        
+        if (firebaseUser == null) {
+          debugPrint('No Firebase Auth user found');
+          return;
+        }
+        
+        // Try to get user data from Firestore
+        final userData = await _authService.getUserData();
+        
+        if (userData == null) {
+          debugPrint('User data not found in Firestore. Creating default profile...');
+          
+          // Create a basic user profile
+          final newUserData = UserModel(
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName ?? 'New User',
+            email: firebaseUser.email ?? '',
+            phone: '',
+            bloodType: 'A+',  // Default blood type
+            address: '',
+            isAvailableToDonate: true,
+          );
+          
+          // Save to Firestore
+          await _userService.saveUserData(newUserData);
+          
+          // Update current user
+          _currentUser = newUserData;
+          notifyListeners();
+          
+          debugPrint('Created default user profile in Firestore');
+        } else {
+          debugPrint('User data exists in Firestore');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error ensuring user data in Firestore: $e');
+    }
   }
 } 

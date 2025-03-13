@@ -196,21 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
           ],
         ),
-        floatingActionButton: _isEditing ? FloatingActionButton(
-          onPressed: _saveProfile,
-          backgroundColor: AppConstants.primaryColor,
-          child: _isLoading 
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Icon(Icons.save),
-          tooltip: 'Save Profile',
-        ) : null,
         body: FadeTransition(
           opacity: _fadeAnimation,
           child: LayoutBuilder(
