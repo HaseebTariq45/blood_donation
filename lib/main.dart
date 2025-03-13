@@ -26,6 +26,7 @@ import 'screens/privacy_policy_screen.dart';
 import 'screens/terms_conditions_screen.dart';
 import 'screens/data_usage_screen.dart';
 import 'screens/emergency_contacts_screen.dart';
+import 'screens/health_tips_screen.dart';
 import 'utils/localization/app_localization.dart';
 import 'firebase/firebase_service.dart';
 import 'services/firebase_notification_service.dart';
@@ -157,6 +158,7 @@ class _MyAppState extends State<MyApp> {
         '/terms_conditions': (context) => const TermsConditionsScreen(),
         '/data_usage': (context) => const DataUsageScreen(),
         '/emergency_contacts': (context) => const EmergencyContactsScreen(),
+        '/health_tips': (context) => const HealthTipsScreen(),
       },
     );
   }

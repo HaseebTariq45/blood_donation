@@ -931,7 +931,24 @@ class AppProvider extends ChangeNotifier {
     if (!isLoggedIn) return;
     
     try {
-      _emergencyContacts = await _emergencyContactService.getAllEmergencyContacts(currentUser.id);
+      // Get only user's personal contacts (not built-in ones)
+      final QuerySnapshot userContactsSnapshot = await FirebaseFirestore.instance
+          .collection('emergency_contacts')
+          .where('userId', isEqualTo: currentUser.id)
+          .orderBy('isPinned', descending: true)
+          .orderBy('name')
+          .get();
+
+      final List<EmergencyContactModel> userContacts = userContactsSnapshot.docs
+          .map(
+            (doc) => EmergencyContactModel.fromJson(
+              doc.data() as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+      
+      _emergencyContacts = userContacts;
+      debugPrint('Loaded ${userContacts.length} user-added emergency contacts');
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading emergency contacts: $e');
@@ -941,7 +958,30 @@ class AppProvider extends ChangeNotifier {
   // Get a stream of emergency contacts for real-time updates
   Stream<List<EmergencyContactModel>> getEmergencyContactsStream() {
     if (!isLoggedIn) return Stream.value([]);
-    return _emergencyContactService.getEmergencyContactsStream(currentUser.id);
+    
+    try {
+      // Stream user's personal contacts only (not built-in ones)
+      return FirebaseFirestore.instance
+          .collection('emergency_contacts')
+          .where('userId', isEqualTo: currentUser.id)
+          .orderBy('isPinned', descending: true)
+          .orderBy('name')
+          .snapshots()
+          .map((snapshot) {
+            final List<EmergencyContactModel> userContacts =
+                snapshot.docs
+                    .map((doc) => EmergencyContactModel.fromJson(
+                      doc.data() as Map<String, dynamic>
+                    ))
+                    .toList();
+            
+            return userContacts;
+          });
+    } catch (e) {
+      debugPrint('Error streaming emergency contacts: $e');
+      // Return an empty stream
+      return Stream.value([]);
+    }
   }
 
   // Add a new emergency contact
@@ -1056,10 +1096,26 @@ class AppProvider extends ChangeNotifier {
     }
     
     try {
-      debugPrint('Getting emergency contacts for user: $userId');
-      final contacts = await _emergencyContactService.getAllEmergencyContacts(userId);
-      debugPrint('Successfully retrieved ${contacts.length} emergency contacts');
-      return contacts;
+      debugPrint('Getting user-added emergency contacts for user: $userId');
+      
+      // Get only user's personal contacts (not built-in ones)
+      final QuerySnapshot userContactsSnapshot = await FirebaseFirestore.instance
+          .collection('emergency_contacts')
+          .where('userId', isEqualTo: userId)
+          .orderBy('isPinned', descending: true)
+          .orderBy('name')
+          .get();
+
+      final List<EmergencyContactModel> userContacts = userContactsSnapshot.docs
+          .map(
+            (doc) => EmergencyContactModel.fromJson(
+              doc.data() as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+      
+      debugPrint('Successfully retrieved ${userContacts.length} user-added emergency contacts');
+      return userContacts;
     } catch (e) {
       debugPrint('Error getting emergency contacts: $e');
       
@@ -1067,9 +1123,8 @@ class AppProvider extends ChangeNotifier {
       if (e.toString().contains('failed-precondition') && 
           e.toString().contains('requires an index')) {
         debugPrint('Firestore index missing for emergency contacts query');
-        
-        // Return built-in contacts as a fallback
-        return EmergencyContactModel.getBuiltInContacts(userId);
+        // Return empty list instead of built-in contacts
+        return [];
       }
       
       // For other errors, return an empty list

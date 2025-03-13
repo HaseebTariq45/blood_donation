@@ -143,29 +143,33 @@ class _BloodResponseNotificationDialogState
       // Get emergency contacts
       try {
         final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
-        debugPrint('BloodResponseNotificationDialog - Retrieved ${contacts.length} emergency contacts');
+        debugPrint('BloodResponseNotificationDialog - Retrieved ${contacts.length} user-added emergency contacts');
         
         if (mounted) {
           setState(() {
             _emergencyContacts = contacts;
           });
+          
+          // If no contacts are found, don't show an error - this is expected now that we only show user-added contacts
+          if (contacts.isEmpty) {
+            debugPrint('No user-added emergency contacts found for responder: ${widget.responderId}');
+          }
         }
-      } catch (contactError) {
-        debugPrint('Error fetching emergency contacts: $contactError');
+      } catch (e) {
+        debugPrint('BloodResponseNotificationDialog - Error fetching emergency contacts: $e');
         
         // Check if it's a Firestore index error
-        if (contactError.toString().contains('requires an index')) {
+        if (e.toString().contains('failed-precondition') && 
+            e.toString().contains('requires an index')) {
+          
           if (mounted) {
-            // Use Future.microtask to avoid setState during build
             Future.microtask(() {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Emergency contacts are being set up. They will be available soon.'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Emergency contacts are being set up and will be available soon'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
             });
           }
         }
@@ -995,7 +999,46 @@ class _BloodResponseNotificationDialogState
 
   // Compact emergency contacts section
   Widget _buildCompactEmergencyContactsSection() {
-    if (_emergencyContacts.isEmpty) return const SizedBox.shrink();
+    if (_emergencyContacts.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.contact_emergency, color: Colors.grey, size: 14),
+                const SizedBox(width: 4),
+                const Text(
+                  'Emergency Contacts',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 8, thickness: 0.5),
+            const Text(
+              'No user-added emergency contacts available',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Only contacts added by the responder are displayed here for privacy',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
     
     // Show the first contact
     final contact = _emergencyContacts.first;
@@ -1019,7 +1062,7 @@ class _BloodResponseNotificationDialogState
               Text(
                 'Emergency Contact${hasMultipleContacts ? 's' : ''}',
                 style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: Colors.orange,
                 ),
@@ -1042,6 +1085,11 @@ class _BloodResponseNotificationDialogState
                   ),
                 ),
               ],
+              const Spacer(),
+              const Text(
+                'User-added only',
+                style: TextStyle(fontSize: 10, color: Colors.grey, fontStyle: FontStyle.italic),
+              ),
             ],
           ),
           const Divider(height: 8, thickness: 0.5),
@@ -1269,16 +1317,39 @@ class _BloodResponseNotificationDialogState
       final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
       
       if (mounted) {
-    setState(() {
+        setState(() {
           _emergencyContacts = contacts;
           _isLoading = false;
         });
+        
+        // If no contacts are found, show a message
+        if (contacts.isEmpty) {
+          debugPrint('No emergency contacts found for responder: ${widget.responderId}');
+          Future.microtask(() {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No emergency contacts available for this responder'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error fetching emergency contacts: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
+        });
+        
+        // Show error message
+        Future.microtask(() {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error fetching emergency contacts: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
         });
       }
     }

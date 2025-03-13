@@ -367,7 +367,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: verticalPadding),
 
-                        // Third row (1 card)
+                        // Third row (2 cards)
                         Row(
                           children: [
                             Expanded(
@@ -381,6 +381,20 @@ class HomeScreen extends StatelessWidget {
                                   );
                                 },
                                 index: 4,
+                              ),
+                            ),
+                            SizedBox(width: horizontalPadding),
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Health Tips',
+                                icon: Icons.health_and_safety,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/health_tips',
+                                  );
+                                },
+                                index: 5,
                               ),
                             ),
                           ],
@@ -400,109 +414,10 @@ class HomeScreen extends StatelessWidget {
                                     '/emergency_contacts',
                                   );
                                 },
-                                index: 5,
+                                index: 6,
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Health Tips or Upcoming Campaigns instead of Urgent Blood Requests
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      0,
-                      horizontalPadding,
-                      verticalPadding,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Donation Tips',
-                          style: TextStyle(
-                            fontSize: sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        SizedBox(height: verticalPadding * 0.8),
-                        Card(
-                          margin: EdgeInsets.only(
-                            bottom: verticalPadding * 0.8,
-                          ),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppConstants.radiusM,
-                            ),
-                          ),
-                          color: context.cardColor,
-                          shadowColor:
-                              context.isDarkMode
-                                  ? Colors.black26
-                                  : Colors.grey.withOpacity(0.2),
-                          child: Padding(
-                            padding: EdgeInsets.all(horizontalPadding * 0.8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.lightbulb,
-                                      color: Colors.amber,
-                                      size: iconSize,
-                                    ),
-                                    SizedBox(width: horizontalPadding * 0.5),
-                                    Expanded(
-                                      child: Text(
-                                        'Preparing for Blood Donation',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: isSmallScreen ? 14 : 16,
-                                          color: context.textColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: verticalPadding * 0.6),
-                                Text(
-                                  '• Get at least 8 hours of sleep the night before',
-                                  style: TextStyle(
-                                    fontSize: bodyTextFontSize,
-                                    color: context.secondaryTextColor,
-                                  ),
-                                ),
-                                SizedBox(height: verticalPadding * 0.3),
-                                Text(
-                                  '• Eat a healthy meal before donating',
-                                  style: TextStyle(
-                                    fontSize: bodyTextFontSize,
-                                    color: context.secondaryTextColor,
-                                  ),
-                                ),
-                                SizedBox(height: verticalPadding * 0.3),
-                                Text(
-                                  '• Drink an extra 16 oz of water before donation',
-                                  style: TextStyle(
-                                    fontSize: bodyTextFontSize,
-                                    color: context.secondaryTextColor,
-                                  ),
-                                ),
-                                SizedBox(height: verticalPadding * 0.3),
-                                Text(
-                                  '• Avoid fatty foods before donating',
-                                  style: TextStyle(
-                                    fontSize: bodyTextFontSize,
-                                    color: context.secondaryTextColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),

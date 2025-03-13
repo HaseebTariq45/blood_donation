@@ -33,10 +33,14 @@ class _HomeMenuCardState extends State<HomeMenuCard>
   late Animation<double> _opacityAnimation;
 
   final List<List<Color>> _gradients = [
-    [Color(0xFFFF4B6E), Color(0xFFFF84A1)], // Vibrant Pink to Soft Pink
-    [Color(0xFF7E57C2), Color(0xFF9575CD)], // Deep Purple to Light Purple
-    [Color(0xFF2196F3), Color(0xFF90CAF9)], // Bright Blue to Light Blue
-    [Color(0xFF26A69A), Color(0xFF80CBC4)], // Teal to Light Teal
+    [Color(0xFFFF4B6E), Color(0xFFFF84A1)],      // Find Blood Donors - Vibrant Pink to Soft Pink
+    [Color(0xFF5D69BE), Color(0xFF9080F1)],      // Request Blood - Deep Indigo to Periwinkle
+    [Color(0xFF2196F3), Color(0xFF90CAF9)],      // Blood Requests - Bright Blue to Light Blue
+    [Color(0xFF26A69A), Color(0xFF80CBC4)],      // Nearby Blood Banks - Teal to Light Teal
+    [Color(0xFFFF9800), Color(0xFFFFCC80)],      // Donation History - Orange to Light Orange
+    [Color(0xFF8BC34A), Color(0xFFAED581)],      // Health Tips - Green to Light Green
+    [Color(0xFF673AB7), Color(0xFFB39DDB)],      // Emergency Contacts - Deep Purple to Light Purple
+    [Color(0xFFE91E63), Color(0xFFF48FB1)],      // Settings - Pink to Light Pink
   ];
 
   @override
@@ -149,22 +153,32 @@ class _HomeMenuCardState extends State<HomeMenuCard>
                           _isPressed ? 1 : (_isHovered ? 6 : 4),
                         ),
                       ),
+                      // Additional inner glow effect for hover state
+                      if (_isHovered)
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.1),
+                          spreadRadius: 0,
+                          blurRadius: 15,
+                          offset: Offset(0, 0),
+                        ),
                     ],
                   ),
                   transform:
                       Matrix4.identity()
-                        ..scale(_isPressed ? 0.97 : (_isHovered ? 1.02 : 1.0)),
+                        ..scale(_isPressed ? 0.97 : (_isHovered ? 1.03 : 1.0))
+                        ..translate(0.0, _isHovered ? -2.0 : 0.0),
                   child: Stack(
                     children: [
                       // Decorative elements and pattern
                       Positioned(
                         right: -20,
                         top: -20,
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           width: mediumBubbleSize,
                           height: mediumBubbleSize,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withOpacity(_isHovered ? 0.15 : 0.1),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -172,11 +186,12 @@ class _HomeMenuCardState extends State<HomeMenuCard>
                       Positioned(
                         left: -25,
                         bottom: -25,
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           width: largeBubbleSize,
                           height: largeBubbleSize,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withOpacity(_isHovered ? 0.12 : 0.08),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -185,11 +200,26 @@ class _HomeMenuCardState extends State<HomeMenuCard>
                       Positioned(
                         right: 40,
                         bottom: 30,
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           width: smallBubbleSize,
                           height: smallBubbleSize,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withOpacity(_isHovered ? 0.2 : 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      // Additional small decorative circle for visual interest
+                      Positioned(
+                        left: 30,
+                        top: 20,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: smallBubbleSize * 0.7,
+                          height: smallBubbleSize * 0.7,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(_isHovered ? 0.25 : 0.15),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -213,12 +243,19 @@ class _HomeMenuCardState extends State<HomeMenuCard>
                                 boxShadow: [
                                   BoxShadow(
                                     color: _cardGradient.first.withOpacity(
-                                      _isHovered ? 0.3 : 0.1,
+                                      _isHovered ? 0.4 : 0.2,
                                     ),
-                                    blurRadius: _isHovered ? 8 : 5,
+                                    blurRadius: _isHovered ? 10 : 6,
                                     spreadRadius: _isHovered ? 2 : 0,
                                     offset: Offset(0, _isHovered ? 3 : 2),
                                   ),
+                                  if (_isHovered)
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.15),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                      offset: Offset(0, 0),
+                                    ),
                                 ],
                               ),
                               child: Icon(
@@ -242,10 +279,11 @@ class _HomeMenuCardState extends State<HomeMenuCard>
                                       fontWeight: FontWeight.w600,
                                       fontSize: titleFontSize,
                                       color: Colors.white,
+                                      letterSpacing: 0.3,
                                       shadows: [
                                         Shadow(
-                                          color: Colors.black.withOpacity(0.3),
-                                          blurRadius: 2,
+                                          color: Colors.black.withOpacity(0.4),
+                                          blurRadius: 3,
                                           offset: Offset(0, 1),
                                         ),
                                       ],
