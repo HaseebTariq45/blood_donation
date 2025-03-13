@@ -5,6 +5,7 @@ import '../models/donation_model.dart';
 import '../models/blood_request_model.dart';
 import '../models/blood_bank_model.dart';
 import '../models/data_usage_model.dart';
+import '../utils/location_service.dart';
 
 class AppProvider extends ChangeNotifier {
   // User data
@@ -21,6 +22,10 @@ class AppProvider extends ChangeNotifier {
   Locale get locale => _locale;
   String _selectedLanguage = 'English';
   String get selectedLanguage => _selectedLanguage;
+
+  // Location settings
+  bool _isLocationEnabled = false;
+  bool get isLocationEnabled => _isLocationEnabled;
 
   // Profile image error handling
   bool _profileImageLoadError = false;
@@ -309,5 +314,35 @@ class AppProvider extends ChangeNotifier {
   void markAllNotificationsAsRead() {
     _hasUnreadNotifications = false;
     notifyListeners();
+  }
+
+  // Location methods
+  Future<void> checkLocationStatus() async {
+    final locationService = LocationService();
+    _isLocationEnabled = await locationService.isLocationEnabled();
+    notifyListeners();
+  }
+
+  Future<bool> enableLocation() async {
+    final locationService = LocationService();
+    bool success = await locationService.requestLocationPermission();
+    _isLocationEnabled = success;
+    notifyListeners();
+    return success;
+  }
+
+  Future<void> disableLocation() async {
+    final locationService = LocationService();
+    await locationService.disableLocation();
+    _isLocationEnabled = false;
+    notifyListeners();
+  }
+
+  // Add to the initialize method
+  Future<void> initialize() async {
+    // ... (existing initialization code) ...
+    
+    // Initialize location status
+    await checkLocationStatus();
   }
 } 

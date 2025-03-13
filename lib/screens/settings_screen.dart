@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../utils/localization/app_localization.dart';
 import '../utils/theme_helper.dart';
+import '../utils/location_service.dart';
 import 'data_usage_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -16,7 +19,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   bool _notificationsEnabled = true;
-  bool _locationEnabled = true;
+  bool _locationEnabled = false;
   bool _emailNotifications = true;
   bool _smsNotifications = false;
   bool _pushNotifications = true;
@@ -40,6 +43,16 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       ),
     );
     _animationController.forward();
+    
+    // Load settings from provider
+    _loadSettings();
+  }
+  
+  void _loadSettings() {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    setState(() {
+      _locationEnabled = appProvider.isLocationEnabled;
+    });
   }
 
   @override
@@ -292,9 +305,22 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                         itemSpacing: itemSpacing,
                         trailing: Switch(
                           value: _locationEnabled,
-                          onChanged: (value) {
+                          onChanged: (value) async {
+                            final appProvider = Provider.of<AppProvider>(context, listen: false);
+                            
+                            if (value) {
+                              // Try to enable location
+                              final success = await appProvider.enableLocation();
+                              if (!success) {
+                                _showLocationPermissionDialog();
+                              }
+                            } else {
+                              // Disable location
+                              await appProvider.disableLocation();
+                            }
+                            
                             setState(() {
-                              _locationEnabled = value;
+                              _locationEnabled = appProvider.isLocationEnabled;
                             });
                           },
                           activeColor: AppConstants.primaryColor,
@@ -748,6 +774,32 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ],
         );
       },
+    );
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Location Permission Required'),
+        content: const Text(
+          'This feature requires location permission to find blood banks near you. '
+          'Please enable location permission in your device settings.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              LocationService().openApplicationSettings();
+            },
+            child: const Text('OPEN SETTINGS'),
+          ),
+        ],
+      ),
     );
   }
 } 

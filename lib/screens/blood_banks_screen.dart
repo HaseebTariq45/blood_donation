@@ -8,6 +8,7 @@ import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../models/blood_bank_model.dart';
 import '../widgets/custom_app_bar.dart';
+import '../utils/location_service.dart';
 
 class BloodBanksScreen extends StatefulWidget {
   const BloodBanksScreen({Key? key}) : super(key: key);
@@ -40,9 +41,10 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
   }
 
   Future<void> _checkLocationPermission() async {
-    final status = await Permission.location.request();
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    await appProvider.checkLocationStatus();
     
-    if (status.isGranted) {
+    if (appProvider.isLocationEnabled) {
       setState(() {
         _isLocationEnabled = true;
       });
@@ -58,21 +60,19 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
 
   Future<void> _getCurrentLocation() async {
     try {
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
+      final locationService = LocationService();
+      
+      // Get current position
+      Position? position = await locationService.getCurrentPosition();
+      
+      if (position == null) {
         setState(() {
-          _isLoading = false;
           _isLocationEnabled = false;
+          _isLoading = false;
         });
         _showLocationServiceDialog();
         return;
       }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
       
       setState(() {
         _currentPosition = position;
@@ -280,7 +280,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
               child: const Text('OPEN SETTINGS'),
               onPressed: () {
                 Navigator.of(context).pop();
-                openAppSettings();
+                LocationService().openApplicationSettings();
               },
             ),
           ],
@@ -758,17 +758,35 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                _checkLocationPermission();
+            ElevatedButton(
+              onPressed: () async {
+                final appProvider = Provider.of<AppProvider>(context, listen: false);
+                setState(() {
+                  _isLoading = true;
+                });
+                
+                bool success = await appProvider.enableLocation();
+                if (success) {
+                  _getCurrentLocation();
+                } else {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  _showLocationPermissionDialog();
+                }
               },
-              icon: const Icon(Icons.location_on),
-              label: const Text('Enable Location'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: AppConstants.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on),
+                  const SizedBox(width: 8),
+                  const Text('Enable Location'),
+                ],
               ),
             ),
           ],
