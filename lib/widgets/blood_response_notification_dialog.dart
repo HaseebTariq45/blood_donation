@@ -99,12 +99,27 @@ class _BloodResponseNotificationDialogState
   Future<void> _fetchResponderDetails() async {
     if (widget.responderId.isEmpty) {
       debugPrint('BloodResponseNotificationDialog - Error: Empty responderId provided');
+      
+      // Show a user-friendly message
+      if (mounted) {
+        Future.microtask(() {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not fetch responder details: Missing information'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        });
+      }
+      
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
@@ -126,13 +141,34 @@ class _BloodResponseNotificationDialogState
       }
 
       // Get emergency contacts
-      final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
-      debugPrint('BloodResponseNotificationDialog - Retrieved ${contacts.length} emergency contacts');
-      
-      if (mounted) {
-        setState(() {
-          _emergencyContacts = contacts;
-        });
+      try {
+        final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
+        debugPrint('BloodResponseNotificationDialog - Retrieved ${contacts.length} emergency contacts');
+        
+        if (mounted) {
+          setState(() {
+            _emergencyContacts = contacts;
+          });
+        }
+      } catch (contactError) {
+        debugPrint('Error fetching emergency contacts: $contactError');
+        
+        // Check if it's a Firestore index error
+        if (contactError.toString().contains('requires an index')) {
+          if (mounted) {
+            // Use Future.microtask to avoid setState during build
+            Future.microtask(() {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Emergency contacts are being set up. They will be available soon.'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            });
+          }
+        }
       }
     } catch (e) {
       debugPrint('BloodResponseNotificationDialog - Error fetching responder details: $e');
@@ -354,7 +390,7 @@ class _BloodResponseNotificationDialogState
             maxWidth: maxDialogWidth,
             maxHeight: maxDialogHeight,
           ),
-          child: _buildDialogContent(context),
+        child: _buildDialogContent(context),
         ),
       ),
     );
@@ -386,43 +422,43 @@ class _BloodResponseNotificationDialogState
           ),
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Blood Donation Response',
-                  style: TextStyle(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Blood Donation Response',
+                      style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                 const SizedBox(height: 8),
-                Text(
-                  '${widget.responderName} has responded to your blood request',
-                  style: TextStyle(
+                    Text(
+                      '${widget.responderName} has responded to your blood request',
+                      style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                 const SizedBox(height: 16),
                 // Responder details card - more compact
-                Container(
+                    Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[850]
-                        : const Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+                                ? Colors.grey[850]
+                                : const Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[800]!
-                          : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                          width: 1,
+                        ),
+                      ),
                   child: Column(
                     children: [
                       Row(
@@ -430,14 +466,14 @@ class _BloodResponseNotificationDialogState
                           // Responder info
                           Expanded(
                             flex: 3,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                                 _buildCompactInfoRow(
-                                  context: context,
-                                  icon: Icons.person,
-                                  title: 'Name',
-                                  value: widget.responderName,
+                            context: context,
+                            icon: Icons.person,
+                            title: 'Name',
+                            value: widget.responderName,
                                   color: AppConstants.primaryColor,
                                 ),
                                 const SizedBox(height: 8),
@@ -450,11 +486,11 @@ class _BloodResponseNotificationDialogState
                                 ),
                                 const SizedBox(height: 8),
                                 _buildCompactInfoRow(
-                                  context: context,
-                                  icon: Icons.phone,
-                                  title: 'Phone',
-                                  value: widget.responderPhone,
-                                  color: Colors.green,
+                            context: context,
+                            icon: Icons.phone,
+                            title: 'Phone',
+                            value: widget.responderPhone,
+                            color: Colors.green,
                                 ),
                               ],
                             ),
@@ -484,22 +520,22 @@ class _BloodResponseNotificationDialogState
                                   label: 'Copy',
                                   color: Colors.orange,
                                   onTap: () => _copyToClipboard(widget.responderPhone, 'Phone'),
-                                ),
-                              ],
-                            ),
                           ),
+                        ],
+                      ),
+                    ),
                         ],
                       ),
                       // Toggle buttons for additional info
                       const SizedBox(height: 12),
                       Row(
-                        children: [
+                      children: [
                           Expanded(
                             child: _buildToggleButton(
-                              icon: Icons.contact_emergency,
+                          icon: Icons.contact_emergency,
                               label: 'Emergency Contacts',
-                              color: Colors.orange,
-                              isSelected: _showingContacts,
+                          color: Colors.orange,
+                          isSelected: _showingContacts,
                               onTap: () {
                                 setState(() {
                                   _showingContacts = !_showingContacts;
@@ -518,10 +554,10 @@ class _BloodResponseNotificationDialogState
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildToggleButton(
-                              icon: Icons.location_on,
-                              label: 'Location',
-                              color: Colors.purple,
-                              isSelected: _showingLocation,
+                          icon: Icons.location_on,
+                          label: 'Location',
+                          color: Colors.purple,
+                          isSelected: _showingLocation,
                               onTap: () {
                                 setState(() {
                                   _showingLocation = !_showingLocation;
@@ -531,13 +567,13 @@ class _BloodResponseNotificationDialogState
                                 });
                               },
                             ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                       // Conditionally show location or contacts
                       if (_showingLocation && _responderDetails?.location != null)
                         _buildCompactLocationSection(),
-                      if (_showingContacts)
+                    if (_showingContacts) 
                         _isLoading && _emergencyContacts.isEmpty
                           ? _buildLoadingIndicator()
                           : _emergencyContacts.isNotEmpty
@@ -566,9 +602,9 @@ class _BloodResponseNotificationDialogState
                             color: AppConstants.primaryColor,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
-                          ),
-                        ),
-                      ),
+            ),
+          ),
+        ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -616,9 +652,9 @@ class _BloodResponseNotificationDialogState
             builder: (context, child) {
               return Transform.scale(
                 scale: _pulseAnimation.value,
-                child: CircleAvatar(
-                  backgroundColor: AppConstants.primaryColor,
-                  radius: 45,
+            child: CircleAvatar(
+              backgroundColor: AppConstants.primaryColor,
+              radius: 45,
                   child: Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -629,13 +665,13 @@ class _BloodResponseNotificationDialogState
                         width: 2,
                       ),
                     ),
-                    child: Icon(
+                child: Icon(
                       Icons.volunteer_activism,
-                      color: AppConstants.primaryColor,
+                  color: AppConstants.primaryColor,
                       size: 40,
-                    ),
-                  ),
                 ),
+              ),
+            ),
               );
             },
           ),
@@ -677,41 +713,41 @@ class _BloodResponseNotificationDialogState
     required Color color,
   }) {
     return Row(
-      children: [
-        Container(
+          children: [
+            Container(
           padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
           child: Icon(icon, color: color, size: 14),
-        ),
+            ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[400]
-                      : Colors.grey[600],
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                 overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
       ],
     );
   }
@@ -732,9 +768,9 @@ class _BloodResponseNotificationDialogState
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
+      child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
+        children: [
             Icon(icon, color: color, size: 16),
             const SizedBox(width: 4),
             Text(
@@ -764,7 +800,7 @@ class _BloodResponseNotificationDialogState
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        decoration: BoxDecoration(
+              decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.2) : color.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
@@ -779,9 +815,9 @@ class _BloodResponseNotificationDialogState
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
+              label,
+              style: TextStyle(
+                fontSize: 12,
                   color: color,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -816,8 +852,8 @@ class _BloodResponseNotificationDialogState
               const SizedBox(width: 4),
               const Text(
                 'Location',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: Colors.purple,
                 ),
@@ -827,7 +863,7 @@ class _BloodResponseNotificationDialogState
                 onTap: () => _openLocation(location.latitude, location.longitude),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
+                children: [
                     Icon(Icons.map, color: Colors.purple, size: 12),
                     SizedBox(width: 2),
                     Text(
@@ -853,7 +889,7 @@ class _BloodResponseNotificationDialogState
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+                    children: [
               Text(
                 'Coordinates: ${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
                 style: const TextStyle(fontSize: 10, color: Colors.grey),
@@ -861,9 +897,9 @@ class _BloodResponseNotificationDialogState
               InkWell(
                 onTap: () => _copyToClipboard('${location.latitude}, ${location.longitude}', 'Coordinates'),
                 child: const Icon(Icons.copy, size: 12, color: Colors.grey),
-              ),
-            ],
-          ),
+                      ),
+                    ],
+                  ),
         ],
       ),
     );
@@ -983,7 +1019,7 @@ class _BloodResponseNotificationDialogState
               Text(
                 'Emergency Contact${hasMultipleContacts ? 's' : ''}',
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: Colors.orange,
                 ),
@@ -1011,34 +1047,34 @@ class _BloodResponseNotificationDialogState
           const Divider(height: 8, thickness: 0.5),
           Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      contact.name,
-                      style: const TextStyle(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  contact.name,
+                                  style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 12,
-                      ),
-                    ),
-                    Text(
+                                  ),
+                                ),
+                                Text(
                       contact.phoneNumber,
                       style: const TextStyle(fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                   InkWell(
                     onTap: () async {
-                      final url = 'tel:${contact.phoneNumber}';
-                      if (await url_launcher.canLaunch(url)) {
-                        await url_launcher.launch(url);
-                      }
-                    },
+                                  final url = 'tel:${contact.phoneNumber}';
+                                  if (await url_launcher.canLaunch(url)) {
+                                    await url_launcher.launch(url);
+                                  }
+                                },
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -1051,11 +1087,11 @@ class _BloodResponseNotificationDialogState
                   const SizedBox(width: 8),
                   InkWell(
                     onTap: () async {
-                      final url = 'sms:${contact.phoneNumber}';
-                      if (await url_launcher.canLaunch(url)) {
-                        await url_launcher.launch(url);
-                      }
-                    },
+                                  final url = 'sms:${contact.phoneNumber}';
+                                  if (await url_launcher.canLaunch(url)) {
+                                    await url_launcher.launch(url);
+                                  }
+                                },
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -1064,11 +1100,11 @@ class _BloodResponseNotificationDialogState
                       ),
                       child: const Icon(Icons.message, color: Colors.blue, size: 14),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
           // Show "View All" button if there are multiple contacts
           if (hasMultipleContacts) ...[
             const Divider(height: 12, thickness: 0.5),
@@ -1096,9 +1132,9 @@ class _BloodResponseNotificationDialogState
                       ),
                     ),
                   ],
-                ),
               ),
             ),
+          ),
           ],
         ],
       ),
@@ -1161,14 +1197,14 @@ class _BloodResponseNotificationDialogState
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+        decoration: BoxDecoration(
         color: Colors.orange.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.orange.withOpacity(0.2)),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+          children: [
           SizedBox(
             width: 16,
             height: 16,
@@ -1178,15 +1214,15 @@ class _BloodResponseNotificationDialogState
             ),
           ),
           SizedBox(width: 12),
-          Text(
+            Text(
             'Loading contacts...',
-            style: TextStyle(
-              fontSize: 12,
+              style: TextStyle(
+                fontSize: 12,
               color: Colors.orange,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
     );
   }
 
@@ -1233,7 +1269,7 @@ class _BloodResponseNotificationDialogState
       final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
       
       if (mounted) {
-        setState(() {
+    setState(() {
           _emergencyContacts = contacts;
           _isLoading = false;
         });

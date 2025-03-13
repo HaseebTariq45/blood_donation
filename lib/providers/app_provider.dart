@@ -728,21 +728,30 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<List<NotificationModel>> getUserNotifications() async {
-    _isLoadingNotifications = true;
-    notifyListeners();
+    // Use a flag to avoid multiple state updates during build
+    final bool wasLoading = _isLoadingNotifications;
+    
+    if (!wasLoading) {
+      _isLoadingNotifications = true;
+      // Use microtask to ensure the notifyListeners call happens after the current build cycle
+      Future.microtask(() => notifyListeners());
+    }
     
     try {
       final notifications = await _notificationService.getUserNotifications();
       _userNotifications = notifications;
       _hasUnreadNotifications = notifications.any((notification) => !notification.read);
-      notifyListeners();
+      
+      // Schedule state update outside the current build cycle
+      Future.microtask(() => notifyListeners());
       return notifications;
     } catch (e) {
       debugPrint('Error getting user notifications: $e');
       return [];
     } finally {
       _isLoadingNotifications = false;
-      notifyListeners();
+      // Schedule state update outside the current build cycle
+      Future.microtask(() => notifyListeners());
     }
   }
 
@@ -1040,11 +1049,30 @@ class AppProvider extends ChangeNotifier {
 
   // Get emergency contacts for a user
   Future<List<EmergencyContactModel>> getEmergencyContactsForUser(String userId) async {
+    // Validate userId
+    if (userId.isEmpty) {
+      debugPrint('Error: Empty userId provided to getEmergencyContactsForUser');
+      return [];
+    }
+    
     try {
+      debugPrint('Getting emergency contacts for user: $userId');
       final contacts = await _emergencyContactService.getAllEmergencyContacts(userId);
+      debugPrint('Successfully retrieved ${contacts.length} emergency contacts');
       return contacts;
     } catch (e) {
       debugPrint('Error getting emergency contacts: $e');
+      
+      // Check if it's a Firestore index error
+      if (e.toString().contains('failed-precondition') && 
+          e.toString().contains('requires an index')) {
+        debugPrint('Firestore index missing for emergency contacts query');
+        
+        // Return built-in contacts as a fallback
+        return EmergencyContactModel.getBuiltInContacts(userId);
+      }
+      
+      // For other errors, return an empty list
       return [];
     }
   }
@@ -1080,6 +1108,7 @@ class AppProvider extends ChangeNotifier {
           'requesterName': requesterDetails.name,
           'requesterPhone': requesterDetails.phone,
           'requestId': requestId,
+          'responderId': responderId,
         },
       );
       

@@ -167,10 +167,20 @@ class FirebaseNotificationService {
       final String? responderName = data['responderName'];
       final String? responderPhone = data['responderPhone'];
       final String? bloodType = data['bloodType'];
+      final String? responderId = data['responderId'];
+      
+      debugPrint('Notification data for blood request response:');
+      debugPrint('  requestId: $requestId');
+      debugPrint('  responderName: $responderName');
+      debugPrint('  responderPhone: $responderPhone');
+      debugPrint('  bloodType: $bloodType');
+      debugPrint('  responderId: $responderId');
 
       if (requestId != null &&
           responderName != null &&
-          responderPhone != null) {
+          responderPhone != null &&
+          responderId != null &&
+          responderId.isNotEmpty) {
         // Show response dialog
         showDialog(
           context: context,
@@ -181,7 +191,7 @@ class FirebaseNotificationService {
                 responderPhone: responderPhone,
                 bloodType: bloodType ?? 'Unknown',
                 requestId: requestId,
-                responderId: data['responderId'] ?? '',
+                responderId: responderId,
                 onViewRequest: () {
                   Navigator.of(context, rootNavigator: true).pushNamed(
                     '/blood_requests_list',
@@ -194,7 +204,18 @@ class FirebaseNotificationService {
               ),
         );
       } else {
-        // Fallback to default navigation if data is missing
+        // Notify user about missing responder information
+        if (responderId == null || responderId.isEmpty) {
+          debugPrint('Error: Missing responderId in notification data');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not show details: Missing responder information'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        
+        // Fallback - navigate to blood requests list if requestId is available
         if (requestId != null) {
           Navigator.of(context, rootNavigator: true).pushNamed(
             '/blood_requests_list',

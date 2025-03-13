@@ -73,6 +73,7 @@ exports.sendNotificationOnCreate = functions.firestore
               responderName: notificationData.responderName || '',
               responderPhone: notificationData.responderPhone || '',
               bloodType: notificationData.bloodType || '',
+              responderId: notificationData.responderId || '',
               timestamp: Date.now().toString(),
               notification_id: notificationId,
               click_action: 'FLUTTER_NOTIFICATION_CLICK',
@@ -158,6 +159,7 @@ exports.sendNotificationOnCreate = functions.firestore
               responderName: notificationData.responderName || '',
               responderPhone: notificationData.responderPhone || '',
               bloodType: notificationData.bloodType || '',
+              responderId: notificationData.responderId || '',
               click_action: 'FLUTTER_NOTIFICATION_CLICK',
             },
             android: {

@@ -53,22 +53,45 @@ class NotificationCard extends StatelessWidget {
             // Mark notification as read
             onMarkAsRead(notification.id);
             
-            // Show blood response dialog with donor details
-            showDialog(
-              context: context,
-              builder: (context) => BloodResponseNotificationDialog(
-                responderName: notification.metadata?['responderName'] ?? 'Unknown',
-                responderPhone: notification.metadata?['responderPhone'] ?? 'Unknown',
-                bloodType: notification.metadata?['bloodType'] ?? 'Unknown',
-                responderId: notification.metadata?['responderId'] ?? '',
-                requestId: notification.metadata?['requestId'] ?? '',
-                onViewRequest: () {
-                  // Handle viewing the request
-                  Navigator.pop(context);
-                  // TODO: Navigate to blood request detail page
-                },
-              ),
-            );
+            // Get responder information
+            final String? responderId = notification.metadata?['responderId'];
+            final String? responderName = notification.metadata?['responderName'];
+            final String? responderPhone = notification.metadata?['responderPhone'];
+            final String? bloodType = notification.metadata?['bloodType'];
+            final String? requestId = notification.metadata?['requestId'];
+            
+            // Debug log
+            debugPrint('Notification card, responder info:');
+            debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
+            debugPrint('  requestId: $requestId');
+            
+            // Validate responderId
+            if (responderId != null && responderId.isNotEmpty) {
+              // Show blood response dialog with donor details
+              showDialog(
+                context: context,
+                builder: (context) => BloodResponseNotificationDialog(
+                  responderName: responderName ?? 'Unknown',
+                  responderPhone: responderPhone ?? 'Unknown',
+                  bloodType: bloodType ?? 'Unknown',
+                  responderId: responderId,
+                  requestId: requestId ?? '',
+                  onViewRequest: () {
+                    // Handle viewing the request
+                    Navigator.pop(context);
+                    // TODO: Navigate to blood request detail page
+                  },
+                ),
+              );
+            } else {
+              // Show error for missing responder ID
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not show details: Missing responder information'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
           } else {
             // For other notification types
             onMarkAsRead(notification.id);

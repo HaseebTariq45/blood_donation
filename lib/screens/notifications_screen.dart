@@ -18,7 +18,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    // Use microtask to ensure this runs after the widget is fully built
+    Future.microtask(() => _loadNotifications());
   }
 
   Future<void> _loadNotifications() async {

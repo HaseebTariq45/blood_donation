@@ -158,6 +158,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
                               'responderName': currentUser.name,
                               'responderPhone': currentUser.phone,
                               'bloodType': currentUser.bloodType,
+                              'responderId': currentUser.id,
                             },
                           );
 
