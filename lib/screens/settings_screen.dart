@@ -761,7 +761,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       await notificationService.sendEmailNotification(
         appProvider.currentUser.email,
         'Test Notification',
-        'This is a test email notification from the Blood Donation app.'
+        'This is a test email notification from the BloodLine app.'
       );
     }
     
@@ -769,7 +769,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       await notificationService.sendPushNotification(
         appProvider.currentUser.id,
         'Test Notification',
-        'This is a test push notification from the Blood Donation app.'
+        'This is a test push notification from the BloodLine app.'
       );
     }
     

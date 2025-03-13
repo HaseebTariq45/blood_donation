@@ -1,4 +1,4 @@
-# Blood Donation App
+# BloodLine
 
 This Flutter application helps connect blood donors with people in need of blood donations. It features user profiles, blood requests, donor search, and more.
 

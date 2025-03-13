@@ -26,7 +26,7 @@
   "filter": "Filter",
   "submit": "Submit",
   "close": "Close",
-  "welcome": "Welcome to Blood Donation App",
+  "welcome": "Welcome to BloodLine",
   "welcome_message": "Your donation can save a life",
   "recent_requests": "Recent Blood Requests",
   "view_all": "View All",
@@ -66,7 +66,7 @@
   "terms_intro_content": "Welcome to Blood Donation. These Terms and Conditions govern your use of the Blood Donation mobile application and all related services. By accessing or using our app, you agree to be bound by these Terms. If you disagree with any part of these terms, please do not use our app.",
   
   "terms_eligibility_title": "Eligibility",
-  "terms_eligibility_content": "To use the Blood Donation app, you must meet the following criteria:",
+  "terms_eligibility_content": "To use the BloodLine app, you must meet the following criteria:",
   "terms_eligibility_point1": "Be at least 18 years of age or have parental consent",
   "terms_eligibility_point2": "Provide accurate, truthful, and complete information about yourself, including your health information",
   "terms_eligibility_point3": "Comply with all local laws and regulations regarding blood donation",
@@ -80,7 +80,7 @@
   "terms_account_point4": "Not transfer your account to another person without our prior written consent",
   
   "terms_conduct_title": "Code of Conduct",
-  "terms_conduct_content": "As a Blood Donation app user, you agree not to:",
+  "terms_conduct_content": "As a BloodLine app user, you agree not to:",
   "terms_conduct_point1": "Use the app for any illegal purpose or in violation of any local laws",
   "terms_conduct_point2": "Submit false or misleading information about yourself or your health status",
   "terms_conduct_point3": "Harass, intimidate, or harm other users or blood recipients",
@@ -95,7 +95,7 @@
   "terms_donation_point4": "We reserve the right to suspend accounts of users who repeatedly fail to meet donation appointments",
   
   "terms_ip_title": "Intellectual Property",
-  "terms_ip_content": "All content on the Blood Donation app, including but not limited to text, graphics, logos, icons, images, audio clips, and software, is the property of Blood Donation and is protected by international copyright, trademark, and other intellectual property laws. You may not use, reproduce, distribute, or modify any content from our app without our express written permission.",
+  "terms_ip_content": "All content on the BloodLine app, including but not limited to text, graphics, logos, icons, images, audio clips, and software, is the property of BloodLine and is protected by international copyright, trademark, and other intellectual property laws. You may not use, reproduce, distribute, or modify any content from our app without our express written permission.",
   
   "terms_liability_title": "Limitation of Liability",
   "terms_liability_content": "To the fullest extent permitted by applicable law, Blood Donation shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses resulting from your use or inability to use the service.",

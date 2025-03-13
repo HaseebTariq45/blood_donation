@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
     final isRtl = appProvider.locale.languageCode == 'ar' || appProvider.locale.languageCode == 'ur';
     
     return MaterialApp(
-      title: 'Blood Donation App',
+      title: 'BloodLine',
       debugShowCheckedModeBanner: false,
       
       // Localization support

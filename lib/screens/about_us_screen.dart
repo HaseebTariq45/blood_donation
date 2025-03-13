@@ -204,7 +204,7 @@ class AboutUsScreen extends StatelessWidget {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Blood Donation App',
+                            'BloodLine',
                             style: TextStyle(
                               fontSize: headerTitleSize,
                               fontWeight: FontWeight.bold,
@@ -511,7 +511,7 @@ class AboutUsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Blood Donation App',
+                                'BloodLine',
                                 style: TextStyle(
                                   fontSize: subtitleFontSize + 2,
                                   fontWeight: FontWeight.bold,

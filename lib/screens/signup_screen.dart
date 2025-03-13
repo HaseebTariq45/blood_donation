@@ -215,7 +215,7 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    'Join the Blood Donation Community',
+                                    'Join the BloodLine Community',
                                     style: TextStyle(
                                       fontSize: headerFontSize,
                                       fontWeight: FontWeight.bold,

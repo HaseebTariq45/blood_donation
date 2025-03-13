@@ -1,5 +1,5 @@
 name: blood_donation
-description: "A modern, user-friendly Blood Donation app"
+description: "A modern, user-friendly BloodLine app"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

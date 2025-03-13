@@ -49,7 +49,7 @@ class HomeScreen extends StatelessWidget {
               Icon(Icons.favorite, size: iconSize),
               SizedBox(width: horizontalPadding * 0.4),
               Text(
-                'BLOOD DONATION',
+                'BloodLine',
                 style: TextStyle(
                   fontSize: titleFontSize,
                   fontWeight: FontWeight.bold,

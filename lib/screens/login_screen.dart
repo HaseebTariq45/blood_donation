@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                'BLOOD DONATION',
+                                'BloodLine',
                                 style: TextStyle(
                                   color: AppConstants.primaryColor,
                                   fontSize: headerFontSize,
