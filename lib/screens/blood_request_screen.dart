@@ -6,6 +6,7 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../models/blood_request_model.dart';
 import '../utils/theme_helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BloodRequestScreen extends StatefulWidget {
   const BloodRequestScreen({Key? key}) : super(key: key);
@@ -15,7 +16,8 @@ class BloodRequestScreen extends StatefulWidget {
 }
 
 class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
+  final _selfFormKey = GlobalKey<FormState>();
+  final _otherFormKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _hospitalController = TextEditingController();
@@ -73,15 +75,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
   }
 
   void _submitRequest() {
-    if (_formKey.currentState!.validate()) {
+    // Get the correct form key based on the current tab
+    final formKey = _tabController.index == 0 ? _selfFormKey : _otherFormKey;
+    
+    if (formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // Create a new blood request
       final appProvider = Provider.of<AppProvider>(context, listen: false);
       final user = appProvider.currentUser;
-      
       final bloodRequest = BloodRequestModel(
         id: 'req_${DateTime.now().millisecondsSinceEpoch}',
         requesterId: user.id,
@@ -93,16 +96,49 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
         urgency: _selectedUrgency,
         notes: _notesController.text,
       );
-      
-      appProvider.addBloodRequest(bloodRequest);
-      
-      // Simulate network delay
-      Future.delayed(const Duration(seconds: 1), () {
+
+      // Save the blood request to Firestore
+      FirebaseFirestore.instance.collection('blood_requests').doc(bloodRequest.id).set(bloodRequest.toMap()).then((_) {
         setState(() {
           _isLoading = false;
         });
-        
-        _showSuccessDialog();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Request submitted successfully'),
+            backgroundColor: AppConstants.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+            action: SnackBarAction(
+              label: 'DISMISS',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }).catchError((error) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit request: $error'),
+            backgroundColor: AppConstants.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+            action: SnackBarAction(
+              label: 'DISMISS',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
       });
     }
   }
@@ -854,7 +890,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
-        key: _formKey,
+        key: forSelf ? _selfFormKey : _otherFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

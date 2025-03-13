@@ -51,4 +51,36 @@ class BloodRequestModel {
   static List<BloodRequestModel> getDummyList() {
     return List.generate(8, (index) => BloodRequestModel.dummy(index));
   }
+
+  // Convert BloodRequestModel to a map for Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'requesterId': requesterId,
+      'requesterName': requesterName,
+      'contactNumber': contactNumber,
+      'bloodType': bloodType,
+      'location': location,
+      'urgency': urgency,
+      'requestDate': requestDate.toIso8601String(),
+      'status': status,
+      'notes': notes,
+    };
+  }
+
+  // Create a BloodRequestModel from a Firestore document
+  factory BloodRequestModel.fromMap(Map<String, dynamic> map) {
+    return BloodRequestModel(
+      id: map['id'] ?? '',
+      requesterId: map['requesterId'] ?? '',
+      requesterName: map['requesterName'] ?? '',
+      contactNumber: map['contactNumber'] ?? '',
+      bloodType: map['bloodType'] ?? '',
+      location: map['location'] ?? '',
+      urgency: map['urgency'] ?? 'Normal',
+      requestDate: DateTime.parse(map['requestDate'] ?? DateTime.now().toIso8601String()),
+      status: map['status'] ?? 'Pending',
+      notes: map['notes'] ?? '',
+    );
+  }
 } 
