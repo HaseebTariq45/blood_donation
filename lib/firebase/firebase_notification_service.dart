@@ -10,11 +10,15 @@ class FirebaseNotificationService {
   String? get _userId => _auth.currentUser?.uid;
 
   // Add a notification to Firestore
-  Future<NotificationModel> addNotification(NotificationModel notification) async {
+  Future<NotificationModel> addNotification(
+    NotificationModel notification,
+  ) async {
     try {
       // Create a notification document in Firestore
-      final docRef = await _firestore.collection('notifications').add(notification.toMap());
-      
+      final docRef = await _firestore
+          .collection('notifications')
+          .add(notification.toMap());
+
       // Return the notification with the new ID
       return notification.copyWith(id: docRef.id);
     } catch (e) {
@@ -33,25 +37,24 @@ class FirebaseNotificationService {
 
       // Note: We're removing the orderBy clause that requires a composite index
       // Instead, we'll sort the results client-side
-      final querySnapshot = await _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: _userId)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('notifications')
+              .where('userId', isEqualTo: _userId)
+              .get();
 
-      final notifications = querySnapshot.docs
-          .map((doc) => NotificationModel.fromMap(
-                doc.data(),
-                doc.id,
-              ))
-          .toList();
-      
+      final notifications =
+          querySnapshot.docs
+              .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+              .toList();
+
       // Sort by createdAt descending
       notifications.sort((a, b) {
         final dateA = DateTime.tryParse(a.createdAt) ?? DateTime(1970);
         final dateB = DateTime.tryParse(b.createdAt) ?? DateTime(1970);
         return dateB.compareTo(dateA); // Descending order (newest first)
       });
-      
+
       return notifications;
     } catch (e) {
       print('Error getting user notifications: $e');
@@ -71,31 +74,28 @@ class FirebaseNotificationService {
         .where('userId', isEqualTo: _userId)
         .snapshots()
         .map((snapshot) {
-      final notifications = snapshot.docs
-          .map((doc) => NotificationModel.fromMap(
-                doc.data(),
-                doc.id,
-              ))
-          .toList();
-      
-      // Sort by createdAt descending
-      notifications.sort((a, b) {
-        final dateA = DateTime.tryParse(a.createdAt) ?? DateTime(1970);
-        final dateB = DateTime.tryParse(b.createdAt) ?? DateTime(1970);
-        return dateB.compareTo(dateA); // Descending order (newest first)
-      });
-      
-      return notifications;
-    });
+          final notifications =
+              snapshot.docs
+                  .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+                  .toList();
+
+          // Sort by createdAt descending
+          notifications.sort((a, b) {
+            final dateA = DateTime.tryParse(a.createdAt) ?? DateTime(1970);
+            final dateB = DateTime.tryParse(b.createdAt) ?? DateTime(1970);
+            return dateB.compareTo(dateA); // Descending order (newest first)
+          });
+
+          return notifications;
+        });
   }
 
   // Mark a notification as read
   Future<void> markNotificationAsRead(String notificationId) async {
     try {
-      await _firestore
-          .collection('notifications')
-          .doc(notificationId)
-          .update({'read': true});
+      await _firestore.collection('notifications').doc(notificationId).update({
+        'read': true,
+      });
     } catch (e) {
       print('Error marking notification as read: $e');
     }
@@ -109,17 +109,18 @@ class FirebaseNotificationService {
       }
 
       final batch = _firestore.batch();
-      
-      final querySnapshot = await _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: _userId)
-          .where('read', isEqualTo: false)
-          .get();
-      
+
+      final querySnapshot =
+          await _firestore
+              .collection('notifications')
+              .where('userId', isEqualTo: _userId)
+              .where('read', isEqualTo: false)
+              .get();
+
       for (var doc in querySnapshot.docs) {
         batch.update(doc.reference, {'read': true});
       }
-      
+
       await batch.commit();
     } catch (e) {
       print('Error marking all notifications as read: $e');
@@ -129,10 +130,7 @@ class FirebaseNotificationService {
   // Delete a notification
   Future<void> deleteNotification(String notificationId) async {
     try {
-      await _firestore
-          .collection('notifications')
-          .doc(notificationId)
-          .delete();
+      await _firestore.collection('notifications').doc(notificationId).delete();
     } catch (e) {
       print('Error deleting notification: $e');
     }
@@ -145,13 +143,14 @@ class FirebaseNotificationService {
         return false;
       }
 
-      final querySnapshot = await _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: _userId)
-          .where('read', isEqualTo: false)
-          .limit(1)
-          .get();
-      
+      final querySnapshot =
+          await _firestore
+              .collection('notifications')
+              .where('userId', isEqualTo: _userId)
+              .where('read', isEqualTo: false)
+              .limit(1)
+              .get();
+
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
       print('Error checking for unread notifications: $e');
