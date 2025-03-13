@@ -15,6 +15,7 @@ import 'screens/blood_request_screen.dart';
 import 'screens/blood_requests_list_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/notification_settings_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/blood_banks_screen.dart';
 import 'screens/donation_history_screen.dart';
@@ -104,6 +105,7 @@ class MyApp extends StatelessWidget {
         '/blood_requests_list': (context) => const BloodRequestsListScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
+        '/notification_settings': (context) => const NotificationSettingsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/blood_banks': (context) => const BloodBanksScreen(),
         '/donation_history': (context) => const DonationHistoryScreen(),

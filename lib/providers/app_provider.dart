@@ -6,6 +6,7 @@ import '../models/blood_request_model.dart';
 import '../models/blood_bank_model.dart';
 import '../models/data_usage_model.dart';
 import '../utils/location_service.dart';
+import '../utils/notification_service.dart';
 
 class AppProvider extends ChangeNotifier {
   // User data
@@ -26,6 +27,14 @@ class AppProvider extends ChangeNotifier {
   // Location settings
   bool _isLocationEnabled = false;
   bool get isLocationEnabled => _isLocationEnabled;
+
+  // Notification settings
+  bool _notificationsEnabled = false;
+  bool get notificationsEnabled => _notificationsEnabled;
+  bool _emailNotificationsEnabled = false;
+  bool get emailNotificationsEnabled => _emailNotificationsEnabled;
+  bool _pushNotificationsEnabled = false;
+  bool get pushNotificationsEnabled => _pushNotificationsEnabled;
 
   // Profile image error handling
   bool _profileImageLoadError = false;
@@ -338,11 +347,66 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Notification methods
+  Future<void> checkNotificationSettings() async {
+    final notificationService = NotificationService();
+    _notificationsEnabled = await notificationService.areNotificationsEnabled();
+    _emailNotificationsEnabled = await notificationService.areEmailNotificationsEnabled();
+    _pushNotificationsEnabled = await notificationService.arePushNotificationsEnabled();
+    notifyListeners();
+  }
+
+  Future<void> toggleNotifications(bool enabled) async {
+    final notificationService = NotificationService();
+    await notificationService.setNotificationsEnabled(enabled);
+    _notificationsEnabled = enabled;
+    
+    // If turning off notifications, all sub-settings get disabled
+    if (!enabled) {
+      _emailNotificationsEnabled = false;
+      _pushNotificationsEnabled = false;
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> toggleEmailNotifications(bool enabled) async {
+    if (!_notificationsEnabled) return;
+    
+    final notificationService = NotificationService();
+    await notificationService.setEmailNotificationsEnabled(enabled);
+    _emailNotificationsEnabled = enabled;
+    notifyListeners();
+  }
+
+  Future<void> togglePushNotifications(bool enabled) async {
+    if (!_notificationsEnabled) return;
+    
+    final notificationService = NotificationService();
+    await notificationService.setPushNotificationsEnabled(enabled);
+    _pushNotificationsEnabled = enabled;
+    notifyListeners();
+  }
+
+  Future<void> sendTestNotification() async {
+    if (!_notificationsEnabled) return;
+    
+    final notificationService = NotificationService();
+    await notificationService.sendTestNotification();
+  }
+
   // Add to the initialize method
   Future<void> initialize() async {
     // ... (existing initialization code) ...
     
     // Initialize location status
     await checkLocationStatus();
+    
+    // Initialize notification status
+    await checkNotificationSettings();
+    
+    // Initialize notification service
+    final notificationService = NotificationService();
+    await notificationService.initialize();
   }
 } 

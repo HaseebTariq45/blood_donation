@@ -8,6 +8,7 @@ import '../widgets/custom_app_bar.dart';
 import '../utils/localization/app_localization.dart';
 import '../utils/theme_helper.dart';
 import '../utils/location_service.dart';
+import '../utils/notification_service.dart';
 import 'data_usage_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -18,11 +19,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
-  bool _notificationsEnabled = true;
+  bool _notificationsEnabled = false;
   bool _locationEnabled = false;
-  bool _emailNotifications = true;
+  bool _emailNotifications = false;
   bool _smsNotifications = false;
-  bool _pushNotifications = true;
+  bool _pushNotifications = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -52,6 +53,9 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     setState(() {
       _locationEnabled = appProvider.isLocationEnabled;
+      _notificationsEnabled = appProvider.notificationsEnabled;
+      _emailNotifications = appProvider.emailNotificationsEnabled;
+      _pushNotifications = appProvider.pushNotificationsEnabled;
     });
   }
 
@@ -201,8 +205,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     cardPadding: cardPadding,
                     children: [
                       _buildSettingItem(
-                        title: 'enable_notifications'.tr(context),
-                        subtitle: 'Receive notifications about blood requests and updates'.tr(context),
+                        title: 'Notification Preferences'.tr(context),
+                        subtitle: 'Manage your notification preferences',
                         icon: Icons.notifications,
                         titleFontSize: itemTitleFontSize,
                         subtitleFontSize: subtitleFontSize,
@@ -210,78 +214,15 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                         iconContainerSize: iconContainerSize,
                         itemPadding: itemPadding,
                         itemSpacing: itemSpacing,
-                        trailing: Switch(
-                          value: _notificationsEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              _notificationsEnabled = value;
-                              if (!value) {
-                                _emailNotifications = false;
-                                _smsNotifications = false;
-                                _pushNotifications = false;
-                              }
-                            });
-                          },
-                          activeColor: AppConstants.primaryColor,
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: isSmallScreen ? 16.0 : 18.0,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54,
                         ),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/notification_settings');
+                        },
                       ),
-                      if (_notificationsEnabled) ...[
-                        const Divider(),
-                        _buildIndentedSettingItem(
-                          title: 'email_notifications'.tr(context),
-                          icon: Icons.email,
-                          titleFontSize: itemTitleFontSize - 2,
-                          iconSize: indentedIconSize,
-                          itemPadding: itemPadding,
-                          itemSpacing: itemSpacing,
-                          leftPadding: isSmallScreen ? 12.0 : 16.0,
-                          trailing: Switch(
-                            value: _emailNotifications,
-                            onChanged: (value) {
-                              setState(() {
-                                _emailNotifications = value;
-                              });
-                            },
-                            activeColor: AppConstants.primaryColor,
-                          ),
-                        ),
-                        _buildIndentedSettingItem(
-                          title: 'sms_notifications'.tr(context),
-                          icon: Icons.sms,
-                          titleFontSize: itemTitleFontSize - 2,
-                          iconSize: indentedIconSize,
-                          itemPadding: itemPadding,
-                          itemSpacing: itemSpacing,
-                          leftPadding: isSmallScreen ? 12.0 : 16.0,
-                          trailing: Switch(
-                            value: _smsNotifications,
-                            onChanged: (value) {
-                              setState(() {
-                                _smsNotifications = value;
-                              });
-                            },
-                            activeColor: AppConstants.primaryColor,
-                          ),
-                        ),
-                        _buildIndentedSettingItem(
-                          title: 'push_notifications'.tr(context),
-                          icon: Icons.notifications_active,
-                          titleFontSize: itemTitleFontSize - 2,
-                          iconSize: indentedIconSize,
-                          itemPadding: itemPadding,
-                          itemSpacing: itemSpacing,
-                          leftPadding: isSmallScreen ? 12.0 : 16.0,
-                          trailing: Switch(
-                            value: _pushNotifications,
-                            onChanged: (value) {
-                              setState(() {
-                                _pushNotifications = value;
-                              });
-                            },
-                            activeColor: AppConstants.primaryColor,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                   
@@ -800,6 +741,45 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ),
         ],
       ),
+    );
+  }
+
+  void _sendTestNotifications() async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final notificationService = NotificationService();
+    
+    // Display a snackbar to inform the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sending test notifications...'),
+        duration: Duration(seconds: 2),
+      )
+    );
+    
+    // Check which notification types are enabled and send appropriate tests
+    if (appProvider.emailNotificationsEnabled) {
+      await notificationService.sendEmailNotification(
+        appProvider.currentUser.email,
+        'Test Notification',
+        'This is a test email notification from the Blood Donation app.'
+      );
+    }
+    
+    if (appProvider.pushNotificationsEnabled) {
+      await notificationService.sendPushNotification(
+        appProvider.currentUser.id,
+        'Test Notification',
+        'This is a test push notification from the Blood Donation app.'
+      );
+    }
+    
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Test notifications sent successfully!'),
+        backgroundColor: AppConstants.successColor,
+        duration: Duration(seconds: 3),
+      )
     );
   }
 } 
