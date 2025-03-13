@@ -10,11 +10,13 @@ import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
 import '../firebase/firebase_auth_service.dart';
 import '../firebase/firebase_user_service.dart';
+import '../firebase/firebase_donation_service.dart';
 
 class AppProvider extends ChangeNotifier {
   // Firebase services - lazy initialization
   late final FirebaseAuthService _authService;
   late final FirebaseUserService _userService;
+  late final FirebaseDonationService _donationService;
   
   // User data
   UserModel? _currentUser;
@@ -85,7 +87,7 @@ class AppProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
 
-  // Constructor - load dummy data for UI demo
+  // Constructor - load data for app
   AppProvider() {
     _initializeServices();
   }
@@ -96,11 +98,17 @@ class AppProvider extends ChangeNotifier {
       // Initialize Firebase services
       _authService = FirebaseAuthService();
       _userService = FirebaseUserService();
+      _donationService = FirebaseDonationService();
       
       // Load data
       _loadDummyData();
       _loadDataUsage();
       _checkAuthState();
+
+      // Load real donations if user is logged in
+      if (_authService.isSignedIn) {
+        loadUserDonations();
+      }
     } catch (e) {
       debugPrint('Error initializing AppProvider: $e');
       // Fallback to dummy data if Firebase initialization fails
@@ -163,8 +171,10 @@ class AppProvider extends ChangeNotifier {
       _currentUser = UserModel.dummy();
     }
     
-    _donations = DonationModel.getDummyList(10);
-    _userDonations = DonationModel.getDummyList(5);
+    // Remove dummy donation data loading
+    _donations = [];
+    _userDonations = [];
+    
     _bloodRequests = BloodRequestModel.getDummyList();
     _bloodBanks = BloodBankModel.getDummyList();
     
@@ -411,6 +421,33 @@ class AppProvider extends ChangeNotifier {
     }
   }
   
+  // Delete account
+  Future<bool> deleteAccount(String password) async {
+    try {
+      debugPrint('Attempting to delete account');
+      
+      // Re-authenticate user before deleting
+      if (_currentUser != null && _authService.currentUser != null) {
+        await _authService.deleteUserAccount(password);
+        
+        // Clear local user data
+        _currentUser = null;
+        notifyListeners();
+        
+        debugPrint('Account deleted successfully');
+        return true;
+      } else {
+        debugPrint('No user is currently logged in');
+        return false;
+      }
+    } catch (e) {
+      _authError = _getFirebaseAuthErrorMessage(e);
+      debugPrint('Error deleting account: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+  
   // Helper method to get readable error messages
   String _getFirebaseAuthErrorMessage(dynamic error) {
     if (error is FirebaseAuthException) {
@@ -441,39 +478,112 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Add a new donation for the current user
-  void addDonation(DonationModel donation) {
-    _userDonations.add(donation);
-    _donations.add(donation);
-    notifyListeners();
+  Future<bool> addDonation(DonationModel donation) async {
+    try {
+      if (_currentUser == null) {
+        debugPrint('Cannot add donation: No user is logged in');
+        return false;
+      }
+      
+      // Set current timestamp if date is not provided
+      final donationWithCurrentUser = donation.copyWith(
+        donorId: _currentUser!.id,
+        donorName: _currentUser!.name,
+        bloodType: _currentUser!.bloodType,
+      );
+      
+      // Save to Firestore
+      final newDonation = await _donationService.addDonation(donationWithCurrentUser);
+      
+      // Update local lists
+      _userDonations.add(newDonation);
+      _donations.add(newDonation);
+      
+      // Update user's last donation date
+      final updatedUser = _currentUser!.copyWith(
+        lastDonationDate: donation.date,
+      );
+      
+      // Save updated user to Firestore
+      await _userService.saveUserData(updatedUser);
+      _currentUser = updatedUser;
+      
+      debugPrint('Donation added successfully: ${newDonation.id}');
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error adding donation: $e');
+      return false;
+    }
   }
   
   // Cancel a donation appointment
-  void cancelDonation(String donationId) {
-    final donationIndex = _userDonations.indexWhere((d) => d.id == donationId);
-    if (donationIndex != -1) {
-      final updatedDonation = DonationModel(
-        id: _userDonations[donationIndex].id,
-        donorId: _userDonations[donationIndex].donorId,
-        donorName: _userDonations[donationIndex].donorName,
-        bloodType: _userDonations[donationIndex].bloodType,
-        date: _userDonations[donationIndex].date,
-        centerName: _userDonations[donationIndex].centerName,
-        address: _userDonations[donationIndex].address,
-        recipientId: _userDonations[donationIndex].recipientId,
-        recipientName: _userDonations[donationIndex].recipientName,
-        status: 'Cancelled',
-      );
+  Future<bool> cancelDonation(String donationId) async {
+    try {
+      // Update status in Firestore
+      await _donationService.updateDonationStatus(donationId, 'Cancelled');
       
-      _userDonations[donationIndex] = updatedDonation;
-      
-      // Update in global donations list too
-      final globalIndex = _donations.indexWhere((d) => d.id == donationId);
-      if (globalIndex != -1) {
-        _donations[globalIndex] = updatedDonation;
+      // Update local lists
+      final donationIndex = _userDonations.indexWhere((d) => d.id == donationId);
+      if (donationIndex != -1) {
+        final updatedDonation = _userDonations[donationIndex].copyWith(status: 'Cancelled');
+        _userDonations[donationIndex] = updatedDonation;
+        
+        // Update in global donations list too
+        final globalIndex = _donations.indexWhere((d) => d.id == donationId);
+        if (globalIndex != -1) {
+          _donations[globalIndex] = updatedDonation;
+        }
       }
       
+      debugPrint('Donation cancelled successfully: $donationId');
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error canceling donation: $e');
+      return false;
+    }
+  }
+
+  // Load user's donations from Firestore
+  Future<void> loadUserDonations() async {
+    try {
+      if (_currentUser != null) {
+        debugPrint('Loading donations for user: ${_currentUser!.id}');
+        _userDonations = await _donationService.getUserDonations(_currentUser!.id);
+        notifyListeners();
+        debugPrint('Successfully loaded ${_userDonations.length} donations');
+      }
+    } catch (e) {
+      debugPrint('Error loading user donations: $e');
+      // Keep the list empty if there's an error
+      _userDonations = [];
       notifyListeners();
     }
+  }
+  
+  // Load all donations from Firestore (for admin purposes)
+  Future<void> loadAllDonations() async {
+    try {
+      debugPrint('Loading all donations from Firestore');
+      _donations = await _donationService.getAllDonations();
+      notifyListeners();
+      debugPrint('Successfully loaded ${_donations.length} donations');
+    } catch (e) {
+      debugPrint('Error loading all donations: $e');
+      // Keep the list empty if there's an error
+      _donations = [];
+      notifyListeners();
+    }
+  }
+
+  // Get a stream of user's donations for real-time updates
+  Stream<List<DonationModel>> getUserDonationsStream() {
+    if (_currentUser != null) {
+      return _donationService.getUserDonationsStream(_currentUser!.id);
+    }
+    // Return empty stream if no user is logged in
+    return Stream.value([]);
   }
 
   // Add new blood request
@@ -489,6 +599,27 @@ class AppProvider extends ChangeNotifier {
       bool matchesAvailability = onlyAvailable == null || !onlyAvailable || donor.isAvailableToDonate;
       return matchesBloodType && matchesAvailability;
     }).toList();
+  }
+  
+  // Load donors from Firestore
+  Future<void> loadDonorsFromFirestore() async {
+    try {
+      debugPrint('Loading donors from Firestore...');
+      final donorsList = await _userService.getAvailableDonors();
+      
+      // Don't include the current user in the donors list
+      if (_currentUser != null) {
+        _donors = donorsList.where((donor) => donor.id != _currentUser!.id).toList();
+      } else {
+        _donors = donorsList;
+      }
+      
+      debugPrint('Successfully loaded ${_donors.length} donors from Firestore');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading donors from Firestore: $e');
+      // If an error occurs, keep using the existing dummy donors
+    }
   }
 
   // Filter blood banks by distance
@@ -661,5 +792,11 @@ class AppProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error ensuring user data in Firestore: $e');
     }
+  }
+
+  // Update blood requests list
+  void updateBloodRequests(List<BloodRequestModel> requests) {
+    _bloodRequests = requests;
+    notifyListeners();
   }
 } 

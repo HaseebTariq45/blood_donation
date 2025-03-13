@@ -10,6 +10,7 @@ import '../utils/theme_helper.dart';
 import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
 import 'data_usage_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -374,6 +375,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                         itemSpacing: itemSpacing,
                         onTap: () {
                           // Navigate to change password
+                          _showChangePasswordDialog(
+                            titleFontSize: titleFontSize,
+                            bodyFontSize: subtitleFontSize + 2,
+                          );
                         },
                       ),
                       const Divider(),
@@ -633,40 +638,142 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     required double titleFontSize,
     required double bodyFontSize,
   }) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'logout'.tr(context),
-            style: TextStyle(
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.bold,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Container(), // Not used
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutBack,
+            ),
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: Theme.of(context).cardColor,
+              elevation: 6,
+              title: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.orange,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'logout'.tr(context),
+                    style: TextStyle(
+                      fontSize: titleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              content: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                child: Text(
+                  'Are you sure you want to logout?'.tr(context),
+                  style: TextStyle(
+                    fontSize: bodyFontSize,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              actions: <Widget>[
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+                    side: BorderSide(color: Theme.of(context).dividerColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: Text('cancel'.tr(context)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: Text('logout'.tr(context)),
+                  onPressed: () async {
+                    // Show a loading indicator
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 10,
+                                )
+                              ]
+                            ),
+                            child: const CircularProgressIndicator(),
+                          ),
+                        );
+                      },
+                    );
+                    
+                    try {
+                      // Logout user and navigate to login screen
+                      final appProvider = Provider.of<AppProvider>(context, listen: false);
+                      await appProvider.logout();
+                      
+                      // Close both dialogs
+                      Navigator.of(context).pop(); // Close loading dialog
+                      Navigator.of(context).pop(); // Close logout dialog
+                      
+                      // Navigate to login screen
+                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                    } catch (e) {
+                      // Close loading dialog
+                      Navigator.of(context).pop();
+                      
+                      // Show error message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to logout: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
           ),
-          content: Text(
-            'Are you sure you want to logout?'.tr(context),
-            style: TextStyle(
-              fontSize: bodyFontSize,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('cancel'.tr(context)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('logout'.tr(context)),
-              onPressed: () {
-                // Logout user and navigate to login screen
-                final appProvider = Provider.of<AppProvider>(context, listen: false);
-                appProvider.logout();
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-              },
-            ),
-          ],
         );
       },
     );
@@ -676,43 +783,235 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     required double titleFontSize,
     required double bodyFontSize,
   }) {
-    showDialog(
+    final _passwordController = TextEditingController();
+    bool _isLoading = false;
+    String _errorMessage = '';
+
+    showGeneralDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'delete_account'.tr(context),
-            style: TextStyle(
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'This action cannot be undone. Are you sure you want to delete your account?'.tr(context),
-            style: TextStyle(
-              fontSize: bodyFontSize,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('cancel'.tr(context)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('delete'.tr(context)),
-              style: TextButton.styleFrom(
-                foregroundColor: AppConstants.errorColor,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Container(), // Not used
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutBack,
+                ),
+                child: AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: Theme.of(context).cardColor,
+                  elevation: 6,
+                  title: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppConstants.errorColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.delete_forever_rounded,
+                          color: AppConstants.errorColor,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'delete_account'.tr(context),
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: AppConstants.errorColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppConstants.errorColor.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppConstants.errorColor.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: AppConstants.errorColor,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'This action cannot be undone. All your data will be permanently deleted.'.tr(context),
+                                  style: TextStyle(
+                                    fontSize: bodyFontSize,
+                                    color: AppConstants.errorColor.withOpacity(0.8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Please enter your password to confirm:',
+                          style: TextStyle(
+                            fontSize: bodyFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_errorMessage.isNotEmpty) 
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.red.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage,
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        TextField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: AppConstants.errorColor,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                  actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  actions: <Widget>[
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+                        side: BorderSide(color: Theme.of(context).dividerColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      child: Text('cancel'.tr(context)),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    if (_isLoading)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                        child: const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.errorColor),
+                        ),
+                      )
+                    else
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppConstants.errorColor,
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        label: Text('delete'.tr(context)),
+                        onPressed: () async {
+                          if (_passwordController.text.isEmpty) {
+                            setState(() {
+                              _errorMessage = 'Password is required';
+                            });
+                            return;
+                          }
+                          
+                          setState(() {
+                            _isLoading = true;
+                            _errorMessage = '';
+                          });
+                          
+                          try {
+                            // Delete account and navigate to login screen
+                            final appProvider = Provider.of<AppProvider>(context, listen: false);
+                            final success = await appProvider.deleteAccount(_passwordController.text);
+                            
+                            if (success) {
+                              // Close dialog and navigate to login
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                              
+                              // Show a success message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Your account has been deleted'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              setState(() {
+                                _isLoading = false;
+                                _errorMessage = appProvider.authError;
+                              });
+                            }
+                          } catch (e) {
+                            setState(() {
+                              _isLoading = false;
+                              _errorMessage = 'An error occurred: $e';
+                            });
+                          }
+                        },
+                      ),
+                  ],
+                ),
               ),
-              onPressed: () {
-                // Delete account and navigate to login screen
-                final appProvider = Provider.of<AppProvider>(context, listen: false);
-                appProvider.logout(); // Just logout for now since we don't have a real backend
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-              },
-            ),
-          ],
+            );
+          }
         );
       },
     );
@@ -780,6 +1079,291 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         backgroundColor: AppConstants.successColor,
         duration: Duration(seconds: 3),
       )
+    );
+  }
+
+  void _showChangePasswordDialog({
+    required double titleFontSize,
+    required double bodyFontSize,
+  }) {
+    final _currentPasswordController = TextEditingController();
+    final _newPasswordController = TextEditingController();
+    final _confirmPasswordController = TextEditingController();
+    bool _isLoading = false;
+    String _errorMessage = '';
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Container(), // Not used
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return ScaleTransition(
+              scale: curvedAnimation,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                backgroundColor: Theme.of(context).cardColor,
+                elevation: 6,
+                title: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_outline,
+                        color: AppConstants.primaryColor,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Change Password',
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: AppConstants.primaryColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_errorMessage.isNotEmpty) 
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage,
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      TextField(
+                        controller: _currentPasswordController,
+                        decoration: InputDecoration(
+                          labelText: 'Current Password',
+                          prefixIcon: const Icon(Icons.vpn_key, size: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).dividerColor,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppConstants.primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _newPasswordController,
+                        decoration: InputDecoration(
+                          labelText: 'New Password',
+                          prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppConstants.primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _confirmPasswordController,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm New Password',
+                          prefixIcon: const Icon(Icons.check_circle_outline, size: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppConstants.primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+                actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                actions: <Widget>[
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+                      side: BorderSide(color: Theme.of(context).dividerColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    child: Text('Cancel'.tr(context)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  if (_isLoading)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                      child: const CircularProgressIndicator(),
+                    )
+                  else
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      child: Text('Change Password'),
+                      onPressed: () async {
+                        // Validate inputs
+                        if (_currentPasswordController.text.isEmpty ||
+                            _newPasswordController.text.isEmpty ||
+                            _confirmPasswordController.text.isEmpty) {
+                          setState(() {
+                            _errorMessage = 'All fields are required';
+                          });
+                          return;
+                        }
+                        
+                        if (_newPasswordController.text != _confirmPasswordController.text) {
+                          setState(() {
+                            _errorMessage = 'New passwords do not match';
+                          });
+                          return;
+                        }
+                        
+                        // Show loading
+                        setState(() {
+                          _isLoading = true;
+                          _errorMessage = '';
+                        });
+                        
+                        try {
+                          // Get the current user
+                          final user = FirebaseAuth.instance.currentUser;
+                          final credentials = EmailAuthProvider.credential(
+                            email: user!.email!,
+                            password: _currentPasswordController.text,
+                          );
+                          
+                          // Re-authenticate the user
+                          await user.reauthenticateWithCredential(credentials);
+                          
+                          // Change the password
+                          await user.updatePassword(_newPasswordController.text);
+                          
+                          // Close the dialog
+                          Navigator.of(context).pop();
+                          
+                          // Show success message
+                          _showSuccessSnackbar('Password changed successfully');
+                        } catch (e) {
+                          // Show error message
+                          setState(() {
+                            _isLoading = false;
+                            if (e is FirebaseAuthException) {
+                              switch (e.code) {
+                                case 'wrong-password':
+                                  _errorMessage = 'Current password is incorrect';
+                                  break;
+                                case 'weak-password':
+                                  _errorMessage = 'New password is too weak';
+                                  break;
+                                default:
+                                  _errorMessage = 'Error: ${e.message}';
+                              }
+                            } else {
+                              _errorMessage = 'An error occurred. Please try again.';
+                            }
+                          });
+                        }
+                      },
+                    ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 } 

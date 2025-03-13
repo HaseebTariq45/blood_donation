@@ -11,11 +11,29 @@ This Flutter application helps connect blood donors with people in need of blood
 - Blood Request Creation
 - Donor Search (by blood type and location)
 - Blood Bank Locator
-- Donation History Tracking
+- Dynamic Donation History with Real-time Updates
+  - Firebase Integration for Donation Tracking
+  - Data Visualization with Charts
+  - Donation Status Management (Pending, Completed, Cancelled)
 
 ## Backend Integration Instructions
 
-The app is currently implemented with front-end only features using local state management. To integrate with a backend, follow these guidelines:
+The app is integrated with Firebase for authentication and data storage. Here's what has been implemented:
+
+### Firebase Integration
+
+- **Authentication**: User registration and login via Firebase Auth
+- **Firestore**: Data storage for users, blood requests, and donations
+- **Storage**: Profile images and other media assets
+
+### Dynamic Donation History
+
+The donation history feature has been implemented with real-time Firestore integration:
+
+- **Real-time Updates**: Stream-based updates for donation history changes
+- **Donation Management**: Add, cancel, and view donation history
+- **Data Visualization**: Monthly donation charts to visualize donation frequency
+- **Status Filtering**: Filter donations by status (All, Completed, Pending, Cancelled)
 
 ### User Registration and Authentication
 
@@ -138,6 +156,8 @@ To run this project locally:
 - Animate_do (for animations)
 - Google Fonts
 - Flutter DotEnv (for environment variables)
+- Firebase Core, Auth, Firestore (for backend integration)
+- FL Chart (for donation history visualization)
 
 ## License
 

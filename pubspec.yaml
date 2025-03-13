@@ -51,6 +51,7 @@ dependencies:
   url_launcher: ^6.2.5
   connectivity_plus: ^5.0.2
   http: ^1.2.0
+  fl_chart: ^0.66.2
   
   # Firebase dependencies
   firebase_core: ^2.27.1

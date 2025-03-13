@@ -14,16 +14,26 @@ class BloodRequestsListScreen extends StatefulWidget {
   State<BloodRequestsListScreen> createState() => _BloodRequestsListScreenState();
 }
 
-class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with SingleTickerProviderStateMixin {
+class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with TickerProviderStateMixin {
   String _selectedFilter = 'All';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late TabController _tabController;
   
-  final List<String> _filters = ['All', 'Urgent', 'Normal'];
+  final List<String> _tabs = ['All', 'Urgent', 'Normal', 'My Requests'];
+  final List<IconData> _tabIcons = [
+    Icons.format_list_bulleted,
+    Icons.priority_high,
+    Icons.schedule,
+    Icons.person,
+  ];
 
   @override
   void initState() {
     super.initState();
+    // Initialize tab controller
+    _tabController = TabController(length: 4, vsync: this);
+    
     // Animation setup
     _animationController = AnimationController(
       vsync: this,
@@ -36,10 +46,26 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
       ),
     );
     _animationController.forward();
+
+    // Handle initial tab selection from arguments
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      print("Route arguments: $args");
+      if (args != null && args.containsKey('initialTab')) {
+        final tabIndex = args['initialTab'] as int;
+        print("Selecting tab index: $tabIndex");
+        if (tabIndex >= 0 && tabIndex < _tabController.length) {
+          _tabController.animateTo(tabIndex);
+        } else {
+          print("Tab index out of range: $tabIndex (controller length: ${_tabController.length})");
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -148,171 +174,83 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
       ),
       body: Column(
         children: [
-          // Header with filter options
+          // Custom TabBar
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             decoration: BoxDecoration(
-              color: AppConstants.primaryColor,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
+              color: context.appBarColor,
               boxShadow: [
                 BoxShadow(
-                  color: AppConstants.primaryColor.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 3),
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Find blood donors near you',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TabBar(
+                controller: _tabController,
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                splashBorderRadius: BorderRadius.circular(50),
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: _filters.map((filter) {
-                    final isSelected = _selectedFilter == filter;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedFilter = filter;
-                          });
-                        },
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            right: filter != _filters.last ? 8 : 0,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 4,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Center(
+                labelColor: AppConstants.primaryColor,
+                unselectedLabelColor: Colors.white,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+                tabs: List.generate(_tabs.length, (index) {
+                  return Tab(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      height: 40,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_tabIcons[index], size: 16),
+                          const SizedBox(width: 6),
+                          Flexible(
                             child: Text(
-                              filter,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? AppConstants.primaryColor
-                                    : Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              _tabs[index],
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
           
-          // Blood requests list from Firestore
+          // TabBarView
           Expanded(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('blood_requests').snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error: ${snapshot.error}',
-                        style: TextStyle(color: context.textColor),
-                      ),
-                    );
-                  }
-                  
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return _buildEmptyState();
-                  }
-                  
-                  // Convert Firestore documents to BloodRequestModel objects
-                  final bloodRequests = snapshot.data!.docs.map((doc) {
-                    return BloodRequestModel.fromMap(doc.data() as Map<String, dynamic>);
-                  }).toList();
-                  
-                  // Filter blood requests based on selected filter
-                  final filteredRequests = _selectedFilter == 'All'
-                      ? bloodRequests
-                      : bloodRequests.where((req) => req.urgency == _selectedFilter).toList();
-                  
-                  // Stats for the summary cards
-                  final urgentCount = bloodRequests.where((req) => req.urgency == 'Urgent').length;
-                  
-                  // Display stats summary
-                  return Column(
-                    children: [
-                      // Stats summary
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                icon: Icons.bloodtype,
-                                title: 'Total',
-                                value: bloodRequests.length.toString(),
-                                color: AppConstants.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                icon: Icons.priority_high,
-                                title: 'Urgent',
-                                value: urgentCount.toString(),
-                                color: AppConstants.errorColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      // Blood requests list
-                      Expanded(
-                        child: filteredRequests.isEmpty
-                            ? _buildEmptyState()
-                            : ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: filteredRequests.length,
-                                itemBuilder: (context, index) {
-                                  final request = filteredRequests[index];
-                                  return _buildRequestCard(request);
-                                },
-                              ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildRequestsList('All'),
+                _buildRequestsList('Urgent'),
+                _buildRequestsList('Normal'),
+                _buildRequestsList('My'),
+              ],
             ),
           ),
         ],
@@ -327,61 +265,61 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
       ),
     );
   }
-  
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 1,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+
+  Widget _buildRequestsList(String filter) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('blood_requests')
+          .orderBy('requestDate', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: TextStyle(color: context.textColor),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 18,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: context.textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: context.secondaryTextColor,
-            ),
-          ),
-        ],
-      ),
+          );
+        }
+        
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildEmptyState();
+        }
+        
+        // Convert Firestore documents to BloodRequestModel objects
+        final bloodRequests = snapshot.data!.docs.map((doc) {
+          return BloodRequestModel.fromMap(doc.data() as Map<String, dynamic>);
+        }).toList();
+        
+        // Filter requests based on tab
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        final filteredRequests = bloodRequests.where((request) {
+          if (filter == 'My') {
+            return request.requesterId == appProvider.currentUser.id;
+          } else if (filter == 'Urgent') {
+            return request.urgency == 'Urgent';
+          } else if (filter == 'Normal') {
+            return request.urgency == 'Normal';
+          }
+          return true; // 'All' tab
+        }).toList();
+        
+        if (filteredRequests.isEmpty) {
+          return _buildEmptyState();
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filteredRequests.length,
+          itemBuilder: (context, index) {
+            final request = filteredRequests[index];
+            return _buildRequestCard(request);
+          },
+        );
+      },
     );
   }
   
@@ -409,9 +347,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                _selectedFilter == 'All'
-                    ? 'There are no active blood requests at the moment.'
-                    : 'There are no $_selectedFilter blood requests at the moment.',
+                _getEmptyStateMessage(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
@@ -439,6 +375,18 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen> with 
         ),
       ),
     );
+  }
+  
+  String _getEmptyStateMessage() {
+    if (_tabController.index == 3) { // My Requests tab
+      return 'You have not created any blood requests yet.';
+    } else if (_tabController.index == 1) { // Urgent tab
+      return 'There are no Urgent blood requests at the moment.';
+    } else if (_tabController.index == 2) { // Normal tab
+      return 'There are no Normal blood requests at the moment.';
+    } else {
+      return 'There are no active blood requests at the moment.';
+    }
   }
   
   Widget _buildRequestCard(BloodRequestModel request) {

@@ -161,4 +161,22 @@ class FirebaseUserService {
       rethrow;
     }
   }
+
+  // Delete user data from Firestore
+  Future<void> deleteUserData(String userId) async {
+    try {
+      debugPrint('Attempting to delete user data from Firestore for user ID: $userId');
+      
+      // Delete the user document
+      await _firestore.collection(_collection).doc(userId).delete();
+      
+      // Note: In a production app, you might want to also delete related user data
+      // such as blood requests, donations, etc.
+      
+      debugPrint('User data successfully deleted from Firestore');
+    } catch (e) {
+      debugPrint('Error deleting user data from Firestore: $e');
+      rethrow;
+    }
+  }
 } 

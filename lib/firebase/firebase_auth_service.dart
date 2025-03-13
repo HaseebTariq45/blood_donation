@@ -114,6 +114,43 @@ class FirebaseAuthService {
     }
   }
 
+  // Delete user account
+  Future<void> deleteUserAccount(String password) async {
+    try {
+      debugPrint('Attempting to delete user account');
+      
+      // Get the current user
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently logged in');
+      }
+      
+      // Re-authenticate user before deletion
+      final credentials = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      
+      await user.reauthenticateWithCredential(credentials);
+      debugPrint('User re-authenticated successfully');
+      
+      // Delete user data from Firestore first
+      await _userService.deleteUserData(user.uid);
+      debugPrint('User data deleted from Firestore');
+      
+      // Delete the Firebase Auth user
+      await user.delete();
+      debugPrint('User deleted from Firebase Auth');
+    } catch (e) {
+      debugPrint('Error deleting user account: $e');
+      if (e is FirebaseAuthException) {
+        debugPrint('Firebase Auth Error Code: ${e.code}');
+        debugPrint('Firebase Auth Error Message: ${e.message}');
+      }
+      rethrow;
+    }
+  }
+
   // Test login with specific email (for debugging)
   Future<bool> testLogin(String email, String password) async {
     try {

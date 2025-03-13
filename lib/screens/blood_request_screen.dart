@@ -40,7 +40,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
   void initState() {
     super.initState();
     // Initialize tab controller
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 1, vsync: this);
     
     // Animation setup
     _animationController = AnimationController(
@@ -75,10 +75,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
   }
 
   void _submitRequest() {
-    // Get the correct form key based on the current tab
-    final formKey = _tabController.index == 0 ? _selfFormKey : _otherFormKey;
-    
-    if (formKey.currentState!.validate()) {
+    if (_selfFormKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
@@ -96,29 +93,15 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
         urgency: _selectedUrgency,
         notes: _notesController.text,
       );
-
+      
       // Save the blood request to Firestore
       FirebaseFirestore.instance.collection('blood_requests').doc(bloodRequest.id).set(bloodRequest.toMap()).then((_) {
         setState(() {
           _isLoading = false;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Request submitted successfully'),
-            backgroundColor: AppConstants.successColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
-            action: SnackBarAction(
-              label: 'DISMISS',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        );
+        
+        // Show success dialog
+        _showSuccessDialog();
       }).catchError((error) {
         setState(() {
           _isLoading = false;
@@ -239,8 +222,18 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                print("Navigating to blood requests list with 'My Requests' tab");
+                Navigator.of(context).pop(); // Close dialog
                 Navigator.of(context).pop(); // Go back to previous screen
+                // Navigate to Blood Requests screen with My Requests tab selected
+                Navigator.of(context).pushNamed(
+                  '/blood_requests_list',
+                  arguments: {'initialTab': 3}
+                ).then((value) {
+                  print("Navigation to blood requests list completed: $value");
+                }).catchError((error) {
+                  print("Navigation error: $error");
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.primaryColor,
@@ -252,7 +245,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
                 elevation: 0,
               ),
               child: const Text(
-                'DONE',
+                'VIEW MY REQUESTS',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -531,366 +524,17 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // Tab bar
-            Container(
-              color: context.appBarColor,
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: AppConstants.primaryColor,
-                labelColor: AppConstants.primaryColor,
-                unselectedLabelColor: context.secondaryTextColor,
-                tabs: const [
-                  Tab(text: 'New Request'),
-                  Tab(text: 'Request for Someone'),
-                ],
-              ),
-            ),
-            
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // New request form
-                  _buildRequestForm(forSelf: true),
-                  
-                  // Request for someone else form
-                  _buildRequestForm(forSelf: false),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  // Build the list of blood requests
-  Widget _buildBloodRequestsList() {
-    final appProvider = Provider.of<AppProvider>(context);
-    final bloodRequests = appProvider.bloodRequests;
-    
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: bloodRequests.isEmpty
-          ? _buildEmptyRequestsList()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: bloodRequests.length,
-              itemBuilder: (context, index) {
-                final request = bloodRequests[index];
-                return _buildRequestCard(request);
-              },
-            ),
-    );
-  }
-  
-  // Build empty state for blood requests list
-  Widget _buildEmptyRequestsList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.bloodtype_outlined,
-            size: 80,
-            color: Colors.grey[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Blood Requests',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'There are no active blood requests at the moment.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              _tabController.animateTo(1); // Switch to Create Request tab
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Create a Request'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Build individual request card
-  Widget _buildRequestCard(BloodRequestModel request) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Colors.white,
-              request.urgency == 'Urgent' ? Colors.red.shade50 : Colors.blue.shade50,
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppConstants.primaryColor.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        request.bloodType,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                request.urgency == 'Urgent' ? 'Urgent: ${request.requesterName}' : request.requesterName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: request.urgency == 'Urgent'
-                                    ? AppConstants.errorColor.withOpacity(0.1)
-                                    : AppConstants.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: request.urgency == 'Urgent'
-                                      ? AppConstants.errorColor.withOpacity(0.5)
-                                      : AppConstants.primaryColor.withOpacity(0.5),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                request.urgency,
-                                style: TextStyle(
-                                  color: request.urgency == 'Urgent'
-                                      ? AppConstants.errorColor
-                                      : AppConstants.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          request.location,
-                          style: const TextStyle(
-                            color: AppConstants.lightTextColor,
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: AppConstants.lightTextColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${request.requestDate.day}/${request.requestDate.month}/${request.requestDate.year}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppConstants.lightTextColor,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.phone_outlined,
-                              size: 14,
-                              color: AppConstants.lightTextColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              request.contactNumber,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppConstants.lightTextColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (request.notes.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Text(
-                  request.notes,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppConstants.darkTextColor,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // Option to call the requester
-                    },
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppConstants.primaryColor,
-                      side: BorderSide(color: AppConstants.primaryColor),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Handle donation response
-                      _showResponseDialog(request);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: const Text('Respond'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  // Show dialog to respond to a blood request
-  void _showResponseDialog(BloodRequestModel request) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Respond to Request'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Do you want to respond to ${request.requesterName}\'s blood request?'),
-            const SizedBox(height: 16),
-            Text(
-              'Responding will share your contact information with the requester.',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Add logic to handle the response
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('You have responded to ${request.requesterName}\'s request'),
-                  backgroundColor: AppConstants.successColor,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryColor,
-            ),
-            child: const Text('RESPOND'),
-          ),
-        ],
+        child: _buildRequestForm(),
       ),
     );
   }
   
   // Build the blood request form
-  Widget _buildRequestForm({required bool forSelf}) {
+  Widget _buildRequestForm() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
-        key: forSelf ? _selfFormKey : _otherFormKey,
+        key: _selfFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -907,7 +551,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> with TickerProv
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      forSelf ? 'Request for Yourself' : 'Request for Someone Else',
+                      'Create Blood Request',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

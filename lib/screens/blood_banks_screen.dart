@@ -9,6 +9,8 @@ import '../providers/app_provider.dart';
 import '../models/blood_bank_model.dart';
 import '../widgets/custom_app_bar.dart';
 import '../utils/location_service.dart';
+import '../models/donation_model.dart';
+import 'package:intl/intl.dart';
 
 class BloodBanksScreen extends StatefulWidget {
   const BloodBanksScreen({Key? key}) : super(key: key);
@@ -482,6 +484,20 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                onPressed: () => _scheduleDonation(bank),
+                icon: const Icon(Icons.favorite),
+                label: const Text('Schedule Donation'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
                 onPressed: () {
                   // Implement call action
                   Navigator.pop(context);
@@ -526,6 +542,176 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // Method to schedule a blood donation
+  void _scheduleDonation(BloodBankModel bank) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    
+    if (!appProvider.isLoggedIn) {
+      Navigator.of(context).pop(); // Close the blood bank info sheet
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to schedule a donation'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.of(context).pushNamed('/login');
+      return;
+    }
+    
+    // Show date picker to select donation date
+    final DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppConstants.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: AppConstants.darkTextColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (selectedDate == null) {
+      // User cancelled the date picker
+      return;
+    }
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    try {
+      // Create donation model
+      final donation = DonationModel.create(
+        donorId: appProvider.currentUser.id,
+        donorName: appProvider.currentUser.name,
+        bloodType: appProvider.currentUser.bloodType,
+        centerName: bank.name,
+        address: bank.address,
+      ).copyWith(
+        date: selectedDate,
+      );
+      
+      // Add donation via AppProvider
+      final success = await appProvider.addDonation(donation);
+      
+      // Close loading indicator
+      Navigator.of(context).pop();
+      
+      // Close blood bank sheet
+      Navigator.of(context).pop();
+      
+      if (success) {
+        // Show success dialog with animation
+        _showDonationScheduledDialog(donation);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to schedule donation. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading indicator
+      Navigator.of(context).pop();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  // Show success dialog for scheduled donation
+  void _showDonationScheduledDialog(DonationModel donation) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 50,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Donation Scheduled!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'You have scheduled a blood donation at ${donation.centerName} on ${DateFormat('EEEE, MMMM d, yyyy').format(donation.date)}.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppConstants.lightTextColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushNamed('/donation_history');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryColor,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text('View My Donations'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
