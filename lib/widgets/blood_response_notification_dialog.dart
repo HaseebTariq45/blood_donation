@@ -116,9 +116,9 @@ class _BloodResponseNotificationDialogState
     }
 
     if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
+    setState(() {
+      _isLoading = true;
+    });
     }
 
     try {
@@ -132,9 +132,9 @@ class _BloodResponseNotificationDialogState
       if (userDetails != null) {
         debugPrint('BloodResponseNotificationDialog - Successfully retrieved user details');
         if (mounted) {
-          setState(() {
-            _responderDetails = userDetails;
-          });
+        setState(() {
+          _responderDetails = userDetails;
+        });
         }
       } else {
         debugPrint('BloodResponseNotificationDialog - Failed to retrieve user details (null returned)');
@@ -142,20 +142,20 @@ class _BloodResponseNotificationDialogState
 
       // Get emergency contacts
       try {
-        final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
+      final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
         debugPrint('BloodResponseNotificationDialog - Retrieved ${contacts.length} user-added emergency contacts');
         
         if (mounted) {
-          setState(() {
-            _emergencyContacts = contacts;
-          });
+      setState(() {
+        _emergencyContacts = contacts;
+      });
           
           // If no contacts are found, don't show an error - this is expected now that we only show user-added contacts
           if (contacts.isEmpty) {
             debugPrint('No user-added emergency contacts found for responder: ${widget.responderId}');
           }
         }
-      } catch (e) {
+    } catch (e) {
         debugPrint('BloodResponseNotificationDialog - Error fetching emergency contacts: $e');
         
         // Check if it's a Firestore index error
@@ -178,9 +178,9 @@ class _BloodResponseNotificationDialogState
       debugPrint('BloodResponseNotificationDialog - Error fetching responder details: $e');
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      setState(() {
+        _isLoading = false;
+      });
       }
     }
   }
@@ -1008,17 +1008,17 @@ class _BloodResponseNotificationDialogState
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 const Icon(Icons.contact_emergency, color: Colors.grey, size: 14),
                 const SizedBox(width: 4),
                 const Text(
-                  'Emergency Contacts',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+              'Emergency Contacts',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
                     fontSize: 13,
                     color: Colors.grey,
                   ),
@@ -1052,9 +1052,9 @@ class _BloodResponseNotificationDialogState
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.orange.withOpacity(0.2)),
       ),
-      child: Column(
+              child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+                        children: [
           Row(
             children: [
               const Icon(Icons.contact_emergency, color: Colors.orange, size: 14),
@@ -1317,7 +1317,7 @@ class _BloodResponseNotificationDialogState
       final contacts = await appProvider.getEmergencyContactsForUser(widget.responderId);
       
       if (mounted) {
-        setState(() {
+    setState(() {
           _emergencyContacts = contacts;
           _isLoading = false;
         });

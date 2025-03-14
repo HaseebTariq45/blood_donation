@@ -320,6 +320,61 @@ class _SettingsScreenState extends State<SettingsScreen>
 
                   SizedBox(height: sectionSpacing),
 
+                  // Health Information Card
+                  _buildSettingsCard(
+                    title: 'Health Information',
+                    titleFontSize: titleFontSize,
+                    cardPadding: cardPadding,
+                    children: [
+                      _buildSettingItem(
+                        title: 'Last Donation',
+                        subtitle: 'Track your donation history',
+                        icon: Icons.history,
+                        titleFontSize: itemTitleFontSize,
+                        subtitleFontSize: subtitleFontSize,
+                        iconSize: iconSize,
+                        iconContainerSize: iconContainerSize,
+                        itemPadding: itemPadding,
+                        itemSpacing: itemSpacing,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/donation_history');
+                        },
+                      ),
+                      const Divider(),
+                      _buildSettingItem(
+                        title: 'Health Questionnaire',
+                        subtitle: 'Manage your health information',
+                        icon: Icons.medical_services,
+                        titleFontSize: itemTitleFontSize,
+                        subtitleFontSize: subtitleFontSize,
+                        iconSize: iconSize,
+                        iconContainerSize: iconContainerSize,
+                        itemPadding: itemPadding,
+                        itemSpacing: itemSpacing,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/health_questionnaire');
+                        },
+                      ),
+                      const Divider(),
+                      _buildSettingItem(
+                        title: 'Medical Conditions',
+                        subtitle: 'Update your medical information',
+                        icon: Icons.healing,
+                        titleFontSize: itemTitleFontSize,
+                        subtitleFontSize: subtitleFontSize,
+                        iconSize: iconSize,
+                        iconContainerSize: iconContainerSize,
+                        itemPadding: itemPadding,
+                        itemSpacing: itemSpacing,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/medical_conditions');
+                        },
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: sectionSpacing),
+
                   // About & Legal Card
                   _buildSettingsCard(
                     title: 'about_legal'.tr(context),
