@@ -245,80 +245,83 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
         elevation: 0,
         title: const Text(
           'Blood Requests',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white, 
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Refresh the page
+              setState(() {});
+            },
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Custom TabBar
+          // Redesigned TabBar with better text visibility
           Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               color: context.appBarColor,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TabBar(
-                controller: _tabController,
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                splashBorderRadius: BorderRadius.circular(50),
-                indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 1),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                labelColor: AppConstants.primaryColor,
-                unselectedLabelColor: Colors.white,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-                tabs: List.generate(_tabs.length, (index) {
-                  return Tab(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      height: 40,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_tabIcons[index], size: 16),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              _tabs[index],
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
+                    labelColor: AppConstants.primaryColor,
+                    unselectedLabelColor: Colors.white,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
-                  );
-                }),
-              ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                    tabs: [
+                      _buildTab(Icons.format_list_bulleted, 'All'),
+                      _buildTab(Icons.priority_high, 'Urgent'),
+                      _buildTab(Icons.schedule, 'Normal'),
+                      _buildTab(Icons.person, 'My'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // TabBarView
+          // TabBarView with improved animations
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -337,8 +340,30 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
           Navigator.pushNamed(context, '/blood_request');
         },
         backgroundColor: AppConstants.primaryColor,
-        icon: const Icon(Icons.add),
-        label: const Text('New Request'),
+        elevation: 4,
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text(
+          'New Request',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build consistent tab items with better visibility
+  Widget _buildTab(IconData icon, String label) {
+    return Tab(
+      height: 48,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 22),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -352,14 +377,46 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
               .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primaryColor),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
           return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: TextStyle(color: context.textColor),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 60,
+                  color: AppConstants.errorColor.withOpacity(0.7),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(
+                    color: context.textColor,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => setState(() {}),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -394,12 +451,33 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
           return _buildEmptyState();
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: filteredRequests.length,
-          itemBuilder: (context, index) {
-            final request = filteredRequests[index];
-            return _buildRequestCard(request);
+        return AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: filteredRequests.length,
+                itemBuilder: (context, index) {
+                  final request = filteredRequests[index];
+                  // Apply staggered animation effect
+                  return AnimatedOpacity(
+                    duration: const Duration(milliseconds: 500),
+                    opacity: 1.0,
+                    curve: Curves.easeInOut,
+                    child: AnimatedPadding(
+                      duration: const Duration(milliseconds: 500),
+                      padding: EdgeInsets.only(
+                        top: index == 0 ? 0 : 8,
+                        bottom: 8,
+                      ),
+                      child: _buildRequestCard(request),
+                    ),
+                  );
+                },
+              ),
+            );
           },
         );
       },
@@ -494,12 +572,21 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
         !isCurrentUserRequest && request.status == 'Pending';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 4,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: request.urgency == 'Urgent'
+              ? AppConstants.errorColor.withOpacity(0.2)
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
@@ -511,266 +598,341 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
             ],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppConstants.primaryColor.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        request.bloodType,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showRequestDetailsDialog(request),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                request.urgency == 'Urgent'
-                                    ? 'Urgent: ${request.requesterName}'
-                                    : request.requesterName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                        // Enhanced blood type indicator
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppConstants.primaryColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                spreadRadius: 1,
                               ),
+                            ],
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    request.urgency == 'Urgent'
-                                        ? AppConstants.errorColor.withOpacity(
-                                          0.1,
-                                        )
-                                        : AppConstants.primaryColor.withOpacity(
-                                          0.1,
-                                        ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color:
-                                      request.urgency == 'Urgent'
-                                          ? AppConstants.errorColor.withOpacity(
-                                            0.5,
-                                          )
-                                          : AppConstants.primaryColor
-                                              .withOpacity(0.5),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                request.urgency,
-                                style: TextStyle(
-                                  color:
-                                      request.urgency == 'Urgent'
-                                          ? AppConstants.errorColor
-                                          : AppConstants.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          request.location,
-                          style: const TextStyle(
-                            color: AppConstants.lightTextColor,
-                            fontSize: 14,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          child: Center(
+                            child: Text(
+                              request.bloodType,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: AppConstants.lightTextColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              request.formattedDate,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppConstants.lightTextColor,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      request.urgency == 'Urgent'
+                                          ? 'Urgent: ${request.requesterName}'
+                                          : request.requesterName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          request.urgency == 'Urgent'
+                                              ? AppConstants.errorColor.withOpacity(
+                                                0.15,
+                                              )
+                                              : AppConstants.primaryColor.withOpacity(
+                                                0.15,
+                                              ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color:
+                                            request.urgency == 'Urgent'
+                                                ? AppConstants.errorColor.withOpacity(
+                                                  0.5,
+                                                )
+                                                : AppConstants.primaryColor
+                                                    .withOpacity(0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          request.urgency == 'Urgent'
+                                              ? Icons.warning_amber_rounded
+                                              : Icons.info_outline,
+                                          size: 14,
+                                          color: request.urgency == 'Urgent'
+                                              ? AppConstants.errorColor
+                                              : AppConstants.primaryColor,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          request.urgency,
+                                          style: TextStyle(
+                                            color:
+                                                request.urgency == 'Urgent'
+                                                    ? AppConstants.errorColor
+                                                    : AppConstants.primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.phone_outlined,
-                              size: 14,
-                              color: AppConstants.lightTextColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              request.contactNumber,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppConstants.lightTextColor,
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 16,
+                                    color: AppConstants.lightTextColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      request.location,
+                                      style: TextStyle(
+                                        color: AppConstants.lightTextColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 16,
+                                    color: AppConstants.lightTextColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    request.formattedDate,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppConstants.lightTextColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Icon(
+                                    Icons.phone_outlined,
+                                    size: 16,
+                                    color: AppConstants.lightTextColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    request.contactNumber,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppConstants.lightTextColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              if (request.notes.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Text(
-                  request.notes,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppConstants.darkTextColor,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-
-              // Status indicator
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(request.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _getStatusColor(request.status).withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _getStatusIcon(request.status),
-                      size: 14,
-                      color: _getStatusColor(request.status),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      request.status,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _getStatusColor(request.status),
+                    
+                    // Notes section with improved styling
+                    if (request.notes.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Divider(height: 1, thickness: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.notes,
+                            size: 18,
+                            color: AppConstants.darkTextColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              request.notes,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppConstants.darkTextColor,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
+                    ],
+
+                    // Status indicator with enhanced design
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(request.status).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _getStatusColor(request.status).withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getStatusIcon(request.status),
+                                size: 16,
+                                color: _getStatusColor(request.status),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                request.status,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getStatusColor(request.status),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        // Improved action buttons
+                        TextButton.icon(
+                          onPressed: () {
+                            // Option to call the requester
+                            _launchCall(request.contactNumber);
+                          },
+                          icon: const Icon(Icons.phone, size: 16),
+                          label: const Text('Call'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppConstants.primaryColor,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (canRespond)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Handle donation response
+                              _showResponseDialog(request);
+                            },
+                            icon: const Icon(Icons.volunteer_activism, size: 16),
+                            label: const Text('Respond'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppConstants.primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          )
+                        else if (isCurrentUserRequest)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Show request details or allow editing
+                              _showRequestDetailsDialog(request);
+                            },
+                            icon: const Icon(Icons.info_outline, size: 16),
+                            label: const Text('Details'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          )
+                        else
+                          ElevatedButton(
+                            onPressed: null, // Disabled button
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(request.status),
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // Option to call the requester
-                      _launchCall(request.contactNumber);
-                    },
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppConstants.primaryColor,
-                      side: BorderSide(color: AppConstants.primaryColor),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  if (canRespond)
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle donation response
-                        _showResponseDialog(request);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: const Text('Respond'),
-                    )
-                  else if (isCurrentUserRequest)
-                    ElevatedButton(
-                      onPressed: () {
-                        // Show request details or allow editing
-                        _showRequestDetailsDialog(request);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: const Text('Details'),
-                    )
-                  else
-                    ElevatedButton(
-                      onPressed: null, // Disabled button
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Text(request.status),
-                    ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -821,50 +983,112 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
     );
   }
 
-  // Show request details dialog
+  // Show request details dialog with enhanced UI
   void _showRequestDetailsDialog(BloodRequestModel request) {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Request Details'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
               children: [
-                _buildDetailRow('Requester', request.requesterName),
-                _buildDetailRow('Blood Type', request.bloodType),
-                _buildDetailRow('Location', request.location),
-                _buildDetailRow('Date', request.formattedDate),
-                _buildDetailRow('Status', request.status),
-                _buildDetailRow('Urgency', request.urgency),
-                if (request.notes.isNotEmpty)
-                  _buildDetailRow('Notes', request.notes),
+                Icon(
+                  Icons.bloodtype_outlined,
+                  color: AppConstants.primaryColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                const Text('Request Details'),
               ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.primaryColor.withOpacity(0.3),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          request.bloodType,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildDetailRow('Requester', request.requesterName),
+                  _buildDetailRow('Blood Type', request.bloodType),
+                  _buildDetailRow('Location', request.location),
+                  _buildDetailRow('Date', request.formattedDate),
+                  _buildDetailRow('Status', request.status, 
+                    statusColor: _getStatusColor(request.status),
+                    icon: _getStatusIcon(request.status),
+                  ),
+                  _buildDetailRow('Urgency', request.urgency,
+                    statusColor: request.urgency == 'Urgent' 
+                        ? AppConstants.errorColor 
+                        : AppConstants.primaryColor,
+                    icon: request.urgency == 'Urgent'
+                        ? Icons.warning_amber_rounded
+                        : Icons.info_outline,
+                  ),
+                  if (request.notes.isNotEmpty)
+                    _buildDetailRow('Notes', request.notes),
+                ],
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('CLOSE'),
               ),
-              if (request.status == 'Pending')
-                ElevatedButton(
+              if (request.status == 'Pending' && 
+                  request.requesterId == appProvider.currentUser.id)
+                ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
                     _showCancelRequestDialog(request);
                   },
+                  icon: const Icon(Icons.cancel_outlined, size: 18),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('CANCEL REQUEST'),
+                  label: const Text('CANCEL REQUEST'),
                 ),
             ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            backgroundColor: context.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
           ),
     );
   }
 
-  // Build detail row for request details dialog
-  Widget _buildDetailRow(String label, String value) {
+  // Build detail row for request details dialog with enhanced styling
+  Widget _buildDetailRow(String label, String value, {Color? statusColor, IconData? icon}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -876,18 +1100,47 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
+          const SizedBox(height: 6),
+          if (statusColor != null && icon != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: statusColor.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 16, color: statusColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Text(
+              value,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
         ],
       ),
     );
   }
 
-  // Show dialog to cancel a request
+  // Show dialog to cancel a request with enhanced UI
   void _showCancelRequestDialog(BloodRequestModel request) {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
     showDialog(
       context: context,
       builder:
