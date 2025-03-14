@@ -12,6 +12,55 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart'; // For haptic feedback
+
+// Custom CheckMark painter for animating the checkmark
+class CheckMarkPainter extends CustomPainter {
+  final double animation;
+  final Color color;
+  final double strokeWidth;
+
+  CheckMarkPainter({required this.animation, required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    
+    // Calculate the check mark points based on size
+    final double startX = size.width * 0.2;
+    final double midY = size.height * 0.65;
+    final double midX = size.width * 0.45;
+    final double endX = size.width * 0.8;
+    final double endY = size.height * 0.35;
+    
+    // First part of the check mark (shorter line)
+    if (animation < 0.5) {
+      final pct = animation * 2;
+      path.moveTo(startX, midY);
+      path.lineTo(startX + (midX - startX) * pct, midY - (midY - endY) * pct);
+    } else {
+      path.moveTo(startX, midY);
+      path.lineTo(midX, endY);
+      
+      // Second part of the check mark (longer line)
+      final pct = (animation - 0.5) * 2;
+      path.lineTo(midX + (endX - midX) * pct, endY + (midY - endY) * pct);
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CheckMarkPainter oldDelegate) {
+    return oldDelegate.animation != animation;
+  }
+}
 
 class HealthQuestionnaireScreen extends StatefulWidget {
   final bool isPostSignup;
@@ -25,12 +74,18 @@ class HealthQuestionnaireScreen extends StatefulWidget {
   State<HealthQuestionnaireScreen> createState() => _HealthQuestionnaireScreenState();
 }
 
-class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
+class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isSaving = false;
   Timer? _autoSaveTimer;
   bool _hasUnsavedChanges = false;
+  
+  // Animation controllers for dialogs
+  late AnimationController _successAnimationController;
+  late Animation<double> _successAnimation;
+  late AnimationController _errorAnimationController;
+  late Animation<double> _errorAnimation;
 
   // Form controllers
   final _heightController = TextEditingController();
@@ -60,6 +115,25 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
   void initState() {
     super.initState();
     _loadHealthInfo();
+    
+    // Initialize animation controllers
+    _successAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _successAnimation = CurvedAnimation(
+      parent: _successAnimationController,
+      curve: Curves.easeInOut,
+    );
+    
+    _errorAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _errorAnimation = CurvedAnimation(
+      parent: _errorAnimationController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -70,6 +144,8 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
     _lastDonationController.dispose();
     _medicationsController.dispose();
     _allergiesController.dispose();
+    _successAnimationController.dispose();
+    _errorAnimationController.dispose();
     super.dispose();
   }
 
@@ -671,18 +747,17 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
         });
 
         if (mounted) {
+          // Provide haptic feedback when data is saved
+          HapticFeedback.mediumImpact();
+          
           // Clear the unsaved changes flag
           setState(() {
             _hasUnsavedChanges = false;
           });
           
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Health information saved successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
+          // Show a visually appealing success popup instead of a simple snackbar
+          _showSaveSuccessDialog();
+          
           if (widget.isPostSignup) {
             // Navigate to home screen after completing the questionnaire
             Navigator.pushReplacementNamed(context, '/home');
@@ -691,12 +766,11 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving health information: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // Vibrate with error pattern for failure
+        HapticFeedback.vibrate();
+        
+        // Show a visually appealing error popup
+        _showErrorDialog('Error saving health information: $e');
       }
     } finally {
       if (mounted) {
@@ -705,6 +779,395 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
         });
       }
     }
+  }
+
+  // Custom visually appealing success dialog
+  void _showSaveSuccessDialog() {
+    // Reset and start the animation
+    _successAnimationController.reset();
+    _successAnimationController.forward();
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return Container(); // Not used
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        );
+        
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnimation),
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      spreadRadius: 5,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedBuilder(
+                        animation: _successAnimationController,
+                        builder: (context, child) {
+                          return Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Growing circle animation
+                                Transform.scale(
+                                  scale: _successAnimation.value,
+                                  child: Container(
+                                    width: 75,
+                                    height: 75,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                // Check mark animation
+                                CustomPaint(
+                                  size: const Size(40, 40),
+                                  painter: CheckMarkPainter(
+                                    animation: _successAnimation.value,
+                                    color: Colors.green,
+                                    strokeWidth: 4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      AnimatedBuilder(
+                        animation: _successAnimationController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _successAnimation.value,
+                            child: Text(
+                              'Success!',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).textTheme.headlineMedium?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      // Animated text with fade and slide
+                      AnimatedBuilder(
+                        animation: _successAnimationController,
+                        builder: (context, child) {
+                          // Determine if we should show this element based on animation progress
+                          final showElement = _successAnimation.value >= 0.3; // Show after 30% of animation
+                          final elementAnimation = showElement 
+                            ? (_successAnimation.value - 0.3) / 0.7 // Normalize to 0-1 for the remaining 70%
+                            : 0.0;
+                          
+                          return Opacity(
+                            opacity: elementAnimation,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - elementAnimation)),
+                              child: Text(
+                                'Your health information has been saved successfully.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 25),
+                      // Animated button with fade
+                      AnimatedBuilder(
+                        animation: _successAnimationController,
+                        builder: (context, child) {
+                          // Determine if we should show this element based on animation progress
+                          final showElement = _successAnimation.value >= 0.5; // Show after 50% of animation
+                          final elementAnimation = showElement 
+                            ? (_successAnimation.value - 0.5) / 0.5 // Normalize to 0-1 for the remaining 50%
+                            : 0.0;
+                          
+                          return Opacity(
+                            opacity: elementAnimation,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppConstants.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text(
+                                'OK',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Error dialog for save failures
+  void _showErrorDialog(String errorMessage) {
+    // Reset and start the animation
+    _errorAnimationController.reset();
+    _errorAnimationController.forward();
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return Container(); // Not used
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        );
+        
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnimation),
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      spreadRadius: 5,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedBuilder(
+                        animation: _errorAnimationController,
+                        builder: (context, child) {
+                          return Container(
+                            padding: const EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Transform.rotate(
+                              angle: (1.0 - _errorAnimation.value) * 0.2,
+                              child: const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 60,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      AnimatedBuilder(
+                        animation: _errorAnimationController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _errorAnimation.value,
+                            child: Text(
+                              'Error!',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).textTheme.headlineMedium?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      AnimatedBuilder(
+                        animation: _errorAnimationController,
+                        builder: (context, child) {
+                          final showElement = _errorAnimation.value >= 0.3;
+                          final elementAnimation = showElement 
+                            ? (_errorAnimation.value - 0.3) / 0.7
+                            : 0.0;
+                          
+                          return Opacity(
+                            opacity: elementAnimation,
+                            child: Text(
+                              'Something went wrong while saving your data.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      AnimatedBuilder(
+                        animation: _errorAnimationController,
+                        builder: (context, child) {
+                          final showElement = _errorAnimation.value >= 0.4;
+                          final elementAnimation = showElement 
+                            ? (_errorAnimation.value - 0.4) / 0.6
+                            : 0.0;
+                          
+                          return Opacity(
+                            opacity: elementAnimation,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                errorMessage,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red[700],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      AnimatedBuilder(
+                        animation: _errorAnimationController,
+                        builder: (context, child) {
+                          final showElement = _errorAnimation.value >= 0.5;
+                          final elementAnimation = showElement 
+                            ? (_errorAnimation.value - 0.5) / 0.5
+                            : 0.0;
+                          
+                          return Opacity(
+                            opacity: elementAnimation,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey[300],
+                                    foregroundColor: Colors.black87,
+                                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    _saveHealthInfo(); // Try again
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppConstants.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Try Again',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _exportHealthData() async {
@@ -796,8 +1259,15 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
         );
       } else {
         // For mobile platforms
+        // Clean up old temporary files first
+        await _cleanupTempFiles();
+        
+        // Create new PDF file
         final output = await getTemporaryDirectory();
-        final file = File('${output.path}/health_questionnaire.pdf');
+        final fileName = 'health_questionnaire_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final file = File('${output.path}/$fileName');
+        
+        // Save PDF with minimal compression to reduce memory usage
         await file.writeAsBytes(await pdf.save());
 
         // Share the PDF file
@@ -830,6 +1300,31 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // Helper method to clean up old temporary PDF files
+  Future<void> _cleanupTempFiles() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final files = tempDir.listSync();
+      
+      // Find and delete old health questionnaire PDF files
+      for (var entity in files) {
+        if (entity is File && 
+            entity.path.contains('health_questionnaire') &&
+            entity.path.endsWith('.pdf')) {
+          try {
+            await entity.delete();
+          } catch (e) {
+            // Ignore errors when deleting individual files
+            print('Error deleting old file: $e');
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors in cleanup
+      print('Error during cleanup: $e');
     }
   }
 } 
