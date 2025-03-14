@@ -6,6 +6,8 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../models/user_model.dart';
 import '../utils/theme_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,6 +29,29 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  String? _userId;
+  String? _phoneNumber;
+  String? _address;
+  String? _lastDonationDate;
+  String _healthStatus = 'Unknown';
+  Color _healthStatusColor = Colors.green;
+  String? _nextDonationDate;
+
+  // Health Questionnaire Data
+  String? _height;
+  String? _weight;
+  String? _gender;
+  bool _hasTattoo = false;
+  bool _hasPiercing = false;
+  bool _hasTraveled = false;
+  bool _hasSurgery = false;
+  bool _hasTransfusion = false;
+  bool _hasPregnancy = false;
+  bool _hasDisease = false;
+  bool _hasMedication = false;
+  bool _hasAllergies = false;
+  String? _medications;
+  String? _allergies;
 
   // List of available blood types
   final List<String> _bloodTypes = [
@@ -62,6 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _addressController = TextEditingController(text: currentUser.address);
     _bloodType = currentUser.bloodType;
     _isAvailableToDonate = currentUser.isAvailableToDonate;
+    _loadUserData();
   }
 
   @override
@@ -72,6 +98,122 @@ class _ProfileScreenState extends State<ProfileScreen>
     _addressController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        _userId = user.uid;
+        
+        // Load user profile data
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_userId)
+            .get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data()!;
+          _bloodType = data['bloodType'];
+          _phoneNumber = data['phoneNumber'];
+          _address = data['address'];
+          _isAvailableToDonate = data['isAvailableToDonate'] ?? true;
+          
+          // Handle lastDonationDate which could be int, Timestamp, or String
+          if (data['lastDonationDate'] != null) {
+            if (data['lastDonationDate'] is int) {
+              _lastDonationDate = data['lastDonationDate'].toString();
+            } else if (data['lastDonationDate'] is Timestamp) {
+              _lastDonationDate = data['lastDonationDate'].toDate().millisecondsSinceEpoch.toString();
+            } else {
+              _lastDonationDate = data['lastDonationDate'];
+            }
+          }
+        }
+
+        // Load health questionnaire data from health_questionnaires collection
+        final healthDoc = await FirebaseFirestore.instance
+            .collection('health_questionnaires')
+            .doc(_userId)
+            .get();
+
+        if (healthDoc.exists) {
+          final healthData = healthDoc.data()!;
+          _height = healthData['height'];
+          _weight = healthData['weight'];
+          _gender = healthData['gender'];
+          _hasTattoo = healthData['hasTattoo'] ?? false;
+          _hasPiercing = healthData['hasPiercing'] ?? false;
+          _hasTraveled = healthData['hasTraveled'] ?? false;
+          _hasSurgery = healthData['hasSurgery'] ?? false;
+          _hasTransfusion = healthData['hasTransfusion'] ?? false;
+          _hasPregnancy = healthData['hasPregnancy'] ?? false;
+          _hasDisease = healthData['hasDisease'] ?? false;
+          _hasMedication = healthData['hasMedication'] ?? false;
+          _hasAllergies = healthData['hasAllergies'] ?? false;
+          _medications = healthData['medications'];
+          _allergies = healthData['allergies'];
+        }
+
+        _updateHealthStatus();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profile data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _updateHealthStatus() {
+    if (_hasDisease || _hasMedication || _hasAllergies) {
+      _healthStatus = 'Needs Review';
+      _healthStatusColor = Colors.orange;
+    } else if (_hasTattoo || _hasPiercing || _hasTraveled || _hasSurgery || _hasTransfusion || _hasPregnancy) {
+      _healthStatus = 'Temporary Deferral';
+      _healthStatusColor = Colors.red;
+    } else {
+      _healthStatus = 'Good';
+      _healthStatusColor = Colors.green;
+    }
+
+    if (_lastDonationDate != null) {
+      DateTime lastDonation;
+      
+      // Handle different types of lastDonationDate (int or String)
+      if (_lastDonationDate is int || int.tryParse(_lastDonationDate!) != null) {
+        // If it's an integer timestamp (milliseconds since epoch)
+        int timestamp = _lastDonationDate is int 
+            ? _lastDonationDate as int 
+            : int.parse(_lastDonationDate!);
+        lastDonation = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      } else {
+        // If it's already a formatted date string
+        try {
+          lastDonation = DateTime.parse(_lastDonationDate!);
+        } catch (e) {
+          // If parsing fails, use current date as fallback
+          lastDonation = DateTime.now();
+        }
+      }
+      
+      final nextDonation = lastDonation.add(const Duration(days: 56));
+      _nextDonationDate = nextDonation.toString().split(' ')[0];
+    }
   }
 
   // Toggle edit mode and play animation
@@ -623,170 +765,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 color: AppConstants.primaryColor,
                               ),
                             const SizedBox(height: 24),
-                            Padding(
-                              padding: EdgeInsets.only(
-                                left: constraints.maxWidth * 0.01,
-                                bottom: constraints.maxHeight * 0.02,
-                              ),
-                              child: Text(
-                                'Donation Status',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textColor,
-                                ),
-                              ),
-                            ),
-                            Builder(
-                              builder:
-                                  (context) => Container(
-                                    padding: EdgeInsets.all(
-                                      constraints.maxWidth * 0.05,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context.cardColor,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                              context.isDarkMode
-                                                  ? Colors.black.withOpacity(
-                                                    0.1,
-                                                  )
-                                                  : Colors.grey.withOpacity(
-                                                    0.07,
-                                                  ),
-                                          blurRadius: 15,
-                                          spreadRadius: 1,
-                                          offset: const Offset(0, 5),
-                                        ),
-                                      ],
-                                      border:
-                                          _isAvailableToDonate
-                                              ? Border.all(
-                                                color: AppConstants.successColor
-                                                    .withOpacity(0.5),
-                                                width: 1.5,
-                                              )
-                                              : null,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.all(
-                                            constraints.maxWidth * 0.03,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                _isAvailableToDonate
-                                                    ? AppConstants.successColor
-                                                        .withOpacity(0.1)
-                                                    : AppConstants.primaryColor
-                                                        .withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.volunteer_activism,
-                                            color:
-                                                _isAvailableToDonate
-                                                    ? AppConstants.successColor
-                                                    : AppConstants.primaryColor,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Available to Donate',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
-                                                  color:
-                                                      _isAvailableToDonate
-                                                          ? AppConstants
-                                                              .successColor
-                                                          : context.textColor,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Let others know if you are available for blood donation requests',
-                                                style: TextStyle(
-                                                  color:
-                                                      context
-                                                          .secondaryTextColor,
-                                                  fontSize: 13,
-                                                  height: 1.4,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Switch.adaptive(
-                                          value: _isAvailableToDonate,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _isAvailableToDonate = value;
-                                            });
-                                            final appProvider =
-                                                Provider.of<AppProvider>(
-                                                  context,
-                                                  listen: false,
-                                                );
-                                            final currentUser =
-                                                appProvider.currentUser;
-                                            final updatedUser = currentUser
-                                                .copyWith(
-                                                  isAvailableToDonate: value,
-                                                );
-                                            appProvider.updateUserProfile(
-                                              updatedUser,
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  value
-                                                      ? 'You are now available for donation requests'
-                                                      : 'You are now marked as unavailable for donation',
-                                                ),
-                                                backgroundColor:
-                                                    value
-                                                        ? AppConstants
-                                                            .successColor
-                                                        : AppConstants
-                                                            .primaryColor,
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                margin: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                duration: const Duration(
-                                                  seconds: 2,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          activeColor:
-                                              AppConstants.successColor,
-                                          activeTrackColor: AppConstants
-                                              .successColor
-                                              .withOpacity(0.3),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 36),
+                            _buildHealthStatusCard(),
+                            const SizedBox(height: 24),
                             if (_isEditing)
                               SizedBox(
                                 width: double.infinity,
@@ -1228,6 +1208,144 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
           ),
+    );
+  }
+
+  Widget _buildHealthStatusCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.health_and_safety,
+                  color: AppConstants.primaryColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Health Status',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _healthStatusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _healthStatusColor),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _healthStatusColor.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _healthStatus == 'Good' ? Icons.check_circle : 
+                      _healthStatus == 'Needs Review' ? Icons.warning : Icons.error,
+                      color: _healthStatusColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Status: ${_healthStatus ?? 'Unknown'}',
+                          style: TextStyle(
+                            color: _healthStatusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        if (_nextDonationDate != null)
+                          Text(
+                            'Next Eligible Donation: $_nextDonationDate',
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildHealthInfoRow('Height', '$_height cm'),
+            _buildHealthInfoRow('Weight', '$_weight kg'),
+            _buildHealthInfoRow('Gender', _gender ?? 'Not specified'),
+            if (_hasMedication) _buildHealthInfoRow('Medications', _medications ?? 'Not specified'),
+            if (_hasAllergies) _buildHealthInfoRow('Allergies', _allergies ?? 'Not specified'),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.pushNamed(context, '/health-questionnaire');
+                  // Refresh data when returning from health questionnaire
+                  _loadUserData();
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Update Health Information'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthInfoRow(String label, String value) {
+    // Handle null or empty values
+    final displayValue = (value == 'null' || value == 'null cm' || value == 'null kg' || value == null || value.isEmpty) 
+        ? 'Not specified' 
+        : value;
+        
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+          Text(
+            displayValue,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

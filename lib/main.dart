@@ -161,8 +161,8 @@ class _MyAppState extends State<MyApp> {
         '/data_usage': (context) => const DataUsageScreen(),
         '/emergency_contacts': (context) => const EmergencyContactsScreen(),
         '/health_tips': (context) => const HealthTipsScreen(),
-        '/health_questionnaire': (context) => const HealthQuestionnaireScreen(),
-        '/medical_conditions': (context) => const MedicalConditionsScreen(),
+        '/health-questionnaire': (context) => const HealthQuestionnaireScreen(),
+        '/medical-conditions': (context) => const MedicalConditionsScreen(),
       },
     );
   }

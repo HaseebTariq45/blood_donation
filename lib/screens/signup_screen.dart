@@ -6,6 +6,8 @@ import '../providers/app_provider.dart';
 import '../widgets/custom_button.dart';
 import '../models/user_model.dart';
 import '../utils/theme_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -29,6 +31,7 @@ class _SignupScreenState extends State<SignupScreen>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   late AnimationController _animationController;
+  bool _isLoading = false;
 
   // List of available blood types
   final List<String> _bloodTypes = [
@@ -65,73 +68,69 @@ class _SignupScreenState extends State<SignupScreen>
     super.dispose();
   }
 
-  Future<void> _register() async {
-    // Validate form
-    if (_formKey.currentState!.validate()) {
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Passwords do not match!'),
-            backgroundColor: AppConstants.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
-          ),
-        );
-        return;
+  Future<void> _signUp() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Create user with email and password
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Create user profile in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'bloodType': _bloodType,
+        'phoneNumber': _phoneController.text.trim(),
+        'address': _addressController.text.trim(),
+        'isAvailableToDonate': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        // Navigate to health questionnaire screen
+        Navigator.pushReplacementNamed(context, '/health-questionnaire');
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'An error occurred during signup';
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'An account already exists for that email.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is invalid.';
       }
 
-      // Create user model
-      final newUser = UserModel(
-        id: '', // Will be assigned by Firebase
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        bloodType: _bloodType,
-        address: _addressController.text.trim(),
-        isAvailableToDonate: _isAvailableToDonate,
-      );
-
-      // Get provider
-      final appProvider = Provider.of<AppProvider>(context, listen: false);
-
-      // Register user
-      final success = await appProvider.registerUser(
-        newUser,
-        _passwordController.text,
-      );
-
-      if (success && mounted) {
-        // Show success message
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Registration successful!'),
-            backgroundColor: AppConstants.successColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
+            content: Text(message),
+            backgroundColor: Colors.red,
           ),
         );
-
-        // Navigate to login or home screen
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else if (mounted) {
-        // Show error message
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(appProvider.authError),
-            backgroundColor: AppConstants.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(10),
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -622,7 +621,7 @@ class _SignupScreenState extends State<SignupScreen>
                                   )
                                   : CustomButton(
                                     text: 'CREATE ACCOUNT',
-                                    onPressed: _register,
+                                    onPressed: _signUp,
                                     fontSize: buttonFontSize,
                                     height: isSmallScreen ? 50 : 56,
                                   ),
