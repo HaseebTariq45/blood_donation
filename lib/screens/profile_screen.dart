@@ -118,24 +118,37 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         if (userDoc.exists) {
           final data = userDoc.data()!;
-          _bloodType = data['bloodType'];
+          
+          // Update controllers with null safety
+          _nameController.text = data['name'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          _phoneController.text = data['phoneNumber'] ?? '';
+          _addressController.text = data['address'] ?? '';
+          
+          // Update other fields with null safety
+          _bloodType = data['bloodType'] ?? 'Unknown';
           _phoneNumber = data['phoneNumber'];
           _address = data['address'];
           _isAvailableToDonate = data['isAvailableToDonate'] ?? true;
           
-          // Handle lastDonationDate which could be int, Timestamp, or String
+          // Handle lastDonationDate with better null safety
           if (data['lastDonationDate'] != null) {
-            if (data['lastDonationDate'] is int) {
-              _lastDonationDate = data['lastDonationDate'].toString();
-            } else if (data['lastDonationDate'] is Timestamp) {
-              _lastDonationDate = data['lastDonationDate'].toDate().millisecondsSinceEpoch.toString();
-            } else {
-              _lastDonationDate = data['lastDonationDate'];
+            try {
+              if (data['lastDonationDate'] is Timestamp) {
+                _lastDonationDate = (data['lastDonationDate'] as Timestamp).toDate().millisecondsSinceEpoch.toString();
+              } else if (data['lastDonationDate'] is int) {
+                _lastDonationDate = data['lastDonationDate'].toString();
+              } else if (data['lastDonationDate'] is String) {
+                _lastDonationDate = data['lastDonationDate'];
+              }
+            } catch (e) {
+              print('Error parsing lastDonationDate: $e');
+              _lastDonationDate = null;
             }
           }
         }
 
-        // Load health questionnaire data from health_questionnaires collection
+        // Load health questionnaire data with null safety
         final healthDoc = await FirebaseFirestore.instance
             .collection('health_questionnaires')
             .doc(_userId)
@@ -143,20 +156,22 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         if (healthDoc.exists) {
           final healthData = healthDoc.data()!;
-          _height = healthData['height'];
-          _weight = healthData['weight'];
-          _gender = healthData['gender'];
-          _hasTattoo = healthData['hasTattoo'] ?? false;
-          _hasPiercing = healthData['hasPiercing'] ?? false;
-          _hasTraveled = healthData['hasTraveled'] ?? false;
-          _hasSurgery = healthData['hasSurgery'] ?? false;
-          _hasTransfusion = healthData['hasTransfusion'] ?? false;
-          _hasPregnancy = healthData['hasPregnancy'] ?? false;
-          _hasDisease = healthData['hasDisease'] ?? false;
-          _hasMedication = healthData['hasMedication'] ?? false;
-          _hasAllergies = healthData['hasAllergies'] ?? false;
-          _medications = healthData['medications'];
-          _allergies = healthData['allergies'];
+          setState(() {
+            _height = healthData['height']?.toString() ?? '';
+            _weight = healthData['weight']?.toString() ?? '';
+            _gender = healthData['gender'] ?? '';
+            _hasTattoo = healthData['hasTattoo'] ?? false;
+            _hasPiercing = healthData['hasPiercing'] ?? false;
+            _hasTraveled = healthData['hasTraveled'] ?? false;
+            _hasSurgery = healthData['hasSurgery'] ?? false;
+            _hasTransfusion = healthData['hasTransfusion'] ?? false;
+            _hasPregnancy = healthData['hasPregnancy'] ?? false;
+            _hasDisease = healthData['hasDisease'] ?? false;
+            _hasMedication = healthData['hasMedication'] ?? false;
+            _hasAllergies = healthData['hasAllergies'] ?? false;
+            _medications = healthData['medications']?.toString() ?? '';
+            _allergies = healthData['allergies']?.toString() ?? '';
+          });
         }
 
         _updateHealthStatus();
@@ -191,28 +206,27 @@ class _ProfileScreenState extends State<ProfileScreen>
       _healthStatusColor = Colors.green;
     }
 
-    if (_lastDonationDate != null) {
-      DateTime lastDonation;
-      
-      // Handle different types of lastDonationDate (int or String)
-      if (_lastDonationDate is int || int.tryParse(_lastDonationDate!) != null) {
-        // If it's an integer timestamp (milliseconds since epoch)
-        int timestamp = _lastDonationDate is int 
-            ? _lastDonationDate as int 
-            : int.parse(_lastDonationDate!);
-        lastDonation = DateTime.fromMillisecondsSinceEpoch(timestamp);
-      } else {
-        // If it's already a formatted date string
-        try {
+    if (_lastDonationDate != null && _lastDonationDate!.isNotEmpty) {
+      try {
+        DateTime lastDonation;
+        
+        // Handle different types of lastDonationDate
+        if (int.tryParse(_lastDonationDate!) != null) {
+          // If it's a timestamp (milliseconds since epoch)
+          lastDonation = DateTime.fromMillisecondsSinceEpoch(int.parse(_lastDonationDate!));
+        } else {
+          // If it's a date string
           lastDonation = DateTime.parse(_lastDonationDate!);
-        } catch (e) {
-          // If parsing fails, use current date as fallback
-          lastDonation = DateTime.now();
         }
+        
+        final nextDonation = lastDonation.add(const Duration(days: 56));
+        _nextDonationDate = nextDonation.toString().split(' ')[0];
+      } catch (e) {
+        print('Error calculating next donation date: $e');
+        _nextDonationDate = null;
       }
-      
-      final nextDonation = lastDonation.add(const Duration(days: 56));
-      _nextDonationDate = nextDonation.toString().split(' ')[0];
+    } else {
+      _nextDonationDate = null;
     }
   }
 
