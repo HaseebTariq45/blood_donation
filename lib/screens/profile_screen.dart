@@ -1226,6 +1226,19 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildHealthStatusCard() {
+    // Handle null values for height, weight, and gender
+    final displayHeight = (_height == null || _height!.isEmpty || _height == 'null') 
+        ? 'Not specified' 
+        : "$_height cm";
+        
+    final displayWeight = (_weight == null || _weight!.isEmpty || _weight == 'null') 
+        ? 'Not specified' 
+        : "$_weight kg";
+        
+    final displayGender = (_gender == null || _gender!.isEmpty) 
+        ? 'Not specified' 
+        : _gender!;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1305,11 +1318,11 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
             const SizedBox(height: 16),
-            _buildHealthInfoRow('Height', '$_height cm'),
-            _buildHealthInfoRow('Weight', '$_weight kg'),
-            _buildHealthInfoRow('Gender', _gender ?? 'Not specified'),
-            if (_hasMedication) _buildHealthInfoRow('Medications', _medications ?? 'Not specified'),
-            if (_hasAllergies) _buildHealthInfoRow('Allergies', _allergies ?? 'Not specified'),
+            _buildHealthInfoRow('Height', displayHeight),
+            _buildHealthInfoRow('Weight', displayWeight),
+            _buildHealthInfoRow('Gender', displayGender),
+            if (_hasMedication && _medications != null) _buildHealthInfoRow('Medications', _medications!),
+            if (_hasAllergies && _allergies != null) _buildHealthInfoRow('Allergies', _allergies!),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

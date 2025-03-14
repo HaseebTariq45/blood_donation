@@ -60,15 +60,6 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
   void initState() {
     super.initState();
     _loadHealthInfo();
-    _setupAutoSave();
-  }
-
-  void _setupAutoSave() {
-    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (_hasUnsavedChanges) {
-        _saveHealthInfo();
-      }
-    });
   }
 
   @override
@@ -113,9 +104,12 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
           if (_hasUnsavedChanges)
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                Icons.save_alt,
-                color: Colors.orange,
+              child: Tooltip(
+                message: 'You have unsaved changes',
+                child: Icon(
+                  Icons.save_alt,
+                  color: Colors.orange,
+                ),
               ),
             ),
           IconButton(
@@ -677,6 +671,11 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
         });
 
         if (mounted) {
+          // Clear the unsaved changes flag
+          setState(() {
+            _hasUnsavedChanges = false;
+          });
+          
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Health information saved successfully'),
