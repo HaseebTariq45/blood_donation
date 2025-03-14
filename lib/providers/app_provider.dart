@@ -450,6 +450,23 @@ class AppProvider extends ChangeNotifier {
     }
   }
   
+  // Check if email exists in Firestore
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      // Query Firestore for a user with this email
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+      
+      // Return true if any documents were found
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error checking email existence: $e');
+      return false;
+    }
+  }
+  
   // Delete account
   Future<bool> deleteAccount(String password) async {
     try {
