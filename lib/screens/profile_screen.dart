@@ -385,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             IconButton(
             icon: Icon(
               Icons.settings_outlined,
-              color: Theme.of(context).iconTheme.color,
+              color: Colors.white,
             ),
             tooltip: 'Settings',
               onPressed: () {
