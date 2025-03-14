@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     _nameController = TextEditingController(text: currentUser.name);
     _emailController = TextEditingController(text: currentUser.email);
-    _phoneController = TextEditingController(text: currentUser.phone);
+    _phoneController = TextEditingController(text: currentUser.phoneNumber);
     _addressController = TextEditingController(text: currentUser.address);
     _bloodType = currentUser.bloodType;
     _isAvailableToDonate = currentUser.isAvailableToDonate;
@@ -257,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       final updatedUser = currentUser.copyWith(
         name: _nameController.text,
         email: _emailController.text,
-        phone: _phoneController.text,
+        phoneNumber: _phoneController.text,
         address: _addressController.text,
         bloodType: _bloodType,
         isAvailableToDonate: _isAvailableToDonate,
@@ -302,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     setState(() {
       _nameController.text = currentUser.name;
       _emailController.text = currentUser.email;
-      _phoneController.text = currentUser.phone;
+      _phoneController.text = currentUser.phoneNumber;
       _addressController.text = currentUser.address;
       _bloodType = currentUser.bloodType;
       _isAvailableToDonate = currentUser.isAvailableToDonate;

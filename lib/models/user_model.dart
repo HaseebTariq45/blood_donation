@@ -4,7 +4,7 @@ class UserModel {
   final String id;
   final String name;
   final String email;
-  final String phone;
+  final String phoneNumber;
   final String bloodType;
   final String address;
   final String imageUrl;
@@ -16,7 +16,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
-    required this.phone,
+    required this.phoneNumber,
     required this.bloodType,
     required this.address,
     this.imageUrl = '',
@@ -30,7 +30,7 @@ class UserModel {
       id: 'user123',
       name: 'John Doe',
       email: 'john.doe@example.com',
-      phone: '+1234567890',
+      phoneNumber: '+1234567890',
       bloodType: 'A+',
       address: '123 Main St, Cityville',
       imageUrl: '', // Empty string to use default icon in CircleAvatar
@@ -53,7 +53,7 @@ class UserModel {
     String? id,
     String? name,
     String? email,
-    String? phone,
+    String? phoneNumber,
     String? bloodType,
     String? address,
     String? imageUrl,
@@ -65,7 +65,7 @@ class UserModel {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
-      phone: phone ?? this.phone,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       bloodType: bloodType ?? this.bloodType,
       address: address ?? this.address,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -78,7 +78,7 @@ class UserModel {
   // For debugging purposes
   @override
   String toString() {
-    return 'UserModel{id: $id, name: $name, email: $email, phone: $phone, bloodType: $bloodType, '
+    return 'UserModel{id: $id, name: $name, email: $email, phoneNumber: $phoneNumber, bloodType: $bloodType, '
            'address: $address, isAvailableToDonate: $isAvailableToDonate, '
            'lastDonationDate: ${lastDonationDate.toIso8601String()}}';
   }

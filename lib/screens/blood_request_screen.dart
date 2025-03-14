@@ -64,7 +64,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     if (appProvider.isLoggedIn) {
       _nameController.text = appProvider.currentUser.name;
-      _phoneController.text = appProvider.currentUser.phone;
+      _phoneController.text = appProvider.currentUser.phoneNumber;
     }
   }
 

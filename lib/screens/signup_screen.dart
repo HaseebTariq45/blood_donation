@@ -97,7 +97,11 @@ class _SignupScreenState extends State<SignupScreen>
 
       if (mounted) {
         // Navigate to health questionnaire screen
-        Navigator.pushReplacementNamed(context, '/health-questionnaire');
+        Navigator.pushReplacementNamed(
+          context, 
+          '/health-questionnaire',
+          arguments: {'isPostSignup': true}
+        );
       }
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred during signup';

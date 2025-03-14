@@ -161,7 +161,11 @@ class _MyAppState extends State<MyApp> {
         '/data_usage': (context) => const DataUsageScreen(),
         '/emergency_contacts': (context) => const EmergencyContactsScreen(),
         '/health_tips': (context) => const HealthTipsScreen(),
-        '/health-questionnaire': (context) => const HealthQuestionnaireScreen(),
+        '/health-questionnaire': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final isPostSignup = args != null ? args['isPostSignup'] ?? false : false;
+          return HealthQuestionnaireScreen(isPostSignup: isPostSignup);
+        },
         '/medical-conditions': (context) => const MedicalConditionsScreen(),
       },
     );

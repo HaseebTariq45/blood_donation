@@ -214,7 +214,7 @@ class AppProvider extends ChangeNotifier {
         id: 'donor_$index',
         name: 'Donor ${index + 1}',
         email: 'donor${index + 1}@example.com',
-        phone: '+1234${index}7890',
+        phoneNumber: '+1234${index}7890',
         bloodType: bloodTypes[index % bloodTypes.length],
         address: '${index + 100} Main St, City',
         imageUrl: 'assets/images/avatar_${(index % 8) + 1}.png',
@@ -897,7 +897,7 @@ class AppProvider extends ChangeNotifier {
             id: firebaseUser.uid,
             name: firebaseUser.displayName ?? 'New User',
             email: firebaseUser.email ?? '',
-            phone: '',
+            phoneNumber: '',
             bloodType: 'A+',  // Default blood type
             address: '',
             isAvailableToDonate: true,
@@ -1161,7 +1161,7 @@ class AppProvider extends ChangeNotifier {
         metadata: {
           'requesterId': currentUser.uid,
           'requesterName': requesterDetails.name,
-          'requesterPhone': requesterDetails.phone,
+          'requesterPhone': requesterDetails.phoneNumber,
           'requestId': requestId,
           'responderId': responderId,
         },

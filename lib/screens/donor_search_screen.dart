@@ -902,7 +902,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                     children: [
                       OutlinedButton.icon(
                         onPressed: () {
-                          _launchSms(donor.phone);
+                          _launchSms(donor.phoneNumber);
                         },
                         icon: const Icon(Icons.message, size: 16),
                         label: const Text('Message'),
@@ -921,7 +921,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                       const SizedBox(width: 12),
                       ElevatedButton.icon(
                         onPressed: () {
-                          _launchCall(donor.phone);
+                          _launchCall(donor.phoneNumber);
                         },
                         icon: const Icon(Icons.phone, size: 16),
                         label: const Text('Call'),
@@ -1055,7 +1055,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                 _buildDetailRow(
                   icon: Icons.phone,
                   title: 'Phone',
-                  value: donor.phone,
+                  value: donor.phoneNumber,
                 ),
                 _buildDetailRow(
                   icon: Icons.calendar_today,
@@ -1082,7 +1082,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  _launchCall(donor.phone);
+                  _launchCall(donor.phoneNumber);
                 },
                 icon: const Icon(Icons.phone, size: 16),
                 label: const Text('CALL'),

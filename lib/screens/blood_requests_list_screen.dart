@@ -133,7 +133,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
                         'status': 'In Progress',
                         'responderId': currentUser.id,
                         'responderName': currentUser.name,
-                        'responderPhone': currentUser.phone,
+                        'responderPhone': currentUser.phoneNumber,
                         'responseDate': DateTime.now().toIso8601String(),
                       })
                       .then((_) async {
@@ -156,7 +156,7 @@ class _BloodRequestsListScreenState extends State<BloodRequestsListScreen>
                             metadata: {
                               'requestId': request.id,
                               'responderName': currentUser.name,
-                              'responderPhone': currentUser.phone,
+                              'responderPhone': currentUser.phoneNumber,
                               'bloodType': currentUser.bloodType,
                               'responderId': currentUser.id,
                             },
