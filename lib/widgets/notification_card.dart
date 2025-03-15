@@ -22,7 +22,7 @@ class NotificationCard extends StatelessWidget {
     // Determine the notification color based on type
     Color color;
     IconData iconData;
-    
+
     switch (notification.type) {
       case 'blood_request_response':
         color = Colors.red.shade700;
@@ -58,11 +58,7 @@ class NotificationCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.delete_forever,
-              color: Colors.white,
-              size: 26.0,
-            ),
+            Icon(Icons.delete_forever, color: Colors.white, size: 26.0),
             SizedBox(height: 4),
             Text(
               'Delete',
@@ -84,7 +80,8 @@ class NotificationCard extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+              backgroundColor:
+                  context.isDarkMode ? const Color(0xFF252525) : Colors.white,
               title: Text(
                 'Delete Notification',
                 style: TextStyle(
@@ -94,18 +91,14 @@ class NotificationCard extends StatelessWidget {
               ),
               content: Text(
                 'Are you sure you want to delete this notification?',
-                style: TextStyle(
-                  color: context.textColor.withOpacity(0.8),
-                ),
+                style: TextStyle(color: context.textColor.withOpacity(0.8)),
               ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
                 TextButton(
@@ -126,7 +119,7 @@ class NotificationCard extends StatelessWidget {
       onDismissed: (direction) {
         // Call the delete function
         onDelete();
-        
+
         // Show a snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -167,12 +160,13 @@ class NotificationCard extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: context.isDarkMode 
-              ? notification.read 
-                  ? const Color(0xFF1E1E1E) 
-                  : const Color(0xFF252525)
-              : notification.read 
-                  ? Colors.white 
+          color:
+              context.isDarkMode
+                  ? notification.read
+                      ? const Color(0xFF1E1E1E)
+                      : const Color(0xFF252525)
+                  : notification.read
+                  ? Colors.white
                   : Colors.white,
           borderRadius: BorderRadius.circular(16.0),
           elevation: notification.read ? 0 : 1,
@@ -180,50 +174,77 @@ class NotificationCard extends StatelessWidget {
             onTap: () {
               // Provide haptic feedback for better interaction
               HapticFeedback.lightImpact();
-              
+
               if (notification.type == 'blood_request_response') {
                 // Mark notification as read
                 onMarkAsRead();
-                
-                // Get responder information
-                final String? responderId = notification.metadata?['responderId'];
-                final String? responderName = notification.metadata?['responderName'];
-                final String? responderPhone = notification.metadata?['responderPhone'];
-                final String? bloodType = notification.metadata?['bloodType'];
-                final String? requestId = notification.metadata?['requestId'];
-                
+
+                // Get responder information with proper null checks
+                final Map<String, dynamic> metadata =
+                    notification.metadata ?? {};
+                debugPrint('Notification metadata: $metadata');
+
+                final String? responderId = metadata['responderId'];
+                final String? responderName = metadata['responderName'];
+                final String? responderPhone = metadata['responderPhone'];
+                final String? bloodType = metadata['bloodType'];
+                final String? requestId = metadata['requestId'];
+
                 // Debug log
                 debugPrint('Notification card, responder info:');
-                debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
+                debugPrint(
+                  '  responderId: $responderId (${responderId == null
+                      ? "null"
+                      : responderId.isEmpty
+                      ? "empty"
+                      : "not empty"})',
+                );
+                debugPrint('  responderName: $responderName');
+                debugPrint('  responderPhone: $responderPhone');
+                debugPrint('  bloodType: $bloodType');
                 debugPrint('  requestId: $requestId');
-                
-                // Validate responderId
-                if (responderId != null && responderId.isNotEmpty) {
+
+                // Check if we have essential information (name, phone, blood type)
+                // Even if responderId is null, we can still show the dialog
+                if (responderName != null &&
+                    responderPhone != null &&
+                    requestId != null) {
                   // Show blood response dialog with donor details
                   showDialog(
                     context: context,
-                    builder: (context) => BloodResponseNotificationDialog(
-                      responderName: responderName ?? 'Unknown',
-                      responderPhone: responderPhone ?? 'Unknown',
-                      bloodType: bloodType ?? 'Unknown',
-                      responderId: responderId,
-                      requestId: requestId ?? '',
-                      onViewRequest: () {
-                        // Handle viewing the request
-                        Navigator.pop(context);
-                        // TODO: Navigate to blood request detail page
-                      },
-                    ),
+                    builder:
+                        (context) => BloodResponseNotificationDialog(
+                          responderName: responderName,
+                          responderPhone: responderPhone,
+                          bloodType: bloodType ?? 'Unknown',
+                          responderId:
+                              responderId ??
+                              'unknown_responder', // Use placeholder for null responderId
+                          requestId: requestId,
+                          onViewRequest: () {
+                            // Handle viewing the request
+                            Navigator.pop(context);
+                            // TODO: Navigate to blood request detail page
+                          },
+                        ),
                   );
                 } else {
-                  // Show error for missing responder ID
+                  // Show error only if essential information is missing
+                  debugPrint(
+                    'Missing essential responder information. Full notification: ${notification.toMap()}',
+                  );
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
                           Icon(Icons.error_outline, color: Colors.white),
                           SizedBox(width: 8),
-                          Text('Could not show details: Missing responder information'),
+                          Expanded(
+                            child: Text(
+                              'Could not show details: Missing essential responder information.',
+                            ),
+                          ),
                         ],
                       ),
                       backgroundColor: Colors.orange,
@@ -231,92 +252,108 @@ class NotificationCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      duration: Duration(seconds: 4),
+                      action: SnackBarAction(
+                        label: 'DISMISS',
+                        textColor: Colors.white,
+                        onPressed: () {},
+                      ),
                     ),
                   );
                 }
               } else {
                 // For other notification types
                 onMarkAsRead();
-                
+
                 // Show a simple dialog for other notification types
                 showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(
-                      notification.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: context.textColor,
-                      ),
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          notification.body,
+                  builder:
+                      (context) => AlertDialog(
+                        title: Text(
+                          notification.title,
                           style: TextStyle(
-                            fontSize: 16,
-                            color: context.textColor.withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Received: ${_formatDate(notification.createdAt)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Close',
-                          style: TextStyle(
-                            color: AppConstants.primaryColor,
                             fontWeight: FontWeight.bold,
+                            color: context.textColor,
                           ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          onDelete();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, color: Colors.white),
-                                  SizedBox(width: 8),
-                                  Text('Notification deleted'),
-                                ],
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              notification.body,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: context.textColor.withOpacity(0.8),
                               ),
-                              backgroundColor: Colors.red[700],
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              duration: Duration(seconds: 2),
                             ),
-                          );
-                        },
-                        child: Text(
-                          'Delete',
-                          style: TextStyle(
-                            color: Colors.red[700],
-                            fontWeight: FontWeight.bold,
-                          ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Received: ${_formatDate(notification.createdAt)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color:
+                                    context.isDarkMode
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor:
+                            context.isDarkMode
+                                ? const Color(0xFF252525)
+                                : Colors.white,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Close',
+                              style: TextStyle(
+                                color: AppConstants.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              onDelete();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text('Notification deleted'),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.red[700],
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(
+                                color: Colors.red[700],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                 );
               }
             },
@@ -330,7 +367,10 @@ class NotificationCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                    backgroundColor:
+                        context.isDarkMode
+                            ? const Color(0xFF252525)
+                            : Colors.white,
                     title: Text(
                       'Notification Options',
                       style: TextStyle(
@@ -349,9 +389,7 @@ class NotificationCard extends StatelessWidget {
                             ),
                             title: Text(
                               'Mark as read',
-                              style: TextStyle(
-                                color: context.textColor,
-                              ),
+                              style: TextStyle(color: context.textColor),
                             ),
                             onTap: () {
                               Navigator.pop(context);
@@ -365,9 +403,7 @@ class NotificationCard extends StatelessWidget {
                           ),
                           title: Text(
                             'Delete notification',
-                            style: TextStyle(
-                              color: context.textColor,
-                            ),
+                            style: TextStyle(color: context.textColor),
                           ),
                           onTap: () {
                             Navigator.pop(context);
@@ -379,7 +415,10 @@ class NotificationCard extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                                  backgroundColor:
+                                      context.isDarkMode
+                                          ? const Color(0xFF252525)
+                                          : Colors.white,
                                   title: Text(
                                     'Delete Notification',
                                     style: TextStyle(
@@ -395,7 +434,8 @@ class NotificationCard extends StatelessWidget {
                                   ),
                                   actions: <Widget>[
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      onPressed:
+                                          () => Navigator.of(context).pop(),
                                       child: Text(
                                         'Cancel',
                                         style: TextStyle(
@@ -407,11 +447,16 @@ class NotificationCard extends StatelessWidget {
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                         onDelete();
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Row(
                                               children: [
-                                                Icon(Icons.delete_outline, color: Colors.white),
+                                                Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.white,
+                                                ),
                                                 SizedBox(width: 8),
                                                 Text('Notification deleted'),
                                               ],
@@ -419,7 +464,8 @@ class NotificationCard extends StatelessWidget {
                                             backgroundColor: Colors.red[700],
                                             behavior: SnackBarBehavior.floating,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                             ),
                                             duration: Duration(seconds: 2),
                                           ),
@@ -451,12 +497,10 @@ class NotificationCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                border: notification.read
-                    ? null
-                    : Border.all(
-                        color: color.withOpacity(0.5),
-                        width: 1.5,
-                      ),
+                border:
+                    notification.read
+                        ? null
+                        : Border.all(color: color.withOpacity(0.5), width: 1.5),
                 borderRadius: BorderRadius.circular(16.0),
               ),
               child: Row(
@@ -490,11 +534,16 @@ class NotificationCard extends StatelessWidget {
                               child: Text(
                                 notification.title,
                                 style: TextStyle(
-                                  fontWeight: notification.read ? FontWeight.w500 : FontWeight.bold,
+                                  fontWeight:
+                                      notification.read
+                                          ? FontWeight.w500
+                                          : FontWeight.bold,
                                   fontSize: 16.0,
                                   color: context.textColor,
                                   letterSpacing: 0.2,
                                 ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             if (!notification.read)
@@ -519,7 +568,10 @@ class NotificationCard extends StatelessWidget {
                         Text(
                           notification.body,
                           style: TextStyle(
-                            color: context.isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            color:
+                                context.isDarkMode
+                                    ? Colors.grey[300]
+                                    : Colors.grey[700],
                             fontSize: 14.0,
                             height: 1.3,
                           ),
@@ -530,26 +582,41 @@ class NotificationCard extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.access_time,
-                                  size: 12,
-                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  _formatDate(notification.createdAt),
-                                  style: TextStyle(
-                                    color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                                    fontSize: 12.0,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 12,
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.grey[400]
+                                            : Colors.grey[500],
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      _formatDate(notification.createdAt),
+                                      style: TextStyle(
+                                        color:
+                                            context.isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[500],
+                                        fontSize: 12.0,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             if (notification.type == 'blood_request_response')
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: color.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
@@ -568,7 +635,8 @@ class NotificationCard extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      notification.metadata?['bloodType'] ?? 'Unknown',
+                                      notification.metadata?['bloodType'] ??
+                                          'Unknown',
                                       style: TextStyle(
                                         color: color,
                                         fontSize: 12,

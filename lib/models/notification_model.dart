@@ -36,6 +36,7 @@ class NotificationModel {
   // Convert notification model to a map
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'userId': userId,
       'title': title,
       'body': body,
