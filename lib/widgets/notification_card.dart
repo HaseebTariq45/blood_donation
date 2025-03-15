@@ -7,14 +7,14 @@ import '../utils/theme_helper.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
-  final Function(String) onMarkAsRead;
-  final VoidCallback? onDelete;
+  final Function onMarkAsRead;
+  final Function onDelete;
 
   const NotificationCard({
     Key? key,
     required this.notification,
     required this.onMarkAsRead,
-    this.onDelete,
+    required this.onDelete,
   }) : super(key: key);
 
   @override
@@ -45,282 +45,546 @@ class NotificationCard extends StatelessWidget {
         iconData = Icons.notifications;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          if (!notification.read)
-            BoxShadow(
-              color: color.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-        ],
-      ),
-      child: Material(
-        color: context.isDarkMode 
-            ? notification.read 
-                ? const Color(0xFF1E1E1E) 
-                : const Color(0xFF252525)
-            : notification.read 
-                ? Colors.white 
-                : Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        elevation: notification.read ? 0 : 1,
-        child: InkWell(
-          onTap: () {
-            // Provide haptic feedback for better interaction
-            HapticFeedback.lightImpact();
-            
-            if (notification.type == 'blood_request_response') {
-              // Mark notification as read
-              onMarkAsRead(notification.id);
-              
-              // Get responder information
-              final String? responderId = notification.metadata?['responderId'];
-              final String? responderName = notification.metadata?['responderName'];
-              final String? responderPhone = notification.metadata?['responderPhone'];
-              final String? bloodType = notification.metadata?['bloodType'];
-              final String? requestId = notification.metadata?['requestId'];
-              
-              // Debug log
-              debugPrint('Notification card, responder info:');
-              debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
-              debugPrint('  requestId: $requestId');
-              
-              // Validate responderId
-              if (responderId != null && responderId.isNotEmpty) {
-                // Show blood response dialog with donor details
-                showDialog(
-                  context: context,
-                  builder: (context) => BloodResponseNotificationDialog(
-                    responderName: responderName ?? 'Unknown',
-                    responderPhone: responderPhone ?? 'Unknown',
-                    bloodType: bloodType ?? 'Unknown',
-                    responderId: responderId,
-                    requestId: requestId ?? '',
-                    onViewRequest: () {
-                      // Handle viewing the request
-                      Navigator.pop(context);
-                      // TODO: Navigate to blood request detail page
-                    },
-                  ),
-                );
-              } else {
-                // Show error for missing responder ID
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text('Could not show details: Missing responder information'),
-                      ],
-                    ),
-                    backgroundColor: Colors.orange,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-              }
-            } else {
-              // For other notification types
-              onMarkAsRead(notification.id);
-              
-              // Show a simple dialog for other notification types
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text(
-                    notification.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: context.textColor,
-                    ),
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        notification.body,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: context.textColor.withOpacity(0.8),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Received: ${_formatDate(notification.createdAt)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'Close',
-                        style: TextStyle(
-                          color: AppConstants.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-          },
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20.0),
+        decoration: BoxDecoration(
+          color: Colors.red.shade700,
           borderRadius: BorderRadius.circular(16.0),
-          splashColor: color.withOpacity(0.1),
-          highlightColor: color.withOpacity(0.05),
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              border: notification.read
-                  ? null
-                  : Border.all(
-                      color: color.withOpacity(0.5),
-                      width: 1.5,
-                    ),
-              borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_forever,
+              color: Colors.white,
+              size: 26.0,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Icon with colored background
-                Container(
-                  padding: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(iconData, color: color, size: 24.0),
+            SizedBox(height: 4),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        // Show confirmation dialog
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+              title: Text(
+                'Delete Notification',
+                style: TextStyle(
+                  color: context.textColor,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(width: 16.0),
-                // Notification content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              notification.title,
-                              style: TextStyle(
-                                fontWeight: notification.read ? FontWeight.w500 : FontWeight.bold,
-                                fontSize: 16.0,
-                                color: context.textColor,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ),
-                          if (!notification.read)
-                            Container(
-                              width: 10.0,
-                              height: 10.0,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: color.withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 6.0),
-                      Text(
-                        notification.body,
-                        style: TextStyle(
-                          color: context.isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                          fontSize: 14.0,
-                          height: 1.3,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 10.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 12,
-                                color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                _formatDate(notification.createdAt),
-                                style: TextStyle(
-                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                                  fontSize: 12.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (notification.type == 'blood_request_response')
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: color.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.bloodtype,
-                                    color: color,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    notification.metadata?['bloodType'] ?? 'Unknown',
-                                    style: TextStyle(
-                                      color: color,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
+              ),
+              content: Text(
+                'Are you sure you want to delete this notification?',
+                style: TextStyle(
+                  color: context.textColor.withOpacity(0.8),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(
+                    'Delete',
+                    style: TextStyle(
+                      color: Colors.red[700],
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        // Call the delete function
+        onDelete();
+        
+        // Show a snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.delete_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Notification deleted'),
+              ],
+            ),
+            backgroundColor: Colors.red[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'UNDO',
+              textColor: Colors.white,
+              onPressed: () {
+                // TODO: Implement undo functionality
+              },
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.0),
+          boxShadow: [
+            if (!notification.read)
+              BoxShadow(
+                color: color.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Material(
+          color: context.isDarkMode 
+              ? notification.read 
+                  ? const Color(0xFF1E1E1E) 
+                  : const Color(0xFF252525)
+              : notification.read 
+                  ? Colors.white 
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          elevation: notification.read ? 0 : 1,
+          child: InkWell(
+            onTap: () {
+              // Provide haptic feedback for better interaction
+              HapticFeedback.lightImpact();
+              
+              if (notification.type == 'blood_request_response') {
+                // Mark notification as read
+                onMarkAsRead();
+                
+                // Get responder information
+                final String? responderId = notification.metadata?['responderId'];
+                final String? responderName = notification.metadata?['responderName'];
+                final String? responderPhone = notification.metadata?['responderPhone'];
+                final String? bloodType = notification.metadata?['bloodType'];
+                final String? requestId = notification.metadata?['requestId'];
+                
+                // Debug log
+                debugPrint('Notification card, responder info:');
+                debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
+                debugPrint('  requestId: $requestId');
+                
+                // Validate responderId
+                if (responderId != null && responderId.isNotEmpty) {
+                  // Show blood response dialog with donor details
+                  showDialog(
+                    context: context,
+                    builder: (context) => BloodResponseNotificationDialog(
+                      responderName: responderName ?? 'Unknown',
+                      responderPhone: responderPhone ?? 'Unknown',
+                      bloodType: bloodType ?? 'Unknown',
+                      responderId: responderId,
+                      requestId: requestId ?? '',
+                      onViewRequest: () {
+                        // Handle viewing the request
+                        Navigator.pop(context);
+                        // TODO: Navigate to blood request detail page
+                      },
+                    ),
+                  );
+                } else {
+                  // Show error for missing responder ID
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Could not show details: Missing responder information'),
+                        ],
+                      ),
+                      backgroundColor: Colors.orange,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                }
+              } else {
+                // For other notification types
+                onMarkAsRead();
+                
+                // Show a simple dialog for other notification types
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      notification.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: context.textColor,
+                      ),
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          notification.body,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: context.textColor.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Received: ${_formatDate(notification.createdAt)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Close',
+                          style: TextStyle(
+                            color: AppConstants.primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onDelete();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Notification deleted'),
+                                ],
+                              ),
+                              backgroundColor: Colors.red[700],
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+            onLongPress: () {
+              // Show delete confirmation on long press
+              HapticFeedback.mediumImpact();
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                    title: Text(
+                      'Notification Options',
+                      style: TextStyle(
+                        color: context.textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!notification.read)
+                          ListTile(
+                            leading: Icon(
+                              Icons.mark_email_read,
+                              color: AppConstants.primaryColor,
+                            ),
+                            title: Text(
+                              'Mark as read',
+                              style: TextStyle(
+                                color: context.textColor,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              onMarkAsRead();
+                            },
+                          ),
+                        ListTile(
+                          leading: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red[700],
+                          ),
+                          title: Text(
+                            'Delete notification',
+                            style: TextStyle(
+                              color: context.textColor,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Show confirmation dialog
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                                  title: Text(
+                                    'Delete Notification',
+                                    style: TextStyle(
+                                      color: context.textColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to delete this notification?',
+                                    style: TextStyle(
+                                      color: context.textColor.withOpacity(0.8),
+                                    ),
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        onDelete();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Row(
+                                              children: [
+                                                Icon(Icons.delete_outline, color: Colors.white),
+                                                SizedBox(width: 8),
+                                                Text('Notification deleted'),
+                                              ],
+                                            ),
+                                            backgroundColor: Colors.red[700],
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            duration: Duration(seconds: 2),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          color: Colors.red[700],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            borderRadius: BorderRadius.circular(16.0),
+            splashColor: color.withOpacity(0.1),
+            highlightColor: color.withOpacity(0.05),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                border: notification.read
+                    ? null
+                    : Border.all(
+                        color: color.withOpacity(0.5),
+                        width: 1.5,
+                      ),
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon with colored background
+                  Container(
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(iconData, color: color, size: 24.0),
+                  ),
+                  const SizedBox(width: 16.0),
+                  // Notification content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notification.title,
+                                style: TextStyle(
+                                  fontWeight: notification.read ? FontWeight.w500 : FontWeight.bold,
+                                  fontSize: 16.0,
+                                  color: context.textColor,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                            if (!notification.read)
+                              Container(
+                                width: 10.0,
+                                height: 10.0,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: color.withOpacity(0.3),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6.0),
+                        Text(
+                          notification.body,
+                          style: TextStyle(
+                            color: context.isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                            fontSize: 14.0,
+                            height: 1.3,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 10.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 12,
+                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  _formatDate(notification.createdAt),
+                                  style: TextStyle(
+                                    color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                                    fontSize: 12.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (notification.type == 'blood_request_response')
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: color.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bloodtype,
+                                      color: color,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      notification.metadata?['bloodType'] ?? 'Unknown',
+                                      style: TextStyle(
+                                        color: color,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

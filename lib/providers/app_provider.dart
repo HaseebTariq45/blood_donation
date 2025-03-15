@@ -809,6 +809,51 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  // Delete a notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      // First, remove from local state to make UI update immediately
+      final index = _userNotifications.indexWhere((n) => n.id == notificationId);
+      if (index != -1) {
+        _userNotifications.removeAt(index);
+        notifyListeners();
+      }
+      
+      // Then delete from Firestore
+      await _notificationService.deleteNotification(notificationId);
+      
+      // Update unread status
+      _hasUnreadNotifications = _userNotifications.any((notification) => !notification.read);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting notification: $e');
+      // If there was an error, refresh notifications to restore state
+      await refreshNotifications();
+    }
+  }
+  
+  // Delete all notifications
+  Future<void> deleteAllNotifications() async {
+    try {
+      // Store a copy of the notifications before clearing
+      final notificationsToDelete = List.from(_userNotifications);
+      
+      // Clear local state
+      _userNotifications.clear();
+      _hasUnreadNotifications = false;
+      notifyListeners();
+      
+      // Then delete all from Firestore
+      for (final notification in notificationsToDelete) {
+        await _notificationService.deleteNotification(notification.id);
+      }
+    } catch (e) {
+      debugPrint('Error deleting all notifications: $e');
+      // If there was an error, refresh notifications to restore state
+      await refreshNotifications();
+    }
+  }
+
   // Send a test notification (used in settings screen)
   Future<void> sendTestNotification() async {
     if (!_notificationsEnabled || !_pushNotificationsEnabled) return;

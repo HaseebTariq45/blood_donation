@@ -119,10 +119,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 120.0,
+              expandedHeight: 140.0,
               floating: true,
               pinned: true,
               elevation: 0,
+              leadingWidth: 40,
               leading: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
@@ -180,53 +181,65 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 60.0,
-                        right: 0,
-                        left: 0,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 50.0),
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                hasUnreadNotifications 
-                                    ? Icons.notifications_active
-                                    : Icons.notifications_none_outlined,
-                                color: Colors.white.withOpacity(0.9),
-                                size: 20,
+                      if (hasNotifications && !hasUnreadNotifications)
+                        Positioned(
+                          bottom: 80.0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: context.isDarkMode 
+                                    ? const Color(0xFF2A2A2A) 
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                hasUnreadNotifications 
-                                    ? 'You have unread notifications' 
-                                    : 'All caught up!',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: context.isDarkMode 
+                                        ? Colors.greenAccent 
+                                        : AppConstants.primaryColor,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'All caught up!',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: context.isDarkMode 
+                                          ? Colors.white 
+                                          : AppConstants.primaryColor,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
               ),
               actions: [
                 if (hasUnreadNotifications)
-                  Container(
-                    margin: const EdgeInsets.only(right: 4.0),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 2.0),
                     child: IconButton(
                       icon: const Icon(Icons.done_all, color: Colors.white),
                       tooltip: 'Mark all as read',
+                      iconSize: 22,
                       onPressed: () {
                         appProvider.markAllNotificationsAsRead();
                         // Show a confirmation snackbar
@@ -252,11 +265,89 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       },
                     ),
                   ),
-                Container(
-                  margin: const EdgeInsets.only(right: 8.0),
+                if (hasNotifications)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 2.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_sweep, color: Colors.white),
+                      tooltip: 'Delete all notifications',
+                      iconSize: 22,
+                      onPressed: () {
+                        // Show confirmation dialog
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                              title: Text(
+                                'Delete All Notifications',
+                                style: TextStyle(
+                                  color: context.textColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              content: Text(
+                                'Are you sure you want to delete all notifications? This action cannot be undone.',
+                                style: TextStyle(
+                                  color: context.textColor.withOpacity(0.8),
+                                ),
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    appProvider.deleteAllNotifications();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(Icons.delete_outline, color: Colors.white),
+                                            SizedBox(width: 8),
+                                            Text('All notifications deleted'),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.red[700],
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Delete All',
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
                   child: IconButton(
                     icon: const Icon(Icons.refresh, color: Colors.white),
                     tooltip: 'Refresh notifications',
+                    iconSize: 22,
                     onPressed: () {
                       appProvider.refreshNotifications();
                       // Show loading indicator
@@ -319,7 +410,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                 color: AppConstants.primaryColor,
                 child: hasNotifications
                     ? ListView.builder(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 24.0),
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 100.0),
                         itemCount: groupedNotifications.length,
                         itemBuilder: (context, index) {
                           final dateKey = groupedNotifications.keys.elementAt(index);
@@ -376,20 +467,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                                     ],
                                   ),
                                 ),
-                                ...notifications.asMap().entries.map((entry) {
-                                  final notificationIndex = entry.key;
-                                  final notification = entry.value;
-                                  return FadeInRight(
-                                    duration: Duration(milliseconds: 300 + (notificationIndex * 50)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: NotificationCard(
-                                        notification: notification,
-                                        onMarkAsRead: (id) => appProvider.markNotificationAsRead(id),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 16.0, 
+                                    right: 16.0, 
+                                    top: 8.0,
+                                    bottom: 16.0,
+                                  ),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: notifications.length,
+                                    itemBuilder: (context, index) {
+                                      final notification = notifications[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 12.0),
+                                        child: NotificationCard(
+                                          notification: notification,
+                                          onDelete: () => appProvider.deleteNotification(notification.id),
+                                          onMarkAsRead: () => appProvider.markNotificationAsRead(notification.id),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ],
                             ),
                           );
