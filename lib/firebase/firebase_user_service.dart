@@ -31,19 +31,20 @@ class FirebaseUserService {
     try {
       debugPrint('Saving user data to Firestore for user ID: ${user.id}');
       debugPrint('User data being saved: ${user.toString()}');
-      
+
       await _firestore.collection(_collection).doc(user.id).set({
         'name': user.name,
         'email': user.email,
         'phoneNumber': user.phoneNumber,
         'bloodType': user.bloodType,
         'address': user.address,
+        'city': user.city,
         'imageUrl': user.imageUrl,
         'isAvailableToDonate': user.isAvailableToDonate,
         'lastDonationDate': user.lastDonationDate.millisecondsSinceEpoch,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      
+
       debugPrint('User data successfully saved to Firestore');
     } catch (e) {
       debugPrint('Error saving user data to Firestore: $e');
@@ -54,14 +55,16 @@ class FirebaseUserService {
   // Get user data from Firestore
   Future<UserModel?> getUserData(String userId) async {
     try {
-      debugPrint('Attempting to retrieve user data from Firestore for user ID: $userId');
-      
+      debugPrint(
+        'Attempting to retrieve user data from Firestore for user ID: $userId',
+      );
+
       final doc = await _firestore.collection(_collection).doc(userId).get();
-      
+
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         debugPrint('Retrieved user data from Firestore: ${data.toString()}');
-        
+
         return UserModel(
           id: userId,
           name: data['name'] ?? '',
@@ -69,14 +72,18 @@ class FirebaseUserService {
           phoneNumber: data['phoneNumber'] ?? '',
           bloodType: data['bloodType'] ?? 'A+',
           address: data['address'] ?? '',
+          city: data['city'] ?? '',
           imageUrl: data['imageUrl'] ?? '',
           isAvailableToDonate: data['isAvailableToDonate'] ?? true,
-          lastDonationDate: data['lastDonationDate'] != null 
-              ? DateTime.fromMillisecondsSinceEpoch(data['lastDonationDate']) 
-              : DateTime.now().subtract(const Duration(days: 90)),
+          lastDonationDate:
+              data['lastDonationDate'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                    data['lastDonationDate'],
+                  )
+                  : DateTime.now().subtract(const Duration(days: 90)),
         );
       }
-      
+
       debugPrint('No user data found in Firestore for user ID: $userId');
       return null;
     } catch (e) {
@@ -93,6 +100,7 @@ class FirebaseUserService {
         'phoneNumber': user.phoneNumber,
         'bloodType': user.bloodType,
         'address': user.address,
+        'city': user.city,
         'imageUrl': user.imageUrl,
         'isAvailableToDonate': user.isAvailableToDonate,
         'lastDonationDate': user.lastDonationDate.millisecondsSinceEpoch,
@@ -106,11 +114,12 @@ class FirebaseUserService {
   // Get all donors (users who are available to donate)
   Future<List<UserModel>> getAvailableDonors() async {
     try {
-      final snapshot = await _firestore
-          .collection(_collection)
-          .where('isAvailableToDonate', isEqualTo: true)
-          .get();
-          
+      final snapshot =
+          await _firestore
+              .collection(_collection)
+              .where('isAvailableToDonate', isEqualTo: true)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return UserModel(
@@ -120,11 +129,15 @@ class FirebaseUserService {
           phoneNumber: data['phoneNumber'] ?? '',
           bloodType: data['bloodType'] ?? 'A+',
           address: data['address'] ?? '',
+          city: data['city'] ?? '',
           imageUrl: data['imageUrl'] ?? '',
           isAvailableToDonate: data['isAvailableToDonate'] ?? true,
-          lastDonationDate: data['lastDonationDate'] != null 
-              ? DateTime.fromMillisecondsSinceEpoch(data['lastDonationDate']) 
-              : DateTime.now().subtract(const Duration(days: 90)),
+          lastDonationDate:
+              data['lastDonationDate'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                    data['lastDonationDate'],
+                  )
+                  : DateTime.now().subtract(const Duration(days: 90)),
         );
       }).toList();
     } catch (e) {
@@ -135,12 +148,13 @@ class FirebaseUserService {
   // Get donors by blood type
   Future<List<UserModel>> getDonorsByBloodType(String bloodType) async {
     try {
-      final snapshot = await _firestore
-          .collection(_collection)
-          .where('isAvailableToDonate', isEqualTo: true)
-          .where('bloodType', isEqualTo: bloodType)
-          .get();
-          
+      final snapshot =
+          await _firestore
+              .collection(_collection)
+              .where('isAvailableToDonate', isEqualTo: true)
+              .where('bloodType', isEqualTo: bloodType)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return UserModel(
@@ -150,11 +164,15 @@ class FirebaseUserService {
           phoneNumber: data['phoneNumber'] ?? '',
           bloodType: data['bloodType'] ?? 'A+',
           address: data['address'] ?? '',
+          city: data['city'] ?? '',
           imageUrl: data['imageUrl'] ?? '',
           isAvailableToDonate: data['isAvailableToDonate'] ?? true,
-          lastDonationDate: data['lastDonationDate'] != null 
-              ? DateTime.fromMillisecondsSinceEpoch(data['lastDonationDate']) 
-              : DateTime.now().subtract(const Duration(days: 90)),
+          lastDonationDate:
+              data['lastDonationDate'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                    data['lastDonationDate'],
+                  )
+                  : DateTime.now().subtract(const Duration(days: 90)),
         );
       }).toList();
     } catch (e) {
@@ -165,18 +183,20 @@ class FirebaseUserService {
   // Delete user data from Firestore
   Future<void> deleteUserData(String userId) async {
     try {
-      debugPrint('Attempting to delete user data from Firestore for user ID: $userId');
-      
+      debugPrint(
+        'Attempting to delete user data from Firestore for user ID: $userId',
+      );
+
       // Delete the user document
       await _firestore.collection(_collection).doc(userId).delete();
-      
+
       // Note: In a production app, you might want to also delete related user data
       // such as blood requests, donations, etc.
-      
+
       debugPrint('User data successfully deleted from Firestore');
     } catch (e) {
       debugPrint('Error deleting user data from Firestore: $e');
       rethrow;
     }
   }
-} 
+}

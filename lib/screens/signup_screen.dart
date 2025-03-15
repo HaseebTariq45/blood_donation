@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import '../constants/app_constants.dart';
+import '../constants/cities_data.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_button.dart';
 import '../models/user_model.dart';
@@ -27,6 +28,7 @@ class _SignupScreenState extends State<SignupScreen>
   final _confirmPasswordController = TextEditingController();
 
   late String _bloodType = 'A+';
+  late String _city = 'Karachi';
   bool _isAvailableToDonate = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -79,28 +81,33 @@ class _SignupScreenState extends State<SignupScreen>
 
     try {
       // Create user with email and password
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
       // Create user profile in Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'bloodType': _bloodType,
-        'phoneNumber': _phoneController.text.trim(),
-        'address': _addressController.text.trim(),
-        'isAvailableToDonate': _isAvailableToDonate,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'bloodType': _bloodType,
+            'phoneNumber': _phoneController.text.trim(),
+            'address': _addressController.text.trim(),
+            'city': _city,
+            'isAvailableToDonate': _isAvailableToDonate,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         // Navigate to health questionnaire screen
         Navigator.pushReplacementNamed(
-          context, 
+          context,
           '/health-questionnaire',
-          arguments: {'isPostSignup': true}
+          arguments: {'isPostSignup': true},
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -115,19 +122,13 @@ class _SignupScreenState extends State<SignupScreen>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -206,85 +207,94 @@ class _SignupScreenState extends State<SignupScreen>
                       FadeInDown(
                         duration: const Duration(milliseconds: 500),
                         child: Builder(
-                          builder: (context) => Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                              vertical: verticalPadding * 2,
-                              horizontal: horizontalPadding,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppConstants.primaryColor.withOpacity(0.15),
-                                  AppConstants.primaryColor.withOpacity(0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: context.isDarkMode
-                                      ? Colors.black.withOpacity(0.15)
-                                      : Colors.grey.withOpacity(0.1),
-                                  spreadRadius: 1,
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
+                          builder:
+                              (context) => Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: verticalPadding * 2,
+                                  horizontal: horizontalPadding,
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppConstants.primaryColor.withOpacity(0.2),
-                                        AppConstants.primaryColor.withOpacity(0.1),
-                                      ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppConstants.primaryColor.withOpacity(0.1),
-                                        blurRadius: 10,
-                                        spreadRadius: 2,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppConstants.primaryColor.withOpacity(
+                                        0.15,
+                                      ),
+                                      AppConstants.primaryColor.withOpacity(
+                                        0.05,
                                       ),
                                     ],
                                   ),
-                                  child: Icon(
-                                    Icons.person_add_rounded,
-                                    size: headerIconSize,
-                                    color: AppConstants.primaryColor,
-                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          context.isDarkMode
+                                              ? Colors.black.withOpacity(0.15)
+                                              : Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 1,
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Join our BloodLine community',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: headerFontSize,
-                                    fontWeight: FontWeight.bold,
-                                    color: context.textColor,
-                                    letterSpacing: 0.5,
-                                  ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            AppConstants.primaryColor
+                                                .withOpacity(0.2),
+                                            AppConstants.primaryColor
+                                                .withOpacity(0.1),
+                                          ],
+                                        ),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppConstants.primaryColor
+                                                .withOpacity(0.1),
+                                            blurRadius: 10,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.person_add_rounded,
+                                        size: headerIconSize,
+                                        color: AppConstants.primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Join our BloodLine community',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: headerFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.textColor,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Help save lives by becoming a blood donor',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: subtitleFontSize,
+                                        color: context.secondaryTextColor,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Help save lives by becoming a blood donor',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: subtitleFontSize,
-                                    color: context.secondaryTextColor,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                              ),
                         ),
                       ),
                       SizedBox(height: verticalPadding * 2),
@@ -312,9 +322,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -342,8 +353,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -381,9 +396,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -412,8 +428,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -454,9 +474,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -485,8 +506,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -524,9 +549,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -555,8 +581,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -581,6 +611,100 @@ class _SignupScreenState extends State<SignupScreen>
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return 'Please enter your address';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            // City Dropdown
+                            Container(
+                              margin: EdgeInsets.only(bottom: verticalPadding),
+                              decoration: BoxDecoration(
+                                color: context.cardColor,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _city,
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    _city = newValue!;
+                                  });
+                                },
+                                style: TextStyle(
+                                  color: context.textColor,
+                                  fontSize: formFontSize,
+                                  letterSpacing: 0.2,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Select City',
+                                  hintStyle: TextStyle(
+                                    color: context.secondaryTextColor,
+                                    fontSize: formFontSize,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  prefixIcon: Container(
+                                    margin: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.location_city,
+                                      color: AppConstants.primaryColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  filled: true,
+                                  fillColor: context.cardColor,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color: context.secondaryTextColor,
+                                ),
+                                items:
+                                    PakistanCities.cities
+                                        .map<DropdownMenuItem<String>>((
+                                          String value,
+                                        ) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        })
+                                        .toList(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please select your city';
                                   }
                                   return null;
                                 },
@@ -622,9 +746,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -634,12 +759,13 @@ class _SignupScreenState extends State<SignupScreen>
                               child: GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  childAspectRatio: 1.0,
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 10,
-                                ),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 4,
+                                      childAspectRatio: 1.0,
+                                      crossAxisSpacing: 10,
+                                      mainAxisSpacing: 10,
+                                    ),
                                 itemCount: _bloodTypes.length,
                                 itemBuilder: (context, index) {
                                   final bloodType = _bloodTypes[index];
@@ -652,47 +778,59 @@ class _SignupScreenState extends State<SignupScreen>
                                       });
                                     },
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppConstants.primaryColor
-                                            : context.isDarkMode
+                                        color:
+                                            isSelected
+                                                ? AppConstants.primaryColor
+                                                : context.isDarkMode
                                                 ? Colors.grey[800]
                                                 : Colors.grey[100],
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: isSelected
-                                              ? AppConstants.primaryColor
-                                              : Colors.grey.withOpacity(0.3),
+                                          color:
+                                              isSelected
+                                                  ? AppConstants.primaryColor
+                                                  : Colors.grey.withOpacity(
+                                                    0.3,
+                                                  ),
                                           width: 1.5,
                                         ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: AppConstants.primaryColor.withOpacity(0.3),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : null,
+                                        boxShadow:
+                                            isSelected
+                                                ? [
+                                                  BoxShadow(
+                                                    color: AppConstants
+                                                        .primaryColor
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ]
+                                                : null,
                                       ),
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
                                             Icons.water_drop,
-                                            color: isSelected
-                                                ? Colors.white
-                                                : AppConstants.primaryColor,
+                                            color:
+                                                isSelected
+                                                    ? Colors.white
+                                                    : AppConstants.primaryColor,
                                             size: 16,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             bloodType,
                                             style: TextStyle(
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : context.textColor,
+                                              color:
+                                                  isSelected
+                                                      ? Colors.white
+                                                      : context.textColor,
                                               fontWeight: FontWeight.bold,
                                               fontSize: bloodTypeFontSize - 2,
                                             ),
@@ -729,9 +867,10 @@ class _SignupScreenState extends State<SignupScreen>
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: context.isDarkMode
-                                    ? Colors.black.withOpacity(0.1)
-                                    : Colors.grey.withOpacity(0.1),
+                                color:
+                                    context.isDarkMode
+                                        ? Colors.black.withOpacity(0.1)
+                                        : Colors.grey.withOpacity(0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -748,21 +887,26 @@ class _SignupScreenState extends State<SignupScreen>
                               Expanded(
                                 child: Row(
                                   children: [
-                                    Text(
-                                      'Available to donate blood',
-                                      style: TextStyle(
-                                        fontSize: formFontSize,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.textColor,
+                                    Flexible(
+                                      child: Text(
+                                        'Available to donate blood',
+                                        style: TextStyle(
+                                          fontSize: formFontSize,
+                                          fontWeight: FontWeight.w500,
+                                          color: context.textColor,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ),
                                     SizedBox(width: 4),
                                     Tooltip(
-                                      message: 'Indicate if you are willing and eligible to donate blood. This will make you visible to those in need of your blood type.',
+                                      message:
+                                          'Indicate if you are willing and eligible to donate blood. This will make you visible to those in need of your blood type.',
                                       triggerMode: TooltipTriggerMode.tap,
                                       showDuration: const Duration(seconds: 3),
                                       decoration: BoxDecoration(
-                                        color: AppConstants.primaryColor.withOpacity(0.9),
+                                        color: AppConstants.primaryColor
+                                            .withOpacity(0.9),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       textStyle: const TextStyle(
@@ -786,7 +930,8 @@ class _SignupScreenState extends State<SignupScreen>
                                   });
                                 },
                                 activeColor: AppConstants.primaryColor,
-                                activeTrackColor: AppConstants.primaryColor.withOpacity(0.4),
+                                activeTrackColor: AppConstants.primaryColor
+                                    .withOpacity(0.4),
                               ),
                             ],
                           ),
@@ -817,9 +962,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -848,8 +994,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -903,9 +1053,10 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: context.isDarkMode
-                                        ? Colors.black.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.black.withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                     blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
@@ -934,8 +1085,12 @@ class _SignupScreenState extends State<SignupScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppConstants.primaryColor.withOpacity(0.2),
-                                          AppConstants.primaryColor.withOpacity(0.1),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.2,
+                                          ),
+                                          AppConstants.primaryColor.withOpacity(
+                                            0.1,
+                                          ),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -955,7 +1110,8 @@ class _SignupScreenState extends State<SignupScreen>
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                                        _obscureConfirmPassword =
+                                            !_obscureConfirmPassword;
                                       });
                                     },
                                   ),
@@ -1003,7 +1159,9 @@ class _SignupScreenState extends State<SignupScreen>
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
-                                color: AppConstants.primaryColor.withOpacity(0.3),
+                                color: AppConstants.primaryColor.withOpacity(
+                                  0.3,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -1019,25 +1177,27 @@ class _SignupScreenState extends State<SignupScreen>
                                 borderRadius: BorderRadius.circular(15),
                               ),
                             ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                            child:
+                                _isLoading
+                                    ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                    : Text(
+                                      'Create Account',
+                                      style: TextStyle(
+                                        fontSize: buttonFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
-                                  )
-                                : Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      fontSize: buttonFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
                           ),
                         ),
                       ),

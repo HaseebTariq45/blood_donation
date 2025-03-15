@@ -9,6 +9,7 @@ import '../constants/app_constants.dart';
 import '../utils/theme_helper.dart';
 import '../providers/app_provider.dart';
 import '../models/user_model.dart';
+import '../models/blood_request_model.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
@@ -20,6 +21,7 @@ class BloodRequestNotificationDialog extends StatefulWidget {
   final String requesterPhone;
   final String bloodType;
   final String location;
+  final String city;
   final String urgency;
   final String notes;
   final String requestDate;
@@ -32,6 +34,7 @@ class BloodRequestNotificationDialog extends StatefulWidget {
     required this.requesterPhone,
     required this.bloodType,
     required this.location,
+    this.city = '',
     required this.urgency,
     required this.notes,
     required this.requestDate,
@@ -691,6 +694,34 @@ class _BloodRequestNotificationDialogState
         ),
         if (trailingActions != null) ...trailingActions,
       ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

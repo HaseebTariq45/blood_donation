@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
+import '../constants/cities_data.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
@@ -28,6 +29,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
 
   String _selectedBloodType = 'A+';
   String _selectedUrgency = 'Normal';
+  String _selectedCity = 'Karachi';
   bool _isLoading = false;
   late TabController _tabController;
   late AnimationController _animationController;
@@ -78,6 +80,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
       _nameController.text = appProvider.currentUser.name;
       _phoneController.text = appProvider.currentUser.phoneNumber;
     }
+
+    // Set initial city value from user profile
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<AppProvider>(context, listen: false).currentUser;
+      if (user.city.isNotEmpty) {
+        setState(() {
+          _selectedCity = user.city;
+        });
+      }
+    });
   }
 
   void _setupStaggeredAnimations() {
@@ -130,129 +142,129 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
     super.dispose();
   }
 
-  void _submitRequest() {
+  void _submitRequest() async {
     if (_selfFormKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      final appProvider = Provider.of<AppProvider>(context, listen: false);
-      final user = appProvider.currentUser;
-      final bloodRequest = BloodRequestModel(
-        id: 'req_${DateTime.now().millisecondsSinceEpoch}',
-        requesterId: user.id,
-        requesterName: _nameController.text,
-        contactNumber: _phoneController.text,
-        bloodType: _selectedBloodType,
-        location: _hospitalController.text,
-        requestDate: DateTime.now(),
-        urgency: _selectedUrgency,
-        notes: _notesController.text,
-      );
+      try {
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        final user = appProvider.currentUser;
+        final bloodRequest = BloodRequestModel(
+          id: 'req_${DateTime.now().millisecondsSinceEpoch}',
+          requesterId: user.id,
+          requesterName: _nameController.text,
+          contactNumber: _phoneController.text,
+          bloodType: _selectedBloodType,
+          location: _hospitalController.text,
+          city: _selectedCity,
+          requestDate: DateTime.now(),
+          urgency: _selectedUrgency,
+          notes: _notesController.text,
+        );
 
-      // Save the blood request to Firestore
-      FirebaseFirestore.instance
-          .collection('blood_requests')
-          .doc(bloodRequest.id)
-          .set(bloodRequest.toMap())
-          .then((_) async {
-            // Find matching blood donors and send notifications
-            await _notifyMatchingDonors(bloodRequest);
+        // Save the blood request to Firestore
+        await FirebaseFirestore.instance
+            .collection('blood_requests')
+            .doc(bloodRequest.id)
+            .set(bloodRequest.toMap());
 
-            setState(() {
-              _isLoading = false;
-            });
+        // Find compatible donors and send notifications
+        final FirebaseNotificationService notificationService =
+            FirebaseNotificationService();
 
-            // Show success dialog
-            _showSuccessDialog();
-          })
-          .catchError((error) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to submit request: $error'),
-                backgroundColor: AppConstants.errorColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(10),
-                action: SnackBarAction(
-                  label: 'DISMISS',
-                  textColor: Colors.white,
-                  onPressed: () {},
-                ),
-              ),
-            );
+        // Logic to find compatible donors based on blood type
+        final compatibleDonors = await _findCompatibleDonors(
+          _selectedBloodType,
+        );
+
+        if (compatibleDonors.isNotEmpty) {
+          // Send notifications to compatible donors
+          await notificationService.sendBloodRequestNotification(
+            requestId: bloodRequest.id,
+            requesterId: user.id,
+            requesterName: _nameController.text,
+            requesterPhone: _phoneController.text,
+            bloodType: _selectedBloodType,
+            location: _hospitalController.text,
+            city: _selectedCity,
+            urgency: _selectedUrgency,
+            notes: _notesController.text,
+            recipientIds: compatibleDonors,
+          );
+        }
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
           });
+
+          // Show success message and navigate back
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Blood request submitted successfully'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error submitting request: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+            ),
+          );
+        }
+      }
     } else {
-      // Scroll to the first field with an error
+      // Scroll to the first error
       _scrollToFirstError();
     }
   }
 
-  // Find matching blood donors and send notifications
-  Future<void> _notifyMatchingDonors(BloodRequestModel request) async {
+  // Function to find compatible donors based on blood type
+  Future<List<String>> _findCompatibleDonors(String bloodType) async {
     try {
-      // Get compatible blood types
-      List<String> compatibleBloodTypes =
-          BloodCompatibility.getCompatibleDonorTypes(request.bloodType);
+      final List<String> compatibleBloodTypes =
+          BloodCompatibility.getCompatibleDonorTypes(bloodType);
 
-      // Query for users with matching blood types
-      final QuerySnapshot donorsSnapshot =
+      debugPrint('Finding donors with blood types: $compatibleBloodTypes');
+
+      // Query Firestore for users with compatible blood types who are available to donate
+      final QuerySnapshot snapshot =
           await FirebaseFirestore.instance
               .collection('users')
               .where('bloodType', whereIn: compatibleBloodTypes)
-              .where(
-                'isDonor',
-                isEqualTo: true,
-              ) // Only query users who are donors
-              .where(
-                'donorStatus',
-                isEqualTo: 'Available',
-              ) // Only available donors
-              .limit(20) // Limit to prevent excessive notifications
+              .where('isAvailableToDonate', isEqualTo: true)
               .get();
 
-      // Skip if no matching donors found
-      if (donorsSnapshot.docs.isEmpty) {
-        debugPrint('No matching donors found');
-        return;
-      }
+      // Extract user IDs
+      final List<String> donorIds = snapshot.docs.map((doc) => doc.id).toList();
 
-      // Get notification service
-      final notificationService = FirebaseNotificationService();
-
-      // Send notifications to matching donors
-      for (var doc in donorsSnapshot.docs) {
-        final userId = doc.id;
-
-        // Skip if user is the requester
-        if (userId == request.requesterId) continue;
-
-        // Send notification to each matching donor
-        await notificationService.sendBloodRequestNotification(
-          recipientId: userId,
-          requestId: request.id,
-          requesterId: request.requesterId,
-          requesterName: request.requesterName,
-          requesterPhone: request.contactNumber,
-          bloodType: request.bloodType,
-          location: request.location,
-          urgency: request.urgency,
-          notes: request.notes,
-        );
-
-        debugPrint('Notification sent to donor $userId');
-      }
-
-      debugPrint(
-        'Notifications sent to ${donorsSnapshot.docs.length} potential donors',
-      );
+      debugPrint('Found ${donorIds.length} compatible donors');
+      return donorIds;
     } catch (e) {
-      debugPrint('Error notifying donors: $e');
+      debugPrint('Error finding compatible donors: $e');
+      return [];
     }
   }
 
@@ -698,17 +710,25 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
 
             const SizedBox(height: 30),
 
-            // Contact Information section - Section 4
+            // City dropdown - Section 4
             SlideTransition(
               position: _itemAnimations[3],
+              child: _buildCityDropdown(),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Contact Information section - Section 5
+            SlideTransition(
+              position: _itemAnimations[4],
               child: _buildContactSection(),
             ),
 
             const SizedBox(height: 30),
 
-            // Notes and Notice - Section 5
+            // Notes and Notice - Section 6
             SlideTransition(
-              position: _itemAnimations[4],
+              position: _itemAnimations[5],
               child: _buildNotesAndNoticeSection(),
             ),
 
@@ -1030,6 +1050,78 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
           },
         ),
       ],
+    );
+  }
+
+  // City dropdown
+  Widget _buildCityDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_city, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'City',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+                width: 1,
+              ),
+            ),
+            child: DropdownButtonFormField<String>(
+              value: _selectedCity,
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedCity = newValue!;
+                });
+              },
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                hintText: 'Select city',
+                hintStyle: TextStyle(color: Theme.of(context).hintColor),
+              ),
+              items:
+                  PakistanCities.cities.map((String city) {
+                    return DropdownMenuItem<String>(
+                      value: city,
+                      child: Text(city),
+                    );
+                  }).toList(),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                fontSize: 16,
+              ),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: Theme.of(context).primaryColor,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select your city';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

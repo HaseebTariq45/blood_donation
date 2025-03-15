@@ -11,6 +11,7 @@ class UserModel {
   final bool isAvailableToDonate;
   final DateTime lastDonationDate;
   final UserLocationModel? location;
+  final String city;
 
   UserModel({
     required this.id,
@@ -23,7 +24,10 @@ class UserModel {
     this.isAvailableToDonate = true,
     DateTime? lastDonationDate,
     this.location,
-  }) : lastDonationDate = lastDonationDate ?? DateTime.now().subtract(const Duration(days: 90));
+    this.city = '',
+  }) : lastDonationDate =
+           lastDonationDate ??
+           DateTime.now().subtract(const Duration(days: 90));
 
   factory UserModel.dummy() {
     return UserModel(
@@ -36,6 +40,7 @@ class UserModel {
       imageUrl: '', // Empty string to use default icon in CircleAvatar
       isAvailableToDonate: true,
       lastDonationDate: DateTime.now().subtract(const Duration(days: 120)),
+      city: 'Karachi',
     );
   }
 
@@ -47,7 +52,8 @@ class UserModel {
   }
 
   // Check if user is eligible to donate
-  bool get isEligibleToDonate => daysUntilNextDonation == 0 && isAvailableToDonate;
+  bool get isEligibleToDonate =>
+      daysUntilNextDonation == 0 && isAvailableToDonate;
 
   UserModel copyWith({
     String? id,
@@ -60,6 +66,7 @@ class UserModel {
     bool? isAvailableToDonate,
     DateTime? lastDonationDate,
     UserLocationModel? location,
+    String? city,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -72,6 +79,7 @@ class UserModel {
       isAvailableToDonate: isAvailableToDonate ?? this.isAvailableToDonate,
       lastDonationDate: lastDonationDate ?? this.lastDonationDate,
       location: location ?? this.location,
+      city: city ?? this.city,
     );
   }
 
@@ -79,7 +87,7 @@ class UserModel {
   @override
   String toString() {
     return 'UserModel{id: $id, name: $name, email: $email, phoneNumber: $phoneNumber, bloodType: $bloodType, '
-           'address: $address, isAvailableToDonate: $isAvailableToDonate, '
-           'lastDonationDate: ${lastDonationDate.toIso8601String()}}';
+        'address: $address, city: $city, isAvailableToDonate: $isAvailableToDonate, '
+        'lastDonationDate: ${lastDonationDate.toIso8601String()}}';
   }
-} 
+}

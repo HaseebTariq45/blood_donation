@@ -323,73 +323,61 @@ class FirebaseNotificationService {
 
   // Send notification when new blood request is created
   Future<void> sendBloodRequestNotification({
-    required String recipientId,
-    required String requestId,
     required String requesterId,
     required String requesterName,
     required String requesterPhone,
     required String bloodType,
     required String location,
+    required String city,
     required String urgency,
-    String notes = '',
+    required String notes,
+    required String requestId,
+    required List<String> recipientIds,
   }) async {
     try {
-      // 1. Get recipient's device tokens from Firestore
-      final recipientDoc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(recipientId)
-              .get();
+      debugPrint(
+        'Sending blood request notification to ${recipientIds.length} recipients',
+      );
+      final batch = FirebaseFirestore.instance.batch();
+      final requestDate = DateTime.now().toIso8601String();
 
-      if (!recipientDoc.exists) {
-        debugPrint('Recipient document not found');
-        return;
+      for (String recipientId in recipientIds) {
+        final notificationRef =
+            FirebaseFirestore.instance.collection('notifications').doc();
+
+        // Create notification document
+        final notification = {
+          'id': notificationRef.id,
+          'recipientId': recipientId,
+          'senderId': requesterId,
+          'title': 'Blood Donation Request',
+          'body':
+              '$requesterName needs $bloodType blood type ${urgency == 'Urgent' ? '(URGENT)' : ''}',
+          'type': 'blood_request',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'metadata': {
+            'requestId': requestId,
+            'requesterId': requesterId,
+            'requesterName': requesterName,
+            'requesterPhone': requesterPhone,
+            'bloodType': bloodType,
+            'location': location,
+            'city': city,
+            'urgency': urgency,
+            'notes': notes,
+            'requestDate': requestDate,
+          },
+        };
+
+        batch.set(notificationRef, notification);
       }
 
-      final recipientData = recipientDoc.data();
-      if (recipientData == null) return;
-
-      final deviceTokens = recipientData['deviceTokens'];
-      if (deviceTokens == null ||
-          (deviceTokens is List && deviceTokens.isEmpty)) {
-        debugPrint('No device tokens found for recipient');
-        return;
-      }
-
-      // 2. Create the notification in Firestore
-      final notificationData = {
-        'userId': recipientId,
-        'title': 'New Blood Request',
-        'body':
-            '$requesterName needs blood type $bloodType${urgency.toLowerCase() == 'urgent' ? ' urgently' : ''}!',
-        'type': 'blood_request',
-        'read': false,
-        'createdAt': DateTime.now().toIso8601String(),
-        'metadata': {
-          'requestId': requestId,
-          'requesterId': requesterId,
-          'requesterName': requesterName,
-          'requesterPhone': requesterPhone,
-          'bloodType': bloodType,
-          'location': location,
-          'urgency': urgency,
-          'notes': notes,
-          'requestDate': DateTime.now().toIso8601String(),
-        },
-      };
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('notifications')
-          .add(notificationData);
-
-      debugPrint('Blood request notification created');
-
-      // Note: For actual push notifications, you would need a server-side component
-      // with Firebase Cloud Messaging (FCM) to send the notifications to the device tokens.
-      // This would typically be done with a Cloud Function or a backend server.
+      await batch.commit();
+      debugPrint('Blood request notifications sent successfully');
     } catch (e) {
-      debugPrint('Error sending blood request notification: $e');
+      debugPrint('Error sending blood request notifications: $e');
+      rethrow;
     }
   }
 

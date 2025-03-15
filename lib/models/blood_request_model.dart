@@ -7,6 +7,7 @@ class BloodRequestModel {
   final String contactNumber;
   final String bloodType;
   final String location;
+  final String city;
   final String urgency; // Normal, Urgent
   final DateTime requestDate;
   final String status; // Pending, In Progress, Accepted, Fulfilled, Cancelled
@@ -23,6 +24,7 @@ class BloodRequestModel {
     required this.bloodType,
     required this.location,
     required this.requestDate,
+    this.city = '',
     this.urgency = 'Normal',
     this.status = 'Pending',
     this.notes = '',
@@ -46,7 +48,8 @@ class BloodRequestModel {
       requesterName: 'Requester ${index + 1}',
       contactNumber: '+12345${index}7890',
       bloodType: bloodTypes[index % bloodTypes.length],
-      location: 'Hospital ${index + 1}, City',
+      location: 'Hospital ${index + 1}',
+      city: 'Karachi',
       requestDate: DateTime.now().subtract(Duration(days: index * 2)),
       urgency: urgencyTypes[index % 2],
       status: statusTypes[index % 3],
@@ -67,6 +70,7 @@ class BloodRequestModel {
       'contactNumber': contactNumber,
       'bloodType': bloodType,
       'location': location,
+      'city': city,
       'urgency': urgency,
       'requestDate': requestDate.toIso8601String(),
       'status': status,
@@ -86,6 +90,7 @@ class BloodRequestModel {
       contactNumber: map['contactNumber'] ?? '',
       bloodType: map['bloodType'] ?? '',
       location: map['location'] ?? '',
+      city: map['city'] ?? '',
       urgency: map['urgency'] ?? 'Normal',
       requestDate:
           map['requestDate'] != null

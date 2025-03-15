@@ -266,6 +266,12 @@ class RequestCard extends StatelessWidget {
           ),
           const Divider(height: 16),
           _buildInfoRow(
+            icon: Icons.location_city,
+            title: 'City',
+            value: request.city.isNotEmpty ? request.city : 'Not specified',
+          ),
+          const Divider(height: 16),
+          _buildInfoRow(
             icon: Icons.calendar_today,
             title: 'Requested',
             value: request.formattedDate,

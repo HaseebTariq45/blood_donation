@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
+import '../constants/cities_data.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
@@ -24,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late String _bloodType;
+  late String _city;
   late bool _isAvailableToDonate;
   bool _isEditing = false;
   bool _isLoading = false;
@@ -86,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _phoneController = TextEditingController(text: currentUser.phoneNumber);
     _addressController = TextEditingController(text: currentUser.address);
     _bloodType = currentUser.bloodType;
+    _city = currentUser.city.isNotEmpty ? currentUser.city : 'Karachi';
     _isAvailableToDonate = currentUser.isAvailableToDonate;
     _loadUserData();
   }
@@ -109,37 +112,43 @@ class _ProfileScreenState extends State<ProfileScreen>
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         _userId = user.uid;
-        
+
         // Load user profile data
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(_userId)
-            .get();
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(_userId)
+                .get();
 
         if (userDoc.exists) {
           final data = userDoc.data()!;
-          
+
           // Update controllers with null safety
           _nameController.text = data['name'] ?? '';
           _emailController.text = data['email'] ?? '';
           _phoneController.text = data['phoneNumber'] ?? '';
           _addressController.text = data['address'] ?? '';
-          
+
           // Update other fields with null safety
           _bloodType = data['bloodType'] ?? 'Unknown';
+          _city = data['city'] ?? 'Karachi';
           _phoneNumber = data['phoneNumber'];
           _address = data['address'];
           _isAvailableToDonate = data['isAvailableToDonate'] ?? true;
-          
+
           // Handle lastDonationDate with better null safety
           if (data['lastDonationDate'] != null) {
             try {
               if (data['lastDonationDate'] is Timestamp) {
-                _lastDonationDate = (data['lastDonationDate'] as Timestamp).toDate().millisecondsSinceEpoch.toString();
+                _lastDonationDate =
+                    (data['lastDonationDate'] as Timestamp)
+                        .toDate()
+                        .millisecondsSinceEpoch
+                        .toString();
               } else if (data['lastDonationDate'] is int) {
-              _lastDonationDate = data['lastDonationDate'].toString();
+                _lastDonationDate = data['lastDonationDate'].toString();
               } else if (data['lastDonationDate'] is String) {
-              _lastDonationDate = data['lastDonationDate'];
+                _lastDonationDate = data['lastDonationDate'];
               }
             } catch (e) {
               print('Error parsing lastDonationDate: $e');
@@ -149,116 +158,93 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
 
         // Load health questionnaire data with null safety
-        final healthDoc = await FirebaseFirestore.instance
-            .collection('health_questionnaires')
-            .doc(_userId)
-            .get();
+        final healthDoc =
+            await FirebaseFirestore.instance
+                .collection('health_questionnaires')
+                .doc(_userId)
+                .get();
 
         if (healthDoc.exists) {
-          final healthData = healthDoc.data()!;
+          final data = healthDoc.data()!;
+
           setState(() {
-            _height = healthData['height']?.toString() ?? '';
-            _weight = healthData['weight']?.toString() ?? '';
-            _gender = healthData['gender'] ?? '';
-          _hasTattoo = healthData['hasTattoo'] ?? false;
-          _hasPiercing = healthData['hasPiercing'] ?? false;
-          _hasTraveled = healthData['hasTraveled'] ?? false;
-          _hasSurgery = healthData['hasSurgery'] ?? false;
-          _hasTransfusion = healthData['hasTransfusion'] ?? false;
-          _hasPregnancy = healthData['hasPregnancy'] ?? false;
-          _hasDisease = healthData['hasDisease'] ?? false;
-          _hasMedication = healthData['hasMedication'] ?? false;
-          _hasAllergies = healthData['hasAllergies'] ?? false;
-            _medications = healthData['medications']?.toString() ?? '';
-            _allergies = healthData['allergies']?.toString() ?? '';
+            _height = data['height']?.toString();
+            _weight = data['weight']?.toString();
+            _gender = data['gender'];
+            _hasTattoo = data['hasTattoo'] ?? false;
+            _hasPiercing = data['hasPiercing'] ?? false;
+            _hasTraveled = data['hasTraveled'] ?? false;
+            _hasSurgery = data['hasSurgery'] ?? false;
+            _hasTransfusion = data['hasTransfusion'] ?? false;
+            _hasPregnancy = data['hasPregnancy'] ?? false;
+            _hasDisease = data['hasDisease'] ?? false;
+            _hasMedication = data['hasMedication'] ?? false;
+            _hasAllergies = data['hasAllergies'] ?? false;
+            _medications = data['medications'];
+            _allergies = data['allergies'];
+
+            // Determine health status
+            _determineHealthStatus();
           });
         }
-
-        _updateHealthStatus();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading profile data: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      print('Error loading user data: $e');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  void _updateHealthStatus() {
-    if (_hasDisease || _hasMedication || _hasAllergies) {
-      _healthStatus = 'Needs Review';
-      _healthStatusColor = Colors.orange;
-    } else if (_hasTattoo || _hasPiercing || _hasTraveled || _hasSurgery || _hasTransfusion || _hasPregnancy) {
-      _healthStatus = 'Temporary Deferral';
-      _healthStatusColor = Colors.red;
+  // Determine health status based on questionnaire data
+  void _determineHealthStatus() {
+    bool hasRiskFactors =
+        _hasTattoo ||
+        _hasPiercing ||
+        _hasTraveled ||
+        _hasSurgery ||
+        _hasTransfusion ||
+        _hasPregnancy ||
+        _hasDisease ||
+        _hasMedication ||
+        _hasAllergies;
+
+    if (hasRiskFactors) {
+      if (_hasTattoo || _hasPiercing) {
+        _healthStatus = 'Possible Temp. Delay';
+        _healthStatusColor = Colors.orange;
+      } else if (_hasDisease || _hasTransfusion) {
+        _healthStatus = 'Possible Permanent Deferral';
+        _healthStatusColor = Colors.red.shade700;
+      } else {
+        _healthStatus = 'Needs Review';
+        _healthStatusColor = Colors.blue.shade600;
+      }
     } else {
-      _healthStatus = 'Good';
+      _healthStatus = 'Eligible';
       _healthStatusColor = Colors.green;
     }
-
-    if (_lastDonationDate != null && _lastDonationDate!.isNotEmpty) {
-      try {
-      DateTime lastDonation;
-      
-        // Handle different types of lastDonationDate
-        if (int.tryParse(_lastDonationDate!) != null) {
-          // If it's a timestamp (milliseconds since epoch)
-          lastDonation = DateTime.fromMillisecondsSinceEpoch(int.parse(_lastDonationDate!));
-      } else {
-          // If it's a date string
-          lastDonation = DateTime.parse(_lastDonationDate!);
-      }
-      
-      final nextDonation = lastDonation.add(const Duration(days: 56));
-      _nextDonationDate = nextDonation.toString().split(' ')[0];
-      } catch (e) {
-        print('Error calculating next donation date: $e');
-        _nextDonationDate = null;
-      }
-    } else {
-      _nextDonationDate = null;
-    }
   }
 
-  // Toggle edit mode and play animation
   void _toggleEdit() {
     setState(() {
-      _isEditing = true;
+      if (_isEditing) {
+        // Cancel editing - reset values
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        final currentUser = appProvider.currentUser;
+
+        _nameController.text = currentUser.name;
+        _phoneController.text = currentUser.phoneNumber;
+        _addressController.text = currentUser.address;
+        _bloodType = currentUser.bloodType;
+        _city = currentUser.city;
+        _isAvailableToDonate = currentUser.isAvailableToDonate;
+      }
+      _isEditing = !_isEditing;
     });
-
-    // Subtle animation when entering edit mode
-    _animationController.reset();
-    _animationController.forward();
-
-    // Show edit mode indicator
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Profile is now in edit mode'),
-        backgroundColor: AppConstants.primaryColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(10),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {},
-        ),
-      ),
-    );
   }
 
-  // Handle profile save - currently just UI with no save logic
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -274,6 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         phoneNumber: _phoneController.text,
         address: _addressController.text,
         bloodType: _bloodType,
+        city: _city,
         isAvailableToDonate: _isAvailableToDonate,
       );
 
@@ -311,60 +298,71 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
-  // Reset form values to current user data
-  void _resetFormValues() {
-    final appProvider = Provider.of<AppProvider>(context, listen: false);
-    final currentUser = appProvider.currentUser;
-
-    setState(() {
-      _nameController.text = currentUser.name;
-      _emailController.text = currentUser.email;
-      _phoneController.text = currentUser.phoneNumber;
-      _addressController.text = currentUser.address;
-      _bloodType = currentUser.bloodType;
-      _isAvailableToDonate = currentUser.isAvailableToDonate;
-    });
-  }
-
-  // Show confirmation dialog before logout
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout Confirmation'),
-        content: const Text('Are you sure you want to logout from your account?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'CANCEL',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontWeight: FontWeight.bold,
-              ),
+  // City Dropdown
+  Widget _buildCityDropdown() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'City',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle logout
-              final appProvider = Provider.of<AppProvider>(context, listen: false);
-              appProvider.logout();
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+                width: 1,
               ),
             ),
-            child: const Text(
-              'LOGOUT',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            child: DropdownButtonFormField<String>(
+              value: _city,
+              onChanged:
+                  _isEditing
+                      ? (newValue) {
+                        setState(() {
+                          _city = newValue!;
+                        });
+                      }
+                      : null,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                hintText: 'Select city',
+                hintStyle: TextStyle(color: Theme.of(context).hintColor),
+              ),
+              items:
+                  PakistanCities.cities.map((String city) {
+                    return DropdownMenuItem<String>(
+                      value: city,
+                      child: Text(city),
+                    );
+                  }).toList(),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                fontSize: 16,
+              ),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color:
+                    _isEditing
+                        ? Theme.of(context).primaryColor
+                        : Theme.of(context).disabledColor,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select your city';
+                }
+                return null;
+              },
             ),
           ),
         ],
@@ -379,934 +377,747 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: CustomAppBar(
+      appBar: CustomAppBar(
         title: _isEditing ? 'Edit Profile' : 'My Profile',
-          actions: [
-            IconButton(
-            icon: Icon(
-              Icons.settings_outlined,
-              color: Colors.white,
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
             tooltip: 'Settings',
-              onPressed: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-            ),
-          ],
-        ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : FadeTransition(
-          opacity: _fadeAnimation,
-              child: RefreshIndicator(
-                onRefresh: _loadUserData,
-                color: AppConstants.primaryColor,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                      // Profile Header with Avatar and Blood Type
-                      Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppConstants.primaryColor,
-                              AppConstants.primaryColor.withOpacity(0.8),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
+      ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : FadeTransition(
+                opacity: _fadeAnimation,
+                child: RefreshIndicator(
+                  onRefresh: _loadUserData,
+                  color: AppConstants.primaryColor,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // Profile Header with Avatar
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppConstants.primaryColor,
+                                AppConstants.primaryColor.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(30),
+                              bottomRight: Radius.circular(30),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppConstants.primaryColor.withOpacity(
+                                  0.3,
+                                ),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 5),
+                              ),
                             ],
                           ),
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(30),
-                            bottomRight: Radius.circular(30),
-                          ),
-                              boxShadow: [
-                                BoxShadow(
-                              color: AppConstants.primaryColor.withOpacity(0.3),
-                                  blurRadius: 10,
-                              spreadRadius: 2,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                        ),
-                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 30),
-                            child: Column(
-                              children: [
-                            // Avatar with Edit Button
-                                Stack(
-                              alignment: Alignment.center,
-                                  children: [
-                                // Outer decorative circle
-                                    Container(
-                                  width: 150,
-                                  height: 150,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                    color: Colors.white.withOpacity(0.2),
-                                  ),
-                                ),
-                                // Avatar
-                                Container(
-                                  width: 130,
-                                  height: 130,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                            blurRadius: 10,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                    image: currentUser.imageUrl.isNotEmpty
-                                        ? DecorationImage(
-                                            image: NetworkImage(currentUser.imageUrl),
-                                            fit: BoxFit.cover,
-                                                )
-                                                : null,
-                                  ),
-                                  child: currentUser.imageUrl.isEmpty
-                                                ? Icon(
-                                                  Icons.person,
-                                          color: AppConstants.primaryColor,
-                                          size: 80,
-                                                )
-                                                : null,
-                                      ),
-                                // Blood type badge
-                                      Positioned(
-                                  top: 0,
-                                        right: 0,
-                                        child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
+                          padding: const EdgeInsets.symmetric(vertical: 30),
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  // Avatar
+                                  Container(
+                                    width: 130,
+                                    height: 130,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
                                       color: Colors.white,
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
+                                      boxShadow: [
+                                        BoxShadow(
                                           color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 5,
-                                                spreadRadius: 1,
-                                              ),
-                                            ],
-                                          ),
-                                  child: Text(
-                                      _bloodType,
-                                    style: TextStyle(
-                                        color: AppConstants.primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                        fontSize: 18,
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                      image:
+                                          currentUser.imageUrl.isNotEmpty
+                                              ? DecorationImage(
+                                                image: NetworkImage(
+                                                  currentUser.imageUrl,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                              : null,
                                     ),
+                                    child:
+                                        currentUser.imageUrl.isEmpty
+                                            ? Icon(
+                                              Icons.person,
+                                              color: AppConstants.primaryColor,
+                                              size: 80,
+                                            )
+                                            : null,
                                   ),
-                                ),
-                                ),
-                                // Edit button
-                                if (_isEditing)
+                                  // Blood type badge
                                   Positioned(
-                                    bottom: 0,
-                                    right: 20,
+                                    top: 0,
+                                    right: 0,
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
+                                      decoration: BoxDecoration(
                                         color: Colors.white,
                                         shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                            color: Colors.black.withOpacity(0.2),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
                                             blurRadius: 5,
-                                                spreadRadius: 1,
+                                            spreadRadius: 1,
                                           ),
                                         ],
-                                                ),
-                                                child: Icon(
-                                        Icons.camera_alt,
-                                        color: AppConstants.primaryColor,
-                                        size: 20,
                                       ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            // User Name
-                            Text(
-                              currentUser.name,
-                              style: const TextStyle(
-                                                    color: Colors.white,
-                                fontSize: 24,
-                                                    fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Donation Status
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                          decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                  Icon(
-                                                  currentUser.isEligibleToDonate
-                                                      ? Icons.check_circle
-                                        : Icons.timelapse,
-                                                  color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    currentUser.isEligibleToDonate
-                                                        ? 'Eligible to Donate'
-                                        : '${currentUser.daysUntilNextDonation} days until eligible',
-                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                      child: Text(
+                                        currentUser.bloodType,
+                                        style: TextStyle(
+                                          color: AppConstants.primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
-                      
-                      // Quick Stats
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          children: [
-                            _buildStatCard(
-                              icon: Icons.calendar_today,
-                              title: 'Last Donation',
-                              value: _lastDonationDate != null && _lastDonationDate!.isNotEmpty
-                                  ? _formatDate(_lastDonationDate!)
-                                  : 'Never',
-                            ),
-                            _buildStatCard(
-                              icon: Icons.health_and_safety,
-                              title: 'Health Status',
-                              value: _healthStatus,
-                              color: _healthStatusColor,
-                            ),
-                              ],
-                            ),
-                          ),
-                      
-                      // Profile Form
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                              // Section Divider
-                              _buildSectionHeader('Personal Information'),
-                              
-                              // Personal Info Fields
-                            _buildFormField(
-                              controller: _nameController,
-                              label: 'Full Name',
-                              icon: Icons.person_outline,
-                              readOnly: !_isEditing,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your name';
-                                }
-                                return null;
-                              },
-                            ),
-                            _buildFormField(
-                              controller: _emailController,
-                              label: 'Email Address',
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              readOnly: !_isEditing,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            _buildFormField(
-                              controller: _phoneController,
-                              label: 'Phone Number',
-                              icon: Icons.phone_outlined,
-                              keyboardType: TextInputType.phone,
-                              readOnly: !_isEditing,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your phone number';
-                                }
-                                return null;
-                              },
-                            ),
-                            _buildFormField(
-                              controller: _addressController,
-                              label: 'Address',
-                              icon: Icons.location_on_outlined,
-                              readOnly: !_isEditing,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your address';
-                                }
-                                return null;
-                              },
-                            ),
-                              
-                              // Blood Type Section
-                            if (_isEditing) ...[
-                                _buildSectionHeader('Blood Type'),
-                              _buildBloodTypeGrid(),
-                              ],
-                              
-                              // Health Information
-                              _buildSectionHeader('Health Information'),
-                            _buildHealthStatusCard(),
-                              
-                              const SizedBox(height: 30),
-                              
-                              // Action Buttons
-                            if (_isEditing)
-                                _buildActionButton(
-                                          onPressed: _saveProfile,
-                                  icon: Icons.save,
-                                  label: 'SAVE PROFILE',
-                                  isLoading: _isLoading,
-                                  color: AppConstants.primaryColor,
-                                )
-                              else
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildActionButton(
-                                        onPressed: _toggleEdit,
-                                        icon: Icons.edit,
-                                        label: 'EDIT PROFILE',
-                                        color: AppConstants.primaryColor,
                                       ),
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: _buildActionButton(
-                                        onPressed: () async {
-                                          await Navigator.pushNamed(context, '/health-questionnaire');
-                                          // Refresh data when returning from health questionnaire
-                                          _loadUserData();
-                                        },
-                                        icon: Icons.medical_information,
-                                        label: 'HEALTH DETAILS',
-                                        color: Colors.teal,
+                                  ),
+                                  if (_isEditing)
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 20,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.2,
+                                              ),
+                                              blurRadius: 5,
+                                              spreadRadius: 1,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          Icons.camera_alt,
+                                          color: AppConstants.primaryColor,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                                
-                              // Logout button (only shown when not editing)
-                            if (!_isEditing) ...[
+                                ],
+                              ),
                               const SizedBox(height: 20),
-                                _buildActionButton(
-                                  onPressed: _showLogoutConfirmation,
-                                  icon: Icons.logout,
-                                  label: 'LOGOUT',
-                                  color: Colors.redAccent,
+                              // User Name
+                              Text(
+                                currentUser.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
-                              ],
-                                
-                              const SizedBox(height: 40),
+                              ),
+                              const SizedBox(height: 8),
+                              // Donation Status
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      currentUser.isAvailableToDonate
+                                          ? Colors.green
+                                          : Colors.red,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  currentUser.isAvailableToDonate
+                                      ? 'Available to Donate'
+                                      : 'Not Available to Donate',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+
+                        // Main content body
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child:
+                              _isEditing
+                                  ? _buildEditForm()
+                                  : _buildProfileInfo(currentUser),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+      floatingActionButton:
+          !_isEditing
+              ? FloatingActionButton(
+                onPressed: _toggleEdit,
+                backgroundColor: AppConstants.primaryColor,
+                child: const Icon(Icons.edit, color: Colors.white),
+              )
+              : null,
     );
   }
 
-  // Helper method to format date strings
-  String _formatDate(String dateString) {
-    try {
-      DateTime date;
-      
-      if (int.tryParse(dateString) != null) {
-        date = DateTime.fromMillisecondsSinceEpoch(int.parse(dateString));
-      } else {
-        date = DateTime.parse(dateString);
-      }
-      
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (e) {
-      return 'Invalid date';
-    }
-  }
-
-  // Stats card widget
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    Color? color,
+  // Build formatted text input
+  Widget _buildTextInput(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    bool isRequired = false,
+    bool readOnly = false,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
   }) {
-    return Expanded(
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: color ?? AppConstants.primaryColor,
-                size: 28,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                                          style: TextStyle(
-                  color: color ?? AppConstants.primaryColor,
-                  fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-            ],
-                                      ),
-                                    ),
-                              ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Theme.of(context).cardColor,
+        ),
+        style: TextStyle(
+          color:
+              readOnly
+                  ? Colors.grey
+                  : Theme.of(context).textTheme.bodyMedium?.color,
+        ),
+        validator:
+            isRequired
+                ? (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your $label';
+                  }
+                  return null;
+                }
+                : null,
+      ),
     );
   }
 
-  // Section header widget
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
+  // Build blood type selector
+  Widget _buildBloodTypeSelector() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            'Blood Type',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppConstants.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              height: 1,
-              color: Colors.grey.withOpacity(0.3),
-                      ),
-                    ),
-                  ],
-      ),
-    );
-  }
-
-  // Action button widget
-  Widget _buildActionButton({
-    required VoidCallback onPressed,
-    required IconData icon,
-    required String label,
-    bool isLoading = false,
-    Color? color,
-  }) {
-    final buttonColor = color ?? AppConstants.primaryColor;
-    final textColor = Colors.white; // Ensuring text is always white for better contrast
-    
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: buttonColor,
-        foregroundColor: textColor,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        elevation: 4,
-        disabledBackgroundColor: buttonColor.withOpacity(0.6), // Better disabled state
-        disabledForegroundColor: textColor.withOpacity(0.6),
-      ),
-      child: isLoading
-          ? SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                color: textColor,
-                strokeWidth: 2,
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: textColor),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-              style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                    color: textColor,
-                  ),
-              ),
-            ],
-          ),
-    );
-  }
-
-  // Build a grid of blood type options
-  Widget _buildBloodTypeGrid() {
-    return Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: (MediaQuery.of(context).size.width ~/ 100).toInt(), // Adjusts number of columns based on width
-                childAspectRatio: 1,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-              ),
-              itemCount: _bloodTypes.length,
-              itemBuilder: (context, index) {
-                final bloodType = _bloodTypes[index];
-                final isSelected = _bloodType == bloodType;
-
-                // Individual blood type card
-                return GestureDetector(
-                  onTap: () {
-                    // Update selected blood type when tapped
-                    setState(() {
-                      _bloodType = bloodType;
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                color: isSelected 
-                              ? AppConstants.primaryColor
-                  : Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                  color: isSelected 
-                                ? AppConstants.primaryColor
-                    : Colors.grey.withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                    color: isSelected 
-                                  ? AppConstants.primaryColor.withOpacity(0.3)
-                      : Colors.grey.withOpacity(0.1),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Blood type display
-                  Text(
-                            bloodType,
-                            style: TextStyle(
-                      color: isSelected 
-                        ? Colors.white 
-                        : AppConstants.primaryColor,
-                              fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                          ),
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(height: 5),
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-          ),
-    );
-  }
-
-  // Build form field with custom styling
-  Widget _buildFormField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    bool readOnly = false,
-    String? Function(String?)? validator,
-  }) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppConstants.primaryColor;
-    final labelColor = readOnly ? Colors.grey : primaryColor;
-    
-    return Container(
-            margin: const EdgeInsets.only(bottom: 20),
+          const SizedBox(height: 8),
+          Container(
             decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-            color: isDarkMode 
-                          ? Colors.black.withOpacity(0.1)
-                          : Colors.grey.withOpacity(0.07),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 5),
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+                width: 1,
+              ),
+            ),
+            child: DropdownButtonFormField<String>(
+              value: _bloodType,
+              onChanged:
+                  _isEditing
+                      ? (newValue) {
+                        setState(() {
+                          _bloodType = newValue!;
+                        });
+                      }
+                      : null,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              items:
+                  _bloodTypes.map((String type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    );
+                  }).toList(),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select your blood type';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Profile Edit Form
+  Widget _buildEditForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildTextInput(
+            'Name',
+            _nameController,
+            Icons.person_outline,
+            isRequired: true,
+          ),
+          _buildTextInput(
+            'Email',
+            _emailController,
+            Icons.email_outlined,
+            readOnly: true,
+          ),
+          _buildTextInput(
+            'Phone',
+            _phoneController,
+            Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
+            isRequired: true,
+          ),
+          _buildTextInput(
+            'Address',
+            _addressController,
+            Icons.home_outlined,
+            isRequired: true,
+            maxLines: 3,
+          ),
+          _buildCityDropdown(),
+          _buildBloodTypeSelector(),
+
+          // Donation availability switch
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Available to Donate',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: _isAvailableToDonate,
+                  onChanged:
+                      _isEditing
+                          ? (value) {
+                            setState(() {
+                              _isAvailableToDonate = value;
+                            });
+                          }
+                          : null,
+                  activeColor: AppConstants.primaryColor,
                 ),
               ],
             ),
-            child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              decoration: InputDecoration(
-                labelText: label,
-                floatingLabelStyle: TextStyle(
-            color: labelColor,
-                  fontWeight: FontWeight.w600,
-                ),
-                prefixIcon: Container(
-                  margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-              color: readOnly
-                  ? Colors.grey.withOpacity(0.1)
-                  : primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-              color: readOnly ? Colors.grey : primaryColor,
-                    size: 20,
-                  ),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-              color: isDarkMode
-                  ? Colors.grey.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-              color: primaryColor.withOpacity(0.7),
-                    width: 1.5,
-                  ),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                    color: Colors.red.withOpacity(0.5),
-                    width: 1.5,
-                  ),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-              color: Colors.red.withOpacity(0.7),
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 16,
-                ),
-          fillColor: Theme.of(context).cardColor,
-                filled: true,
-              ),
-              readOnly: readOnly,
-              validator: validator,
-              style: TextStyle(
-                fontSize: 16,
-          color: readOnly ? Colors.grey : Theme.of(context).textTheme.bodyMedium?.color,
-            ),
           ),
+
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton(
+                onPressed: _isLoading ? null : _toggleEdit,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(_isEditing ? 'Cancel' : 'Edit Profile'),
+              ),
+              if (_isEditing)
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text('Save Changes'),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHealthStatusCard() {
-    // Handle null values for height, weight, and gender
-    final displayHeight = (_height == null || _height!.isEmpty || _height == 'null') 
-        ? 'Not specified' 
-        : "$_height cm";
-        
-    final displayWeight = (_weight == null || _weight!.isEmpty || _weight == 'null') 
-        ? 'Not specified' 
-        : "$_weight kg";
-        
-    final displayGender = (_gender == null || _gender!.isEmpty) 
-        ? 'Not specified' 
-        : _gender!;
+  // Build the profile info section
+  Widget _buildProfileInfo(UserModel user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // User information section
+        _buildProfileInfoSection(user),
 
+        const SizedBox(height: 24),
+
+        // Health information section
+        _buildHealthStatusCard(),
+
+        // Donation history section if applicable
+        if (user.lastDonationDate != null) ...[
+          const SizedBox(height: 24),
+          _buildDonationHistoryCard(),
+        ],
+
+        // Action buttons
+        const SizedBox(height: 32),
+        _buildActionButtons(),
+      ],
+    );
+  }
+
+  // Build a custom information section
+  Widget _buildProfileInfoSection(UserModel user) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Health Status Indicator
+            const Text(
+              'Personal Information',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildInfoRow(Icons.email_outlined, 'Email', user.email),
+            const Divider(),
+            _buildInfoRow(Icons.phone_outlined, 'Phone', user.phoneNumber),
+            const Divider(),
+            _buildInfoRow(Icons.home_outlined, 'Address', user.address),
+            const Divider(),
+            _buildInfoRow(Icons.location_city, 'City', user.city),
+            const Divider(),
+            _buildInfoRow(
+              Icons.bloodtype_outlined,
+              'Blood Type',
+              user.bloodType,
+              valueColor: AppConstants.primaryColor,
+              valueFontWeight: FontWeight.bold,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build health status card
+  Widget _buildHealthStatusCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Health Information',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            // Health status indicator
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _healthStatusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _healthStatusColor.withOpacity(0.5),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _healthStatusColor.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _healthStatus == 'Good' ? Icons.check_circle : 
-                      _healthStatus == 'Needs Review' ? Icons.warning : Icons.error,
-                      color: _healthStatusColor,
-                      size: 24,
-                    ),
+                  Icon(
+                    Icons.health_and_safety,
+                    color: _healthStatusColor,
+                    size: 24,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Status: $_healthStatus',
+                        const Text(
+                          'Donation Eligibility Status',
                           style: TextStyle(
-                            color: _healthStatusColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        if (_nextDonationDate != null)
-                          Text(
-                            'Next Eligible Donation: $_nextDonationDate',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _healthStatus,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _healthStatusColor,
                           ),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
-            // Health Details
-            const SizedBox(height: 20),
-            
+            const SizedBox(height: 16),
             // Basic Health Info
-            _buildHealthInfoRow(
-              icon: Icons.height,
-              title: 'Height',
-              value: displayHeight,
+            _buildInfoRow(Icons.height, 'Height', _height ?? 'Not provided'),
+            _buildInfoRow(
+              Icons.monitor_weight,
+              'Weight',
+              _weight ?? 'Not provided',
             ),
-            _buildHealthInfoRow(
-              icon: Icons.monitor_weight,
-              title: 'Weight',
-              value: displayWeight,
-            ),
-            _buildHealthInfoRow(
-              icon: Icons.person,
-              title: 'Gender',
-              value: displayGender,
-            ),
-            
-            // Divider
-            Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Divider(color: Colors.grey.withOpacity(0.3)),
-            ),
-            
-            // Health Conditions
-            Text(
-              'Health Conditions',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppConstants.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-            
-            // Conditions Grid
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildConditionChip('Tattoo', _hasTattoo),
-                _buildConditionChip('Piercing', _hasPiercing),
-                _buildConditionChip('Travel', _hasTraveled),
-                _buildConditionChip('Surgery', _hasSurgery),
-                _buildConditionChip('Transfusion', _hasTransfusion),
-                _buildConditionChip('Pregnancy', _hasPregnancy),
-                _buildConditionChip('Disease', _hasDisease),
-                _buildConditionChip('Medication', _hasMedication),
-                _buildConditionChip('Allergies', _hasAllergies),
-              ],
-            ),
-            
-            // Additional Info
-            if (_hasMedication && _medications != null && _medications!.isNotEmpty) 
-              _buildNoteSection('Medications', _medications!),
-              
-            if (_hasAllergies && _allergies != null && _allergies!.isNotEmpty) 
-              _buildNoteSection('Allergies', _allergies!),
+            _buildInfoRow(Icons.person, 'Gender', _gender ?? 'Not provided'),
           ],
         ),
       ),
     );
   }
 
-  // Health info row with icon
-  Widget _buildHealthInfoRow({
-    required IconData icon,
-    required String title,
-    required String value,
+  // Build donation history card
+  Widget _buildDonationHistoryCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Donation History',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/donation_history');
+                  },
+                  child: const Text('View All'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Last donation info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Last Donation',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Colors.blue,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _lastDonationDate ?? 'Unknown',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_nextDonationDate != null) ...[
+                    const SizedBox(height: 8),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Next Eligible Donation Date',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.event_available,
+                          color: Colors.green,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _nextDonationDate!,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build action buttons
+  Widget _buildActionButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pushNamed(context, '/donation_tracking');
+          },
+          icon: const Icon(Icons.bloodtype),
+          label: const Text('My Donations'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppConstants.primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pushNamed(context, '/health_questionnaire');
+          },
+          icon: const Icon(Icons.health_and_safety),
+          label: const Text('Update Health Information'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Build info row with icon
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+    FontWeight? valueFontWeight,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppConstants.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: AppConstants.primaryColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Condition chip (Yes/No indicators)
-  Widget _buildConditionChip(String label, bool value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: value 
-            ? Colors.red.withOpacity(0.1) 
-            : Colors.green.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: value ? Colors.red.withOpacity(0.3) : Colors.green.withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            value ? Icons.circle : Icons.check_circle,
-            size: 16,
-            color: value ? Colors.red : Colors.green,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: value ? Colors.red : Colors.green,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // For displaying multi-line notes
-  Widget _buildNoteSection(String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0),
-      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppConstants.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.grey.withOpacity(0.2),
-              ),
-            ),
-            child: Text(
-              content,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[800],
-              ),
+          Icon(icon, size: 20, color: Colors.grey),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color:
+                        valueColor ??
+                        Theme.of(context).textTheme.bodyLarge?.color,
+                    fontWeight: valueFontWeight ?? FontWeight.normal,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
