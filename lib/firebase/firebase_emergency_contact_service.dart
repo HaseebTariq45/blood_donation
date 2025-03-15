@@ -145,6 +145,57 @@ class FirebaseEmergencyContactService {
     }
   }
 
+  // Get only user-added emergency contacts (not built-in ones)
+  Future<List<EmergencyContactModel>> getEmergencyContactsForUser(
+    String userId,
+  ) async {
+    try {
+      // Validate userId
+      if (userId.isEmpty) {
+        print('Error: Empty userId provided to getEmergencyContactsForUser');
+        return [];
+      }
+
+      print('Getting user-added emergency contacts for user: $userId');
+
+      // Get only user's personal contacts (not built-in ones)
+      final QuerySnapshot userContactsSnapshot =
+          await _firestore
+              .collection(_collectionPath)
+              .where('userId', isEqualTo: userId)
+              .orderBy('isPinned', descending: true)
+              .orderBy('name')
+              .get();
+
+      final List<EmergencyContactModel> userContacts =
+          userContactsSnapshot.docs
+              .map(
+                (doc) => EmergencyContactModel.fromJson(
+                  doc.data() as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+
+      print(
+        'Successfully retrieved ${userContacts.length} user-added emergency contacts',
+      );
+      return userContacts;
+    } catch (e) {
+      print('Error getting emergency contacts: $e');
+
+      // Check if it's a Firestore index error
+      if (e.toString().contains('failed-precondition') &&
+          e.toString().contains('requires an index')) {
+        print('Firestore index missing for emergency contacts query');
+        // Return empty list
+        return [];
+      }
+
+      // For other errors, return an empty list
+      return [];
+    }
+  }
+
   // Toggle pin status for a contact
   Future<bool> togglePinStatus(String contactId, bool isPinned) async {
     try {

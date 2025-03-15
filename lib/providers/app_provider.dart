@@ -28,7 +28,7 @@ class AppProvider extends ChangeNotifier {
   late final FirebaseEmergencyContactService _emergencyContactService;
   late final FirebaseNotificationService _notificationService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // User data
   UserModel? _currentUser;
   UserModel get currentUser => _currentUser ?? UserModel.dummy();
@@ -79,7 +79,7 @@ class AppProvider extends ChangeNotifier {
   // Donation history
   List<DonationModel> _donations = [];
   List<DonationModel> get donations => _donations;
-  
+
   // Current user's donations
   List<DonationModel> _userDonations = [];
   List<DonationModel> get userDonations => _userDonations;
@@ -108,7 +108,7 @@ class AppProvider extends ChangeNotifier {
   AppProvider() {
     _initializeServices();
   }
-  
+
   // Initialize services
   void _initializeServices() {
     try {
@@ -118,7 +118,7 @@ class AppProvider extends ChangeNotifier {
       _donationService = FirebaseDonationService();
       _emergencyContactService = FirebaseEmergencyContactService();
       _notificationService = FirebaseNotificationService();
-      
+
       // Load data
       _loadDummyData();
       _loadDataUsage();
@@ -135,7 +135,7 @@ class AppProvider extends ChangeNotifier {
       _loadDataUsage();
     }
   }
-  
+
   // Check authentication state on app startup
   Future<void> _checkAuthState() async {
     try {
@@ -143,36 +143,37 @@ class AppProvider extends ChangeNotifier {
         try {
           // Ensure user data exists in Firestore
           await ensureUserDataInFirestore();
-          
+
           // Get the user data from Firestore
           UserModel? userData = await _authService.getUserData();
           if (userData != null) {
             _currentUser = userData;
-            
+
             // Load user-specific data
             loadUserDonations();
             loadEmergencyContacts();
-            
+
             notifyListeners();
           }
         } catch (e) {
           debugPrint('Error loading user data: $e');
         }
       }
-      
+
       // Listen for auth state changes
       _authService.authStateChanges.listen((User? user) {
         if (user == null) {
           // User signed out
           _currentUser = null;
-          _emergencyContacts = []; // Clear emergency contacts when user signs out
+          _emergencyContacts =
+              []; // Clear emergency contacts when user signs out
         } else {
           // User signed in, get their data from Firestore
           ensureUserDataInFirestore().then((_) {
             _authService.getUserData().then((userData) {
               if (userData != null) {
                 _currentUser = userData;
-                
+
                 // Load user-specific data
                 loadUserDonations();
                 loadEmergencyContacts();
@@ -199,14 +200,14 @@ class AppProvider extends ChangeNotifier {
       // If Firebase is not initialized, use dummy data
       _currentUser = UserModel.dummy();
     }
-    
+
     // Remove dummy donation data loading
     _donations = [];
     _userDonations = [];
-    
+
     _bloodRequests = BloodRequestModel.getDummyList();
     _bloodBanks = BloodBankModel.getDummyList();
-    
+
     // Generate dummy donors
     _donors = List.generate(15, (index) {
       final bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -219,10 +220,12 @@ class AppProvider extends ChangeNotifier {
         address: '${index + 100} Main St, City',
         imageUrl: 'assets/images/avatar_${(index % 8) + 1}.png',
         isAvailableToDonate: index % 3 != 0,
-        lastDonationDate: DateTime.now().subtract(Duration(days: 90 + index * 5)),
+        lastDonationDate: DateTime.now().subtract(
+          Duration(days: 90 + index * 5),
+        ),
       );
     });
-    
+
     // Set the current user to also have a local image
     if (_currentUser != null && _currentUser!.imageUrl.isEmpty) {
       _currentUser = _currentUser!.copyWith(
@@ -230,7 +233,7 @@ class AppProvider extends ChangeNotifier {
       );
     }
   }
-  
+
   // Load data usage from shared preferences
   Future<void> _loadDataUsage() async {
     try {
@@ -239,18 +242,19 @@ class AppProvider extends ChangeNotifier {
       final wifiBytes = prefs.getInt('data_usage_wifi_bytes') ?? 0;
       final mobileBytes = prefs.getInt('data_usage_mobile_bytes') ?? 0;
       final lastResetTimestamp = prefs.getInt('data_usage_last_reset');
-      
-      final lastReset = lastResetTimestamp != null 
-          ? DateTime.fromMillisecondsSinceEpoch(lastResetTimestamp)
-          : DateTime.now();
-      
+
+      final lastReset =
+          lastResetTimestamp != null
+              ? DateTime.fromMillisecondsSinceEpoch(lastResetTimestamp)
+              : DateTime.now();
+
       _dataUsage = DataUsageModel(
         totalBytes: totalBytes,
         wifiBytes: wifiBytes,
         mobileBytes: mobileBytes,
         lastReset: lastReset,
       );
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading data usage: $e');
@@ -258,12 +262,12 @@ class AppProvider extends ChangeNotifier {
       _dataUsage = DataUsageModel.empty();
     }
   }
-  
+
   // Public method to refresh data usage
   Future<void> refreshDataUsage() async {
     await _loadDataUsage();
   }
-  
+
   // Save data usage to shared preferences
   Future<void> _saveDataUsage() async {
     try {
@@ -271,8 +275,10 @@ class AppProvider extends ChangeNotifier {
       await prefs.setInt('data_usage_total_bytes', _dataUsage.totalBytes);
       await prefs.setInt('data_usage_wifi_bytes', _dataUsage.wifiBytes);
       await prefs.setInt('data_usage_mobile_bytes', _dataUsage.mobileBytes);
-      await prefs.setInt('data_usage_last_reset', 
-          _dataUsage.lastReset.millisecondsSinceEpoch);
+      await prefs.setInt(
+        'data_usage_last_reset',
+        _dataUsage.lastReset.millisecondsSinceEpoch,
+      );
     } catch (e) {
       debugPrint('Error saving data usage: $e');
     }
@@ -305,7 +311,7 @@ class AppProvider extends ChangeNotifier {
   // Change app language
   void setLanguage(String language) {
     _selectedLanguage = language;
-    
+
     switch (language) {
       case 'English':
         _locale = const Locale('en', 'US');
@@ -325,7 +331,7 @@ class AppProvider extends ChangeNotifier {
       default:
         _locale = const Locale('en', 'US');
     }
-    
+
     notifyListeners();
   }
 
@@ -334,31 +340,35 @@ class AppProvider extends ChangeNotifier {
     _isAuthenticating = true;
     _authError = '';
     notifyListeners();
-    
+
     try {
       debugPrint('Starting login process for: $email');
-      
+
       // Sign in with Firebase Auth
       final userCredential = await _authService.signInWithEmailAndPassword(
         email,
         password,
       );
-      
-      debugPrint('Successfully signed in with Firebase Auth. UID: ${userCredential.user?.uid}');
-      
+
+      debugPrint(
+        'Successfully signed in with Firebase Auth. UID: ${userCredential.user?.uid}',
+      );
+
       // Ensure user data exists in Firestore
       await ensureUserDataInFirestore();
-      
+
       // Get user profile data from Firestore
       final userData = await _authService.getUserData();
-      
+
       if (userData != null) {
         debugPrint('Successfully retrieved user data from Firestore');
         _currentUser = userData;
       } else {
-        debugPrint('WARNING: No user data found in Firestore after successful authentication');
+        debugPrint(
+          'WARNING: No user data found in Firestore after successful authentication',
+        );
       }
-      
+
       _isAuthenticating = false;
       notifyListeners();
       return true;
@@ -370,27 +380,27 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Register a new user with Firebase
   Future<bool> registerUser(UserModel user, String password) async {
     _isAuthenticating = true;
     _authError = '';
     notifyListeners();
-    
+
     try {
       debugPrint('Starting user registration process for: ${user.email}');
-      
+
       // Register with Firebase Auth and save user data to Firestore
       final registeredUser = await _authService.registerUser(user, password);
       debugPrint('User registered successfully. User ID: ${registeredUser.id}');
-      
+
       _currentUser = registeredUser;
-      
+
       // Add the new user to the donors list as well
       _donors.add(registeredUser);
-      
+
       debugPrint('Current user set in app state and added to donors list');
-      
+
       _isAuthenticating = false;
       notifyListeners();
       return true;
@@ -432,7 +442,7 @@ class AppProvider extends ChangeNotifier {
     try {
       if (_authService.isSignedIn) {
         debugPrint('Refreshing user data from Firestore');
-        
+
         // Get the user data from Firestore
         UserModel? userData = await _authService.getUserData();
         if (userData != null) {
@@ -452,11 +462,11 @@ class AppProvider extends ChangeNotifier {
       final updatedUser = _currentUser!.copyWith(
         isAvailableToDonate: !_currentUser!.isAvailableToDonate,
       );
-      
+
       await updateUserProfile(updatedUser);
     }
   }
-  
+
   // Reset password
   Future<bool> resetPassword(String email) async {
     try {
@@ -468,16 +478,17 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Check if email exists in Firestore
   Future<bool> checkEmailExists(String email) async {
     try {
       // Query Firestore for a user with this email
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
-      
+      final querySnapshot =
+          await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .get();
+
       // Return true if any documents were found
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
@@ -485,20 +496,20 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Delete account
   Future<bool> deleteAccount(String password) async {
     try {
       debugPrint('Attempting to delete account');
-      
+
       // Re-authenticate user before deleting
       if (_currentUser != null && _authService.currentUser != null) {
         await _authService.deleteUserAccount(password);
-        
+
         // Clear local user data
         _currentUser = null;
         notifyListeners();
-        
+
         debugPrint('Account deleted successfully');
         return true;
       } else {
@@ -512,7 +523,7 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Helper method to get readable error messages
   String _getFirebaseAuthErrorMessage(dynamic error) {
     if (error is FirebaseAuthException) {
@@ -549,30 +560,32 @@ class AppProvider extends ChangeNotifier {
         debugPrint('Cannot add donation: No user is logged in');
         return false;
       }
-      
+
       // Set current timestamp if date is not provided
       final donationWithCurrentUser = donation.copyWith(
         donorId: _currentUser!.id,
         donorName: _currentUser!.name,
         bloodType: _currentUser!.bloodType,
       );
-      
+
       // Save to Firestore
-      final newDonation = await _donationService.addDonation(donationWithCurrentUser);
-      
+      final newDonation = await _donationService.addDonation(
+        donationWithCurrentUser,
+      );
+
       // Update local lists
       _userDonations.add(newDonation);
       _donations.add(newDonation);
-      
+
       // Update user's last donation date
       final updatedUser = _currentUser!.copyWith(
         lastDonationDate: donation.date,
       );
-      
+
       // Save updated user to Firestore
       await _userService.saveUserData(updatedUser);
       _currentUser = updatedUser;
-      
+
       debugPrint('Donation added successfully: ${newDonation.id}');
       notifyListeners();
       return true;
@@ -581,26 +594,30 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   // Cancel a donation appointment
   Future<bool> cancelDonation(String donationId) async {
     try {
       // Update status in Firestore
       await _donationService.updateDonationStatus(donationId, 'Cancelled');
-      
+
       // Update local lists
-      final donationIndex = _userDonations.indexWhere((d) => d.id == donationId);
+      final donationIndex = _userDonations.indexWhere(
+        (d) => d.id == donationId,
+      );
       if (donationIndex != -1) {
-        final updatedDonation = _userDonations[donationIndex].copyWith(status: 'Cancelled');
+        final updatedDonation = _userDonations[donationIndex].copyWith(
+          status: 'Cancelled',
+        );
         _userDonations[donationIndex] = updatedDonation;
-        
+
         // Update in global donations list too
         final globalIndex = _donations.indexWhere((d) => d.id == donationId);
         if (globalIndex != -1) {
           _donations[globalIndex] = updatedDonation;
         }
       }
-      
+
       debugPrint('Donation cancelled successfully: $donationId');
       notifyListeners();
       return true;
@@ -615,7 +632,9 @@ class AppProvider extends ChangeNotifier {
     try {
       if (_currentUser != null) {
         debugPrint('Loading donations for user: ${_currentUser!.id}');
-        _userDonations = await _donationService.getUserDonations(_currentUser!.id);
+        _userDonations = await _donationService.getUserDonations(
+          _currentUser!.id,
+        );
         notifyListeners();
         debugPrint('Successfully loaded ${_userDonations.length} donations');
       }
@@ -626,7 +645,7 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Load all donations from Firestore (for admin purposes)
   Future<void> loadAllDonations() async {
     try {
@@ -661,24 +680,26 @@ class AppProvider extends ChangeNotifier {
   List<UserModel> filterDonors({String? bloodType, bool? onlyAvailable}) {
     return _donors.where((donor) {
       bool matchesBloodType = bloodType == null || donor.bloodType == bloodType;
-      bool matchesAvailability = onlyAvailable == null || !onlyAvailable || donor.isAvailableToDonate;
+      bool matchesAvailability =
+          onlyAvailable == null || !onlyAvailable || donor.isAvailableToDonate;
       return matchesBloodType && matchesAvailability;
     }).toList();
   }
-  
+
   // Load donors from Firestore
   Future<void> loadDonorsFromFirestore() async {
     try {
       debugPrint('Loading donors from Firestore...');
       final donorsList = await _userService.getAvailableDonors();
-      
+
       // Don't include the current user in the donors list
       if (_currentUser != null) {
-        _donors = donorsList.where((donor) => donor.id != _currentUser!.id).toList();
+        _donors =
+            donorsList.where((donor) => donor.id != _currentUser!.id).toList();
       } else {
         _donors = donorsList;
       }
-      
+
       debugPrint('Successfully loaded ${_donors.length} donors from Firestore');
       notifyListeners();
     } catch (e) {
@@ -709,12 +730,16 @@ class AppProvider extends ChangeNotifier {
   Future<void> checkNotificationSettings() async {
     final notificationService = NotificationService();
     _notificationsEnabled = await notificationService.areNotificationsEnabled();
-    _emailNotificationsEnabled = await notificationService.areEmailNotificationsEnabled();
-    _pushNotificationsEnabled = await notificationService.arePushNotificationsEnabled();
-    
+    _emailNotificationsEnabled =
+        await notificationService.areEmailNotificationsEnabled();
+    _pushNotificationsEnabled =
+        await notificationService.arePushNotificationsEnabled();
+
     // Check for unread notifications
-    _hasUnreadNotifications = _userNotifications.any((notification) => !notification.read);
-    
+    _hasUnreadNotifications = _userNotifications.any(
+      (notification) => !notification.read,
+    );
+
     notifyListeners();
   }
 
@@ -722,13 +747,13 @@ class AppProvider extends ChangeNotifier {
     final notificationService = NotificationService();
     await notificationService.setNotificationsEnabled(enabled);
     _notificationsEnabled = enabled;
-    
+
     // If turning off notifications, all sub-settings get disabled
     if (!enabled) {
       await toggleEmailNotifications(false);
       await togglePushNotifications(false);
     }
-    
+
     notifyListeners();
   }
 
@@ -750,11 +775,13 @@ class AppProvider extends ChangeNotifier {
   Future<void> refreshNotifications() async {
     _isLoadingNotifications = true;
     notifyListeners();
-    
+
     try {
       final notifications = await _notificationService.getUserNotifications();
       _userNotifications = notifications;
-      _hasUnreadNotifications = notifications.any((notification) => !notification.read);
+      _hasUnreadNotifications = notifications.any(
+        (notification) => !notification.read,
+      );
     } catch (e) {
       debugPrint('Error refreshing notifications: $e');
     } finally {
@@ -766,18 +793,20 @@ class AppProvider extends ChangeNotifier {
   Future<List<NotificationModel>> getUserNotifications() async {
     // Use a flag to avoid multiple state updates during build
     final bool wasLoading = _isLoadingNotifications;
-    
+
     if (!wasLoading) {
       _isLoadingNotifications = true;
       // Use microtask to ensure the notifyListeners call happens after the current build cycle
       Future.microtask(() => notifyListeners());
     }
-    
+
     try {
       final notifications = await _notificationService.getUserNotifications();
       _userNotifications = notifications;
-      _hasUnreadNotifications = notifications.any((notification) => !notification.read);
-      
+      _hasUnreadNotifications = notifications.any(
+        (notification) => !notification.read,
+      );
+
       // Schedule state update outside the current build cycle
       Future.microtask(() => notifyListeners());
       return notifications;
@@ -798,12 +827,13 @@ class AppProvider extends ChangeNotifier {
   Future<void> markAllNotificationsAsRead() async {
     try {
       await _notificationService.markAllNotificationsAsRead();
-      
+
       // Update local state
       if (_userNotifications.isNotEmpty) {
-        _userNotifications = _userNotifications
-            .map((notification) => notification.copyWith(read: true))
-            .toList();
+        _userNotifications =
+            _userNotifications
+                .map((notification) => notification.copyWith(read: true))
+                .toList();
         _hasUnreadNotifications = false;
         notifyListeners();
       }
@@ -811,16 +841,20 @@ class AppProvider extends ChangeNotifier {
       debugPrint('Error marking all notifications as read: $e');
     }
   }
-  
+
   // Mark a single notification as read
   Future<void> markNotificationAsRead(String notificationId) async {
     try {
       await _notificationService.markNotificationAsRead(notificationId);
-      
+
       // Update local state
-      final index = _userNotifications.indexWhere((n) => n.id == notificationId);
+      final index = _userNotifications.indexWhere(
+        (n) => n.id == notificationId,
+      );
       if (index != -1) {
-        _userNotifications[index] = _userNotifications[index].copyWith(read: true);
+        _userNotifications[index] = _userNotifications[index].copyWith(
+          read: true,
+        );
         notifyListeners();
       }
     } catch (e) {
@@ -832,17 +866,21 @@ class AppProvider extends ChangeNotifier {
   Future<void> deleteNotification(String notificationId) async {
     try {
       // First, remove from local state to make UI update immediately
-      final index = _userNotifications.indexWhere((n) => n.id == notificationId);
+      final index = _userNotifications.indexWhere(
+        (n) => n.id == notificationId,
+      );
       if (index != -1) {
         _userNotifications.removeAt(index);
         notifyListeners();
       }
-      
+
       // Then delete from Firestore
       await _notificationService.deleteNotification(notificationId);
-      
+
       // Update unread status
-      _hasUnreadNotifications = _userNotifications.any((notification) => !notification.read);
+      _hasUnreadNotifications = _userNotifications.any(
+        (notification) => !notification.read,
+      );
       notifyListeners();
     } catch (e) {
       debugPrint('Error deleting notification: $e');
@@ -850,18 +888,18 @@ class AppProvider extends ChangeNotifier {
       await refreshNotifications();
     }
   }
-  
+
   // Delete all notifications
   Future<void> deleteAllNotifications() async {
     try {
       // Store a copy of the notifications before clearing
       final notificationsToDelete = List.from(_userNotifications);
-      
+
       // Clear local state
       _userNotifications.clear();
       _hasUnreadNotifications = false;
       notifyListeners();
-      
+
       // Then delete all from Firestore
       for (final notification in notificationsToDelete) {
         await _notificationService.deleteNotification(notification.id);
@@ -876,7 +914,7 @@ class AppProvider extends ChangeNotifier {
   // Send a test notification (used in settings screen)
   Future<void> sendTestNotification() async {
     if (!_notificationsEnabled || !_pushNotificationsEnabled) return;
-    
+
     try {
       final userId = _currentUser?.id;
       if (userId != null) {
@@ -892,7 +930,7 @@ class AppProvider extends ChangeNotifier {
             metadata: {},
           ),
         );
-        
+
         // Refresh notifications after adding a new one
         await refreshNotifications();
       }
@@ -926,13 +964,13 @@ class AppProvider extends ChangeNotifier {
   // Add to the initialize method
   Future<void> initialize() async {
     // ... (existing initialization code) ...
-    
+
     // Initialize location status
     await checkLocationStatus();
-    
+
     // Initialize notification status
     await checkNotificationSettings();
-    
+
     // Initialize notification service
     final notificationService = NotificationService();
     await notificationService.initialize();
@@ -944,39 +982,41 @@ class AppProvider extends ChangeNotifier {
       // Only proceed if user is authenticated
       if (_authService.isSignedIn) {
         debugPrint('Checking if user data exists in Firestore...');
-        
+
         // Get the current auth user
         final User? firebaseUser = _authService.currentUser;
-        
+
         if (firebaseUser == null) {
           debugPrint('No Firebase Auth user found');
           return;
         }
-        
+
         // Try to get user data from Firestore
         final userData = await _authService.getUserData();
-        
+
         if (userData == null) {
-          debugPrint('User data not found in Firestore. Creating default profile...');
-          
+          debugPrint(
+            'User data not found in Firestore. Creating default profile...',
+          );
+
           // Create a basic user profile
           final newUserData = UserModel(
             id: firebaseUser.uid,
             name: firebaseUser.displayName ?? 'New User',
             email: firebaseUser.email ?? '',
             phoneNumber: '',
-            bloodType: 'A+',  // Default blood type
+            bloodType: 'A+', // Default blood type
             address: '',
             isAvailableToDonate: true,
           );
-          
+
           // Save to Firestore
           await _userService.saveUserData(newUserData);
-          
+
           // Update current user
           _currentUser = newUserData;
           notifyListeners();
-          
+
           debugPrint('Created default user profile in Firestore');
         } else {
           debugPrint('User data exists in Firestore');
@@ -996,24 +1036,26 @@ class AppProvider extends ChangeNotifier {
   // Load emergency contacts for the current user
   Future<void> loadEmergencyContacts() async {
     if (!isLoggedIn) return;
-    
+
     try {
       // Get only user's personal contacts (not built-in ones)
-      final QuerySnapshot userContactsSnapshot = await FirebaseFirestore.instance
-          .collection('emergency_contacts')
-          .where('userId', isEqualTo: currentUser.id)
-          .orderBy('isPinned', descending: true)
-          .orderBy('name')
-          .get();
+      final QuerySnapshot userContactsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('emergency_contacts')
+              .where('userId', isEqualTo: currentUser.id)
+              .orderBy('isPinned', descending: true)
+              .orderBy('name')
+              .get();
 
-      final List<EmergencyContactModel> userContacts = userContactsSnapshot.docs
-          .map(
-            (doc) => EmergencyContactModel.fromJson(
-              doc.data() as Map<String, dynamic>,
-            ),
-          )
-          .toList();
-      
+      final List<EmergencyContactModel> userContacts =
+          userContactsSnapshot.docs
+              .map(
+                (doc) => EmergencyContactModel.fromJson(
+                  doc.data() as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+
       _emergencyContacts = userContacts;
       debugPrint('Loaded ${userContacts.length} user-added emergency contacts');
       notifyListeners();
@@ -1025,7 +1067,7 @@ class AppProvider extends ChangeNotifier {
   // Get a stream of emergency contacts for real-time updates
   Stream<List<EmergencyContactModel>> getEmergencyContactsStream() {
     if (!isLoggedIn) return Stream.value([]);
-    
+
     try {
       // Stream user's personal contacts only (not built-in ones)
       return FirebaseFirestore.instance
@@ -1037,11 +1079,13 @@ class AppProvider extends ChangeNotifier {
           .map((snapshot) {
             final List<EmergencyContactModel> userContacts =
                 snapshot.docs
-                    .map((doc) => EmergencyContactModel.fromJson(
-                      doc.data() as Map<String, dynamic>
-                    ))
+                    .map(
+                      (doc) => EmergencyContactModel.fromJson(
+                        doc.data() as Map<String, dynamic>,
+                      ),
+                    )
                     .toList();
-            
+
             return userContacts;
           });
     } catch (e) {
@@ -1054,19 +1098,21 @@ class AppProvider extends ChangeNotifier {
   // Add a new emergency contact
   Future<bool> addEmergencyContact(EmergencyContactModel contact) async {
     if (!isLoggedIn) return false;
-    
+
     try {
       // Create a new contact with the current user ID
       final newContact = contact.copyWith(userId: currentUser.id);
-      
+
       // Add to Firebase
-      final success = await _emergencyContactService.addEmergencyContact(newContact);
-      
+      final success = await _emergencyContactService.addEmergencyContact(
+        newContact,
+      );
+
       if (success) {
         // Refresh the contacts list
         await loadEmergencyContacts();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error adding emergency contact: $e');
@@ -1077,15 +1123,17 @@ class AppProvider extends ChangeNotifier {
   // Update an existing emergency contact
   Future<bool> updateEmergencyContact(EmergencyContactModel contact) async {
     if (!isLoggedIn) return false;
-    
+
     try {
-      final success = await _emergencyContactService.updateEmergencyContact(contact);
-      
+      final success = await _emergencyContactService.updateEmergencyContact(
+        contact,
+      );
+
       if (success) {
         // Refresh the contacts list
         await loadEmergencyContacts();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error updating emergency contact: $e');
@@ -1096,15 +1144,17 @@ class AppProvider extends ChangeNotifier {
   // Delete an emergency contact
   Future<bool> deleteEmergencyContact(String contactId) async {
     if (!isLoggedIn) return false;
-    
+
     try {
-      final success = await _emergencyContactService.deleteEmergencyContact(contactId);
-      
+      final success = await _emergencyContactService.deleteEmergencyContact(
+        contactId,
+      );
+
       if (success) {
         // Refresh the contacts list
         await loadEmergencyContacts();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error deleting emergency contact: $e');
@@ -1115,15 +1165,18 @@ class AppProvider extends ChangeNotifier {
   // Toggle pin status for a contact
   Future<bool> toggleContactPinStatus(String contactId, bool isPinned) async {
     if (!isLoggedIn) return false;
-    
+
     try {
-      final success = await _emergencyContactService.togglePinStatus(contactId, isPinned);
-      
+      final success = await _emergencyContactService.togglePinStatus(
+        contactId,
+        isPinned,
+      );
+
       if (success) {
         // Refresh the contacts list
         await loadEmergencyContacts();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error toggling pin status: $e');
@@ -1155,73 +1208,75 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Get emergency contacts for a user
-  Future<List<EmergencyContactModel>> getEmergencyContactsForUser(String userId) async {
-    // Validate userId
-    if (userId.isEmpty) {
-      debugPrint('Error: Empty userId provided to getEmergencyContactsForUser');
-      return [];
-    }
-    
+  Future<List<EmergencyContactModel>> getEmergencyContactsForUser(
+    String userId,
+  ) async {
     try {
-      debugPrint('Getting user-added emergency contacts for user: $userId');
-      
-      // Get only user's personal contacts (not built-in ones)
-      final QuerySnapshot userContactsSnapshot = await FirebaseFirestore.instance
-          .collection('emergency_contacts')
-          .where('userId', isEqualTo: userId)
-          .orderBy('isPinned', descending: true)
-          .orderBy('name')
-          .get();
-
-      final List<EmergencyContactModel> userContacts = userContactsSnapshot.docs
-          .map(
-            (doc) => EmergencyContactModel.fromJson(
-              doc.data() as Map<String, dynamic>,
-            ),
-          )
-          .toList();
-      
-      debugPrint('Successfully retrieved ${userContacts.length} user-added emergency contacts');
-      return userContacts;
+      final contacts = await _emergencyContactService
+          .getEmergencyContactsForUser(userId);
+      return contacts;
     } catch (e) {
-      debugPrint('Error getting emergency contacts: $e');
-      
-      // Check if it's a Firestore index error
-      if (e.toString().contains('failed-precondition') && 
-          e.toString().contains('requires an index')) {
-        debugPrint('Firestore index missing for emergency contacts query');
-        // Return empty list instead of built-in contacts
-        return [];
-      }
-      
-      // For other errors, return an empty list
-      return [];
+      debugPrint('Error fetching emergency contacts: $e');
+      rethrow;
     }
   }
 
-  // Accept blood request response
-  Future<bool> acceptBloodRequestResponse(String requestId, String responderId) async {
+  // Get health questionnaire data for a user by their ID
+  Future<Map<String, dynamic>?> getHealthQuestionnaireData(
+    String userId,
+  ) async {
+    try {
+      // Fetch health questionnaire data from Firestore
+      debugPrint('Fetching health questionnaire data for user: $userId');
+
+      final documentSnapshot =
+          await _firestore
+              .collection('health_questionnaires')
+              .doc(userId)
+              .get();
+
+      if (!documentSnapshot.exists) {
+        debugPrint('No health questionnaire found for user: $userId');
+        return null;
+      }
+
+      final data = documentSnapshot.data();
+      debugPrint('Found health questionnaire data: $data');
+
+      return data;
+    } catch (e) {
+      debugPrint('Error fetching health questionnaire data: $e');
+      return null; // Return null instead of rethrowing to avoid crashing the UI
+    }
+  }
+
+  // Accept a blood request response
+  Future<void> acceptBloodRequestResponse(
+    String requestId,
+    String responderId,
+  ) async {
     try {
       // Update request status to accepted
       await _firestore.collection('blood_requests').doc(requestId).update({
         'status': 'Accepted',
         'acceptedAt': DateTime.now().toIso8601String(),
       });
-      
+
       // Get the current user (requester)
       final currentUser = _authService.currentUser;
-      if (currentUser == null) return false;
-      
+      if (currentUser == null) return;
+
       // Get user details
       final requesterDetails = await getUserDetailsById(currentUser.uid);
-      if (requesterDetails == null) return false;
-      
+      if (requesterDetails == null) return;
+
       // Create notification model
       final notification = NotificationModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: responderId,
         title: 'Blood Donation Request Accepted',
-        body: '${requesterDetails.name} has accepted your offer to donate blood.',
+        body:
+            '${requesterDetails.name} has accepted your offer to donate blood.',
         type: 'blood_request_accepted',
         read: false,
         createdAt: DateTime.now().toIso8601String(),
@@ -1233,14 +1288,14 @@ class AppProvider extends ChangeNotifier {
           'responderId': responderId,
         },
       );
-      
+
       // Add notification
       await _notificationService.addNotification(notification);
-      
-      return true;
+
+      return;
     } catch (e) {
       debugPrint('Error accepting blood request response: $e');
-      return false;
+      return;
     }
   }
 }

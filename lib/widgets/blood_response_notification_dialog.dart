@@ -46,8 +46,11 @@ class _BloodResponseNotificationDialogState
   bool _isLoading = false;
   bool _showingContacts = false;
   bool _showingLocation = false;
+  bool _showingHealthQuestionnaire = false;
   UserModel? _responderDetails;
   List<EmergencyContactModel> _emergencyContacts = [];
+  Map<String, dynamic>? _healthQuestionnaireData;
+  bool _loadingHealthQuestionnaire = false;
 
   @override
   void initState() {
@@ -434,347 +437,303 @@ class _BloodResponseNotificationDialogState
 
   @override
   Widget build(BuildContext context) {
-    // Get screen size to make dialog responsive
-    final screenSize = MediaQuery.of(context).size;
-    final maxDialogWidth = screenSize.width * 0.9;
-    final maxDialogHeight = screenSize.height * 0.85;
-
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: maxDialogWidth,
-            maxHeight: maxDialogHeight,
-          ),
-          child: _buildDialogContent(context),
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      contentPadding: const EdgeInsets.all(16),
+      content: Container(
+        width: double.maxFinite,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
-      ),
-    );
-  }
-
-  Widget _buildDialogContent(BuildContext context) {
-    return Stack(
-      children: [
-        // Main container
-        Container(
-          padding: const EdgeInsets.only(
-            top: 65,
-            bottom: 16,
-            left: 16,
-            right: 16,
-          ),
-          margin: const EdgeInsets.only(top: 45),
-          decoration: BoxDecoration(
-            shape: BoxShape.rectangle,
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                offset: const Offset(0, 10),
-                blurRadius: 10,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Blood Donation Response',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ],
-          ),
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Blood Donation Response',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                  textAlign: TextAlign.center,
+              const SizedBox(height: 8),
+              Text(
+                '${widget.responderName} has responded to your blood request',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${widget.responderName} has responded to your blood request',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                // Responder details card - more compact
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[850]
-                            : const Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]!
-                              : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Wrap content in Expanded + SingleChildScrollView to make it scrollable
+              Flexible(
+                child: SingleChildScrollView(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          // Responder info
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildCompactInfoRow(
-                                  context: context,
-                                  icon: Icons.person,
-                                  title: 'Name',
-                                  value: widget.responderName,
-                                  color: AppConstants.primaryColor,
-                                ),
-                                const SizedBox(height: 8),
-                                _buildCompactInfoRow(
-                                  context: context,
-                                  icon: Icons.bloodtype,
-                                  title: 'Blood Type',
-                                  value: widget.bloodType,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(height: 8),
-                                _buildCompactInfoRow(
-                                  context: context,
-                                  icon: Icons.phone,
-                                  title: 'Phone',
-                                  value: widget.responderPhone,
-                                  color: Colors.green,
-                                ),
-                              ],
-                            ),
+                      // Responder details card - more compact
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[850]
+                                  : const Color(0xFFF8F9FA),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
+                            width: 1,
                           ),
-                          // Quick action buttons
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                _buildQuickActionButton(
-                                  icon: Icons.call,
-                                  label: 'Call',
-                                  color: Colors.green,
-                                  onTap:
-                                      () =>
-                                          _makePhoneCall(widget.responderPhone),
-                                ),
-                                const SizedBox(height: 8),
-                                _buildQuickActionButton(
-                                  icon: Icons.message,
-                                  label: 'SMS',
-                                  color: Colors.blue,
-                                  onTap: () => _sendSMS(widget.responderPhone),
-                                ),
-                                const SizedBox(height: 8),
-                                _buildQuickActionButton(
-                                  icon: Icons.content_copy,
-                                  label: 'Copy',
-                                  color: Colors.orange,
-                                  onTap:
-                                      () => _copyToClipboard(
-                                        widget.responderPhone,
-                                        'Phone',
+                                // Responder info
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildCompactInfoRow(
+                                        context: context,
+                                        icon: Icons.person,
+                                        title: 'Name',
+                                        value: widget.responderName,
+                                        color: AppConstants.primaryColor,
                                       ),
+                                      const SizedBox(height: 8),
+                                      _buildCompactInfoRow(
+                                        context: context,
+                                        icon: Icons.bloodtype,
+                                        title: 'Blood Type',
+                                        value: widget.bloodType,
+                                        color: Colors.red,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildCompactInfoRow(
+                                        context: context,
+                                        icon: Icons.phone,
+                                        title: 'Phone',
+                                        value: widget.responderPhone,
+                                        color: Colors.green,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Quick action buttons
+                                Expanded(
+                                  flex: 2,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildQuickActionButton(
+                                        icon: Icons.call,
+                                        label: 'Call',
+                                        color: Colors.green,
+                                        onTap:
+                                            () => _makePhoneCall(
+                                              widget.responderPhone,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildQuickActionButton(
+                                        icon: Icons.message,
+                                        label: 'SMS',
+                                        color: Colors.blue,
+                                        onTap:
+                                            () =>
+                                                _sendSMS(widget.responderPhone),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildQuickActionButton(
+                                        icon: Icons.content_copy,
+                                        label: 'Copy',
+                                        color: Colors.orange,
+                                        onTap:
+                                            () => _copyToClipboard(
+                                              widget.responderPhone,
+                                              'Phone',
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      // Toggle buttons for additional info
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildToggleButton(
-                              icon: Icons.contact_emergency,
-                              label: 'Emergency Contacts',
-                              color: Colors.orange,
-                              isSelected: _showingContacts,
-                              onTap: () {
-                                setState(() {
-                                  _showingContacts = !_showingContacts;
-                                  if (_showingContacts) {
-                                    _showingLocation = false;
+                            // Toggle buttons for additional info
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildToggleButton(
+                                    icon: Icons.contact_emergency,
+                                    label: 'Emergency Contacts',
+                                    color: Colors.orange,
+                                    isSelected: _showingContacts,
+                                    onTap: () {
+                                      setState(() {
+                                        _showingContacts = !_showingContacts;
+                                        if (_showingContacts) {
+                                          _showingLocation = false;
+                                          _showingHealthQuestionnaire = false;
 
-                                    // If we don't have contacts yet, fetch them
-                                    if (_emergencyContacts.isEmpty &&
-                                        !_isLoading) {
-                                      _fetchEmergencyContacts();
-                                    }
-                                  }
-                                });
-                              },
+                                          // If we don't have contacts yet, fetch them
+                                          if (_emergencyContacts.isEmpty &&
+                                              !_isLoading) {
+                                            _fetchEmergencyContacts();
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildToggleButton(
+                                    icon: Icons.location_on,
+                                    label: 'Location',
+                                    color: Colors.purple,
+                                    isSelected: _showingLocation,
+                                    onTap: () {
+                                      setState(() {
+                                        _showingLocation = !_showingLocation;
+                                        if (_showingLocation) {
+                                          _showingContacts = false;
+                                          _showingHealthQuestionnaire = false;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildToggleButton(
+                                    icon: Icons.health_and_safety,
+                                    label: 'Health Data',
+                                    color: Colors.teal,
+                                    isSelected: _showingHealthQuestionnaire,
+                                    onTap: () {
+                                      setState(() {
+                                        _showingHealthQuestionnaire =
+                                            !_showingHealthQuestionnaire;
+                                        if (_showingHealthQuestionnaire) {
+                                          _showingContacts = false;
+                                          _showingLocation = false;
+
+                                          // If we don't have health data yet, fetch it
+                                          if (_healthQuestionnaireData ==
+                                                  null &&
+                                              !_loadingHealthQuestionnaire) {
+                                            _fetchHealthQuestionnaireData();
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildToggleButton(
-                              icon: Icons.location_on,
-                              label: 'Location',
-                              color: Colors.purple,
-                              isSelected: _showingLocation,
-                              onTap: () {
-                                setState(() {
-                                  _showingLocation = !_showingLocation;
-                                  if (_showingLocation) {
-                                    _showingContacts = false;
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        ],
+                            // Conditionally show location, contacts, or health questionnaire
+                            if (_showingLocation &&
+                                _responderDetails?.location != null)
+                              _buildCompactLocationSection(),
+                            if (_showingContacts)
+                              _isLoading && _emergencyContacts.isEmpty
+                                  ? _buildLoadingIndicator(
+                                    color: Colors.orange,
+                                    message: 'Loading contacts...',
+                                  )
+                                  : _emergencyContacts.isNotEmpty
+                                  ? _buildCompactEmergencyContactsSection()
+                                  : _buildNoContactsMessage(),
+                            if (_showingHealthQuestionnaire)
+                              _loadingHealthQuestionnaire
+                                  ? _buildLoadingIndicator(
+                                    color: Colors.teal,
+                                    message: 'Loading health data...',
+                                  )
+                                  : _healthQuestionnaireData != null
+                                  ? _buildHealthQuestionnaireSection()
+                                  : _buildNoHealthDataMessage(),
+                          ],
+                        ),
                       ),
-                      // Conditionally show location or contacts
-                      if (_showingLocation &&
-                          _responderDetails?.location != null)
-                        _buildCompactLocationSection(),
-                      if (_showingContacts)
-                        _isLoading && _emergencyContacts.isEmpty
-                            ? _buildLoadingIndicator()
-                            : _emergencyContacts.isNotEmpty
-                            ? _buildCompactEmergencyContactsSection()
-                            : _buildNoContactsMessage(),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Action buttons - simplified to just two main actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppConstants.primaryColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              const SizedBox(height: 16),
+              // Action buttons - simplified to just two main actions
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppConstants.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          'DISMISS',
-                          style: TextStyle(
-                            color: AppConstants.primaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      child: Text(
+                        'DISMISS',
+                        style: TextStyle(
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _acceptDonation,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.successColor,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child:
-                            _isLoading
-                                ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                                : const Text(
-                                  'ACCEPT',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Top circular avatar with pulse animation
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          child: AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: CircleAvatar(
-                  backgroundColor: AppConstants.primaryColor,
-                  radius: 45,
-                  child: Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppConstants.primaryColor,
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.volunteer_activism,
-                      color: AppConstants.primaryColor,
-                      size: 40,
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-        // Copied text indicator
-        if (_copiedText != null)
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$_copiedText copied',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _acceptDonation,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.successColor,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                              : const Text(
+                                'ACCEPT',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 
@@ -1338,16 +1297,19 @@ class _BloodResponseNotificationDialogState
     );
   }
 
-  Widget _buildLoadingIndicator() {
+  Widget _buildLoadingIndicator({
+    Color color = Colors.orange,
+    String message = 'Loading...',
+  }) {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.05),
+        color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange.withOpacity(0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
@@ -1355,14 +1317,11 @@ class _BloodResponseNotificationDialogState
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
-          SizedBox(width: 12),
-          Text(
-            'Loading contacts...',
-            style: TextStyle(fontSize: 12, color: Colors.orange),
-          ),
+          const SizedBox(width: 12),
+          Text(message, style: TextStyle(fontSize: 12, color: color)),
         ],
       ),
     );
@@ -1494,6 +1453,381 @@ class _BloodResponseNotificationDialogState
               ),
             ],
           ),
+    );
+  }
+
+  // Format timestamp to a readable format
+  String _formatDate(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 30) {
+        // Format as date if older than 30 days
+        final month = date.month.toString().padLeft(2, '0');
+        final day = date.day.toString().padLeft(2, '0');
+        final year = date.year;
+        return '$month/$day/$year';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (e) {
+      return 'Unknown date';
+    }
+  }
+
+  // Fetch health questionnaire data for the responder
+  Future<void> _fetchHealthQuestionnaireData() async {
+    if (widget.responderId.isEmpty ||
+        widget.responderId == 'unknown_responder') {
+      debugPrint('Cannot fetch health questionnaire data: invalid responderId');
+      return;
+    }
+
+    setState(() {
+      _loadingHealthQuestionnaire = true;
+    });
+
+    try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+
+      // Fetch health questionnaire data from the provider
+      final data = await appProvider.getHealthQuestionnaireData(
+        widget.responderId,
+      );
+
+      if (mounted) {
+        setState(() {
+          _healthQuestionnaireData = data;
+          _loadingHealthQuestionnaire = false;
+        });
+
+        debugPrint('Fetched health questionnaire data: $data');
+
+        if (data == null || data.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No health questionnaire data available for this donor',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching health questionnaire data: $e');
+      if (mounted) {
+        setState(() {
+          _loadingHealthQuestionnaire = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error fetching health questionnaire data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Build health questionnaire section
+  Widget _buildHealthQuestionnaireSection() {
+    if (_healthQuestionnaireData == null || _healthQuestionnaireData!.isEmpty) {
+      return _buildNoHealthDataMessage();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.teal.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.teal.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.health_and_safety, color: Colors.teal, size: 16),
+              const SizedBox(width: 4),
+              const Text(
+                'Health Questionnaire',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.teal,
+                ),
+              ),
+              const Spacer(),
+              Flexible(
+                child: Text(
+                  'Updated: ${_formatDate(_healthQuestionnaireData!['lastUpdated'] ?? DateTime.now().toString())}',
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 16, thickness: 0.5),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.3,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _buildHealthQuestionnaireItems(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build individual health questionnaire items
+  List<Widget> _buildHealthQuestionnaireItems() {
+    final List<Widget> items = [];
+    final data = _healthQuestionnaireData!;
+
+    // Add general health info
+    if (data.containsKey('generalHealth')) {
+      items.add(
+        _buildHealthInfoItem(
+          title: 'General Health Status',
+          value: data['generalHealth'] ?? 'Not provided',
+          icon: Icons.favorite,
+          color: Colors.pink,
+        ),
+      );
+    }
+
+    // Add medical conditions
+    if (data.containsKey('medicalConditions')) {
+      final conditions = data['medicalConditions'];
+      if (conditions is List && conditions.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Medical Conditions',
+            value: conditions.join(', '),
+            icon: Icons.medical_services,
+            color: Colors.red,
+          ),
+        );
+      } else if (conditions is String && conditions.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Medical Conditions',
+            value: conditions,
+            icon: Icons.medical_services,
+            color: Colors.red,
+          ),
+        );
+      }
+    }
+
+    // Add medications
+    if (data.containsKey('medications')) {
+      final medications = data['medications'];
+      if (medications is List && medications.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Current Medications',
+            value: medications.join(', '),
+            icon: Icons.medication,
+            color: Colors.orange,
+          ),
+        );
+      } else if (medications is String && medications.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Current Medications',
+            value: medications,
+            icon: Icons.medication,
+            color: Colors.orange,
+          ),
+        );
+      }
+    }
+
+    // Add allergies
+    if (data.containsKey('allergies')) {
+      final allergies = data['allergies'];
+      if (allergies is List && allergies.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Allergies',
+            value: allergies.join(', '),
+            icon: Icons.warning,
+            color: Colors.amber,
+          ),
+        );
+      } else if (allergies is String && allergies.isNotEmpty) {
+        items.add(
+          _buildHealthInfoItem(
+            title: 'Allergies',
+            value: allergies,
+            icon: Icons.warning,
+            color: Colors.amber,
+          ),
+        );
+      }
+    }
+
+    // Add last donation date
+    if (data.containsKey('lastDonationDate') &&
+        data['lastDonationDate'] != null) {
+      items.add(
+        _buildHealthInfoItem(
+          title: 'Last Donation Date',
+          value: _formatDate(data['lastDonationDate']),
+          icon: Icons.calendar_today,
+          color: Colors.blue,
+        ),
+      );
+    }
+
+    // Add lifestyle info
+    if (data.containsKey('lifestyle')) {
+      final lifestyle = data['lifestyle'];
+      if (lifestyle is Map) {
+        lifestyle.forEach((key, value) {
+          if (value != null) {
+            items.add(
+              _buildHealthInfoItem(
+                title: key.toString().replaceFirst(
+                  key[0],
+                  key[0].toUpperCase(),
+                ),
+                value: value.toString(),
+                icon: Icons.person,
+                color: Colors.green,
+              ),
+            );
+          }
+        });
+      }
+    }
+
+    // Add any other health info key
+    data.forEach((key, value) {
+      if (![
+            'generalHealth',
+            'medicalConditions',
+            'medications',
+            'allergies',
+            'lastDonationDate',
+            'lifestyle',
+            'lastUpdated',
+          ].contains(key) &&
+          value != null) {
+        items.add(
+          _buildHealthInfoItem(
+            title: key
+                .toString()
+                .replaceFirst(key[0], key[0].toUpperCase())
+                .replaceAll('_', ' '),
+            value: value.toString(),
+            icon: Icons.info_outline,
+            color: Colors.blueGrey,
+          ),
+        );
+      }
+    });
+
+    // If no items were added, add a message
+    if (items.isEmpty) {
+      items.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'No detailed health information available',
+            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          ),
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  // Build a single health info item
+  Widget _buildHealthInfoItem({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 14, color: color),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(value, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build message for when no health data is available
+  Widget _buildNoHealthDataMessage() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.teal.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.teal.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 16, color: Colors.teal),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'No health questionnaire data available for this donor',
+              style: TextStyle(fontSize: 12, color: Colors.teal),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
