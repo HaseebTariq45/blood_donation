@@ -1550,46 +1550,83 @@ class _BloodResponseNotificationDialogState
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.teal.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.teal.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.teal.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Header with title and timestamp - fixed layout to prevent overflow
           Row(
             children: [
-              Icon(Icons.health_and_safety, color: Colors.teal, size: 16),
-              const SizedBox(width: 4),
-              const Text(
-                'Health Questionnaire',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.health_and_safety,
                   color: Colors.teal,
+                  size: 16,
                 ),
               ),
-              const Spacer(),
-              Flexible(
+              const SizedBox(width: 8),
+              // Make title text flexible to prevent overflow
+              const Expanded(
                 child: Text(
-                  'Updated: ${_formatDate(_healthQuestionnaireData!['lastUpdated'] ?? DateTime.now().toString())}',
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  'Health Questionnaire',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.teal,
+                  ),
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Timestamp in compact format
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.update, size: 10, color: Colors.grey[600]),
+                    const SizedBox(width: 2),
+                    Text(
+                      _formatDate(
+                        _healthQuestionnaireData!['lastUpdated'] ??
+                            DateTime.now().toString(),
+                      ),
+                      style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const Divider(height: 16, thickness: 0.5),
+          // Content area with scrolling
           ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.3,
             ),
             child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _buildHealthQuestionnaireItems(),
-              ),
+              physics: const BouncingScrollPhysics(),
+              child: _buildHealthQuestionnaireContent(),
             ),
           ),
         ],
@@ -1597,101 +1634,31 @@ class _BloodResponseNotificationDialogState
     );
   }
 
-  // Build individual health questionnaire items
-  List<Widget> _buildHealthQuestionnaireItems() {
-    final List<Widget> items = [];
+  // Build the content of the health questionnaire with grouped sections
+  Widget _buildHealthQuestionnaireContent() {
     final data = _healthQuestionnaireData!;
 
-    // Add general health info
+    // Group data into categories for better organization
+    final Map<String, List<Widget>> categories = {
+      'General': <Widget>[],
+      'Medical': <Widget>[],
+      'Lifestyle': <Widget>[],
+      'Other': <Widget>[],
+    };
+
+    // General health status
     if (data.containsKey('generalHealth')) {
-      items.add(
-        _buildHealthInfoItem(
-          title: 'General Health Status',
-          value: data['generalHealth'] ?? 'Not provided',
-          icon: Icons.favorite,
-          color: Colors.pink,
-        ),
+      categories['General']!.add(
+        _buildHealthStatusCard(data['generalHealth'] ?? 'Not provided'),
       );
     }
 
-    // Add medical conditions
-    if (data.containsKey('medicalConditions')) {
-      final conditions = data['medicalConditions'];
-      if (conditions is List && conditions.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Medical Conditions',
-            value: conditions.join(', '),
-            icon: Icons.medical_services,
-            color: Colors.red,
-          ),
-        );
-      } else if (conditions is String && conditions.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Medical Conditions',
-            value: conditions,
-            icon: Icons.medical_services,
-            color: Colors.red,
-          ),
-        );
-      }
-    }
-
-    // Add medications
-    if (data.containsKey('medications')) {
-      final medications = data['medications'];
-      if (medications is List && medications.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Current Medications',
-            value: medications.join(', '),
-            icon: Icons.medication,
-            color: Colors.orange,
-          ),
-        );
-      } else if (medications is String && medications.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Current Medications',
-            value: medications,
-            icon: Icons.medication,
-            color: Colors.orange,
-          ),
-        );
-      }
-    }
-
-    // Add allergies
-    if (data.containsKey('allergies')) {
-      final allergies = data['allergies'];
-      if (allergies is List && allergies.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Allergies',
-            value: allergies.join(', '),
-            icon: Icons.warning,
-            color: Colors.amber,
-          ),
-        );
-      } else if (allergies is String && allergies.isNotEmpty) {
-        items.add(
-          _buildHealthInfoItem(
-            title: 'Allergies',
-            value: allergies,
-            icon: Icons.warning,
-            color: Colors.amber,
-          ),
-        );
-      }
-    }
-
-    // Add last donation date
+    // Last donation date
     if (data.containsKey('lastDonationDate') &&
         data['lastDonationDate'] != null) {
-      items.add(
-        _buildHealthInfoItem(
-          title: 'Last Donation Date',
+      categories['General']!.add(
+        _buildInfoCard(
+          title: 'Last Donation',
           value: _formatDate(data['lastDonationDate']),
           icon: Icons.calendar_today,
           color: Colors.blue,
@@ -1699,20 +1666,62 @@ class _BloodResponseNotificationDialogState
       );
     }
 
-    // Add lifestyle info
+    // Medical conditions, medications, and allergies (Medical category)
+    List<Map<String, dynamic>> medicalItems = [
+      {
+        'key': 'medicalConditions',
+        'title': 'Medical Conditions',
+        'icon': Icons.medical_services,
+        'color': Colors.red,
+      },
+      {
+        'key': 'medications',
+        'title': 'Current Medications',
+        'icon': Icons.medication,
+        'color': Colors.orange,
+      },
+      {
+        'key': 'allergies',
+        'title': 'Allergies',
+        'icon': Icons.warning,
+        'color': Colors.amber,
+      },
+    ];
+
+    for (var item in medicalItems) {
+      if (data.containsKey(item['key'])) {
+        final value = data[item['key']];
+        if (value != null &&
+            (value is String && value.isNotEmpty ||
+                value is List && value.isNotEmpty)) {
+          final displayValue =
+              value is List ? value.join(', ') : value.toString();
+          categories['Medical']!.add(
+            _buildInfoCard(
+              title: item['title'],
+              value: displayValue,
+              icon: item['icon'],
+              color: item['color'],
+            ),
+          );
+        }
+      }
+    }
+
+    // Lifestyle information
     if (data.containsKey('lifestyle')) {
       final lifestyle = data['lifestyle'];
-      if (lifestyle is Map) {
+      if (lifestyle is Map && lifestyle.isNotEmpty) {
         lifestyle.forEach((key, value) {
           if (value != null) {
-            items.add(
-              _buildHealthInfoItem(
-                title: key.toString().replaceFirst(
-                  key[0],
-                  key[0].toUpperCase(),
-                ),
+            categories['Lifestyle']!.add(
+              _buildInfoCard(
+                title: key
+                    .toString()
+                    .replaceFirst(key[0], key[0].toUpperCase())
+                    .replaceAll('_', ' '),
                 value: value.toString(),
-                icon: Icons.person,
+                icon: _getLifestyleIcon(key.toString()),
                 color: Colors.green,
               ),
             );
@@ -1721,7 +1730,7 @@ class _BloodResponseNotificationDialogState
       }
     }
 
-    // Add any other health info key
+    // Other health information
     data.forEach((key, value) {
       if (![
             'generalHealth',
@@ -1733,8 +1742,8 @@ class _BloodResponseNotificationDialogState
             'lastUpdated',
           ].contains(key) &&
           value != null) {
-        items.add(
-          _buildHealthInfoItem(
+        categories['Other']!.add(
+          _buildInfoCard(
             title: key
                 .toString()
                 .replaceFirst(key[0], key[0].toUpperCase())
@@ -1747,83 +1756,247 @@ class _BloodResponseNotificationDialogState
       }
     });
 
-    // If no items were added, add a message
-    if (items.isEmpty) {
-      items.add(
+    // Build the final layout with sections
+    List<Widget> sectionWidgets = [];
+
+    // Add sections that have content
+    categories.forEach((title, items) {
+      if (items.isNotEmpty) {
+        sectionWidgets.add(_buildSection(title, items));
+      }
+    });
+
+    // If no sections were added, show a message
+    if (sectionWidgets.isEmpty) {
+      sectionWidgets.add(
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            'No detailed health information available',
-            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Center(
+            child: Text(
+              'No detailed health information available',
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       );
     }
 
-    return items;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: sectionWidgets,
+    );
   }
 
-  // Build a single health info item
-  Widget _buildHealthInfoItem({
+  // Build a section with title and items
+  Widget _buildSection(String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8, left: 4),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        ...items,
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  // Build a special card for health status
+  Widget _buildHealthStatusCard(String status) {
+    // Determine color based on status
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (status.toLowerCase()) {
+      case 'excellent':
+      case 'very good':
+        statusColor = Colors.green;
+        statusIcon = Icons.sentiment_very_satisfied;
+        break;
+      case 'good':
+        statusColor = Colors.lightGreen;
+        statusIcon = Icons.sentiment_satisfied;
+        break;
+      case 'fair':
+        statusColor = Colors.amber;
+        statusIcon = Icons.sentiment_neutral;
+        break;
+      case 'poor':
+        statusColor = Colors.orange;
+        statusIcon = Icons.sentiment_dissatisfied;
+        break;
+      default:
+        statusColor = Colors.blueGrey;
+        statusIcon = Icons.favorite;
+    }
+
+    return Card(
+      elevation: 0,
+      color: statusColor.withOpacity(0.1),
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: statusColor.withOpacity(0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(statusIcon, color: statusColor, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'General Health Status',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build an info card for health data items
+  Widget _buildInfoCard({
     required String title,
     required String value,
     required IconData icon,
     required Color color,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 14, color: color),
             ),
-            child: Icon(icon, size: 14, color: color),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: color,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: color,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 12)),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  // Get appropriate icon for lifestyle items
+  IconData _getLifestyleIcon(String key) {
+    switch (key.toLowerCase()) {
+      case 'smoking':
+        return Icons.smoking_rooms;
+      case 'alcohol':
+        return Icons.liquor;
+      case 'exercise':
+        return Icons.fitness_center;
+      case 'diet':
+        return Icons.restaurant;
+      case 'sleep':
+        return Icons.nightlight;
+      default:
+        return Icons.person;
+    }
   }
 
   // Build message for when no health data is available
   Widget _buildNoHealthDataMessage() {
     return Container(
       margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.teal.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.teal.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 16, color: Colors.teal),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.teal.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.info_outline, size: 20, color: Colors.teal),
+          ),
+          const SizedBox(width: 12),
           const Expanded(
-            child: Text(
-              'No health questionnaire data available for this donor',
-              style: TextStyle(fontSize: 12, color: Colors.teal),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No Health Data Available',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.teal,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'This donor has not provided any health questionnaire information.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
           ),
         ],
