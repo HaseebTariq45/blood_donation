@@ -679,7 +679,7 @@ class _BloodResponseNotificationDialogState
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppConstants.primaryColor),
+                        side: BorderSide(color: Colors.grey[600]!),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -688,7 +688,7 @@ class _BloodResponseNotificationDialogState
                       child: Text(
                         'DISMISS',
                         style: TextStyle(
-                          color: AppConstants.primaryColor,
+                          color: Colors.grey[700],
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -698,9 +698,14 @@ class _BloodResponseNotificationDialogState
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _acceptDonation,
+                      onPressed:
+                          _isLoading
+                              ? null
+                              : () {
+                                _showContactOptionsSheet();
+                              },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.successColor,
+                        backgroundColor: AppConstants.primaryColor,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -718,17 +723,56 @@ class _BloodResponseNotificationDialogState
                                   ),
                                 ),
                               )
-                              : const Text(
-                                'ACCEPT',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                              : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.contact_phone, size: 16),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'CONTACT DONOR',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              // Additional action row with View Details button
+              OutlinedButton(
+                onPressed: widget.onViewRequest,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppConstants.primaryColor,
+                  side: BorderSide(color: AppConstants.primaryColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.visibility,
+                      size: 16,
+                      color: AppConstants.primaryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'VIEW REQUEST DETAILS',
+                      style: TextStyle(
+                        color: AppConstants.primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -2002,5 +2046,248 @@ class _BloodResponseNotificationDialogState
         ],
       ),
     );
+  }
+
+  // Function to show contact options in a bottom sheet
+  void _showContactOptionsSheet() {
+    setState(() {
+      _showContactOptions = true;
+    });
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.contact_phone,
+                        color: AppConstants.primaryColor,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Contact ${widget.responderName}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Blood Type: ${widget.bloodType}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Contact options
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.call, color: Colors.green),
+                  ),
+                  title: const Text('Call Donor'),
+                  subtitle: Text(widget.responderPhone),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _makePhoneCall(widget.responderPhone);
+                  },
+                ),
+
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.message, color: Colors.blue),
+                  ),
+                  title: const Text('Send SMS'),
+                  subtitle: Text(widget.responderPhone),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _sendSMS(widget.responderPhone);
+                  },
+                ),
+
+                if (_responderDetails?.email != null &&
+                    _responderDetails!.email.isNotEmpty)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.email, color: Colors.orange),
+                    ),
+                    title: const Text('Send Email'),
+                    subtitle: Text(_responderDetails!.email),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final Uri emailUri = Uri(
+                        scheme: 'mailto',
+                        path: _responderDetails!.email,
+                        queryParameters: {
+                          'subject': 'Blood Donation Coordination',
+                          'body':
+                              'Hello ${widget.responderName},\n\nThank you for responding to my blood request...',
+                        },
+                      );
+                      if (await url_launcher.canLaunchUrl(emailUri)) {
+                        await url_launcher.launchUrl(emailUri);
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not launch email app'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.content_copy, color: Colors.purple),
+                  ),
+                  title: const Text('Copy Phone Number'),
+                  subtitle: Text(widget.responderPhone),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _copyToClipboard(widget.responderPhone, 'Phone number');
+                  },
+                ),
+
+                // Emergency contacts section if available
+                if (_emergencyContacts.isNotEmpty) ...[
+                  const Divider(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    child: Text(
+                      'Emergency Contacts',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  ..._emergencyContacts
+                      .take(2)
+                      .map(
+                        (contact) => ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.contact_emergency,
+                              color: Colors.red,
+                            ),
+                          ),
+                          title: Text(contact.name),
+                          subtitle: Text(contact.phoneNumber),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.call,
+                                  color: Colors.green,
+                                ),
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final Uri phoneUri = Uri(
+                                    scheme: 'tel',
+                                    path: contact.phoneNumber,
+                                  );
+                                  await url_launcher.launchUrl(phoneUri);
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.message,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final Uri smsUri = Uri(
+                                    scheme: 'sms',
+                                    path: contact.phoneNumber,
+                                  );
+                                  await url_launcher.launchUrl(smsUri);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  if (_emergencyContacts.length > 2)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, top: 8),
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.people, size: 16),
+                        label: Text(
+                          'View All ${_emergencyContacts.length} Contacts',
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAllContacts();
+                        },
+                      ),
+                    ),
+                ],
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+    ).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _showContactOptions = false;
+        });
+      }
+    });
   }
 }

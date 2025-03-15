@@ -237,6 +237,8 @@ class _DonationRequestNotificationDialogState
   }
 
   Widget _buildDialogContent(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.9,
@@ -247,9 +249,10 @@ class _DonationRequestNotificationDialogState
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black38,
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 2,
           ),
         ],
       ),
@@ -261,11 +264,18 @@ class _DonationRequestNotificationDialogState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header - Fixed position
+              // Header - Enhanced with gradient background
               Container(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 20),
                 decoration: BoxDecoration(
-                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppConstants.primaryColor.withOpacity(0.15),
+                      AppConstants.primaryColor.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
@@ -282,78 +292,123 @@ class _DonationRequestNotificationDialogState
                       child: Text(
                         'Blood Donation Request',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppConstants.primaryColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildBloodTypeBadge(widget.requesterBloodType),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Urgent Request',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: context.textColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Needs Assistance',
+                    const SizedBox(height: 20),
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildBloodTypeBadge(widget.requesterBloodType),
+                          const SizedBox(width: 20),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Urgent Request',
                                 style: TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: context.textColor,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.green.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.priority_high_rounded,
+                                      size: 14,
+                                      color: Colors.green,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Needs Assistance',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // Requester information - Scrollable
+              // Divider
+              Container(
+                height: 1,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+              ),
+
+              // Requester information - Scrollable with improved styling
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Requester Information',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: context.textColor,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.primaryColor.withOpacity(
+                                    0.1,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  color: AppConstants.primaryColor,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Requester Information',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textColor,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
-                          // Requester details
+                          // Requester details with enhanced styling
                           _buildDetailRow(
                             context,
                             Icons.person,
@@ -412,6 +467,9 @@ class _DonationRequestNotificationDialogState
                                 ),
                             showCopy: true,
                           ),
+
+                          // Extra spacing at bottom
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -419,76 +477,108 @@ class _DonationRequestNotificationDialogState
                 ),
               ),
 
-              // Action buttons - Fixed position at bottom
+              // Divider before buttons
+              Container(
+                height: 1,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+              ),
+
+              // Action buttons - Enhanced styling
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 20,
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  color:
-                      context.isDarkMode ? Colors.black12 : Colors.grey.shade50,
+                  color: isDark ? Colors.black12 : Colors.grey.shade50,
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(24),
                     bottomRight: Radius.circular(24),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: _declineDonationRequest,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[600],
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _declineDonationRequest,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'DECLINE',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'DECLINE',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _acceptDonationRequest,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.primaryColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _acceptDonationRequest,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppConstants.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: AppConstants.primaryColor.withOpacity(
+                                  0.3,
+                                ),
+                              ),
+                            ),
+                          ),
+                          child: const Text(
+                            'ACCEPT',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'ACCEPT',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
 
-          // Close button
+          // Close button - Enhanced
           Positioned(
             right: 8,
             top: 8,
-            child: IconButton(
-              icon: Icon(
-                Icons.close,
-                color: context.isDarkMode ? Colors.white70 : Colors.grey[700],
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color:
+                        isDark ? Colors.black26 : Colors.white.withOpacity(0.8),
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: isDark ? Colors.white70 : Colors.grey[700],
+                    size: 20,
+                  ),
+                ),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
             ),
           ),
 
@@ -497,29 +587,83 @@ class _DonationRequestNotificationDialogState
             Positioned.fill(
               child: Container(
                 color: context.cardColor.withOpacity(0.7),
-                child: const Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800 : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading details...',
+                          style: TextStyle(
+                            color: context.textColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
 
-          // Copied text indicator
+          // Copied text indicator - Enhanced
           if (_copiedText != null)
             Positioned(
               bottom: 70,
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$_copiedText copied to clipboard',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800 : Colors.black87,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: Colors.greenAccent,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$_copiedText copied to clipboard',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -533,11 +677,20 @@ class _DonationRequestNotificationDialogState
     return ScaleTransition(
       scale: _pulseAnimation,
       child: Container(
-        width: 60,
-        height: 60,
+        width: 64,
+        height: 64,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppConstants.primaryColor,
+          gradient: LinearGradient(
+            colors: [
+              AppConstants.primaryColor,
+              AppConstants.primaryColor.withRed(
+                (AppConstants.primaryColor.red + 30).clamp(0, 255),
+              ),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppConstants.primaryColor.withOpacity(0.4),
@@ -552,7 +705,7 @@ class _DonationRequestNotificationDialogState
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: 20,
             ),
           ),
         ),

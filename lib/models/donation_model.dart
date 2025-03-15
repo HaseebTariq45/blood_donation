@@ -11,6 +11,7 @@ class DonationModel {
   final String address;
   final String recipientId;
   final String recipientName;
+  final String? recipientPhone;
   final String status; // Completed, Pending, Cancelled
 
   DonationModel({
@@ -23,6 +24,7 @@ class DonationModel {
     required this.address,
     this.recipientId = '',
     this.recipientName = '',
+    this.recipientPhone,
     this.status = 'Pending',
   });
 
@@ -39,6 +41,7 @@ class DonationModel {
     String? address,
     String? recipientId,
     String? recipientName,
+    String? recipientPhone,
     String? status,
   }) {
     return DonationModel(
@@ -51,6 +54,7 @@ class DonationModel {
       address: address ?? this.address,
       recipientId: recipientId ?? this.recipientId,
       recipientName: recipientName ?? this.recipientName,
+      recipientPhone: recipientPhone ?? this.recipientPhone,
       status: status ?? this.status,
     );
   }
@@ -67,6 +71,7 @@ class DonationModel {
       'address': address,
       'recipientId': recipientId,
       'recipientName': recipientName,
+      'recipientPhone': recipientPhone,
       'status': status,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -83,7 +88,7 @@ class DonationModel {
     } else {
       parsedDate = DateTime.now();
     }
-    
+
     return DonationModel(
       id: json['id'] ?? '',
       donorId: json['donorId'] ?? '',
@@ -94,6 +99,7 @@ class DonationModel {
       address: json['address'] ?? '',
       recipientId: json['recipientId'] ?? '',
       recipientName: json['recipientName'] ?? '',
+      recipientPhone: json['recipientPhone'],
       status: json['status'] ?? 'Pending',
     );
   }
@@ -107,7 +113,7 @@ class DonationModel {
     required String address,
   }) {
     return DonationModel(
-      id: '',  // Will be assigned by Firestore
+      id: '', // Will be assigned by Firestore
       donorId: donorId,
       donorName: donorName,
       bloodType: bloodType,
@@ -126,14 +132,14 @@ class DonationModel {
       'Central Hospital',
       'Red Cross Center',
       'Community Donation Center',
-      'Medical College Hospital'
+      'Medical College Hospital',
     ];
-    
+
     final randomDays = (index + 1) * 30;
     final randomStatus = statuses[index % statuses.length];
     final randomBloodType = bloodTypes[index % bloodTypes.length];
     final randomCenter = centers[index % centers.length];
-    
+
     return DonationModel(
       id: 'donation_$index',
       donorId: 'donor_1',
@@ -144,6 +150,7 @@ class DonationModel {
       address: '123 Main St, City, Country',
       recipientId: index % 2 == 0 ? 'recipient_$index' : '',
       recipientName: index % 2 == 0 ? 'Hospital Patient' : '',
+      recipientPhone: index % 2 == 0 ? '555-1234' : null,
       status: randomStatus,
     );
   }
@@ -151,4 +158,4 @@ class DonationModel {
   static List<DonationModel> getDummyList(int count) {
     return List.generate(count, (index) => DonationModel.dummy(index));
   }
-} 
+}

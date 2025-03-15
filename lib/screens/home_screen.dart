@@ -432,7 +432,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: verticalPadding),
 
-                        // Fourth row (1 card)
+                        // Fourth row (2 cards)
                         Row(
                           children: [
                             Expanded(
@@ -446,6 +446,20 @@ class HomeScreen extends StatelessWidget {
                                   );
                                 },
                                 index: 6,
+                              ),
+                            ),
+                            SizedBox(width: horizontalPadding),
+                            Expanded(
+                              child: HomeMenuCard(
+                                title: 'Donation Tracking',
+                                icon: Icons.volunteer_activism,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/donation_tracking',
+                                  );
+                                },
+                                index: 7,
                               ),
                             ),
                           ],

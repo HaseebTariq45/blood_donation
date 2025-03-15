@@ -29,6 +29,7 @@ import 'screens/emergency_contacts_screen.dart';
 import 'screens/health_tips_screen.dart';
 import 'screens/health_questionnaire_screen.dart';
 import 'screens/medical_conditions_screen.dart';
+import 'screens/donation_tracking_screen.dart';
 import 'utils/localization/app_localization.dart';
 import 'firebase/firebase_service.dart';
 import 'services/firebase_notification_service.dart';
@@ -155,6 +156,7 @@ class _MyAppState extends State<MyApp> {
         '/settings': (context) => const SettingsScreen(),
         '/blood_banks': (context) => const BloodBanksScreen(),
         '/donation_history': (context) => const DonationHistoryScreen(),
+        '/donation_tracking': (context) => const DonationTrackingScreen(),
         '/about_us': (context) => const AboutUsScreen(),
         '/privacy_policy': (context) => const PrivacyPolicyScreen(),
         '/terms_conditions': (context) => const TermsConditionsScreen(),
@@ -162,8 +164,11 @@ class _MyAppState extends State<MyApp> {
         '/emergency_contacts': (context) => const EmergencyContactsScreen(),
         '/health_tips': (context) => const HealthTipsScreen(),
         '/health-questionnaire': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-          final isPostSignup = args != null ? args['isPostSignup'] ?? false : false;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final isPostSignup =
+              args != null ? args['isPostSignup'] ?? false : false;
           return HealthQuestionnaireScreen(isPostSignup: isPostSignup);
         },
         '/medical-conditions': (context) => const MedicalConditionsScreen(),

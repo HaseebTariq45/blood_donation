@@ -7,6 +7,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../constants/app_constants.dart';
 import '../widgets/blood_response_notification_dialog.dart';
+import '../widgets/donation_request_notification_dialog.dart';
+import '../widgets/blood_request_notification_dialog.dart';
 
 class FirebaseNotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -168,7 +170,7 @@ class FirebaseNotificationService {
       final String? responderPhone = data['responderPhone'];
       final String? bloodType = data['bloodType'];
       final String? responderId = data['responderId'];
-      
+
       debugPrint('Notification data for blood request response:');
       debugPrint('  requestId: $requestId');
       debugPrint('  responderName: $responderName');
@@ -209,12 +211,14 @@ class FirebaseNotificationService {
           debugPrint('Error: Missing responderId in notification data');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Could not show details: Missing responder information'),
+              content: Text(
+                'Could not show details: Missing responder information',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
         }
-        
+
         // Fallback - navigate to blood requests list if requestId is available
         if (requestId != null) {
           Navigator.of(context, rootNavigator: true).pushNamed(
@@ -223,6 +227,38 @@ class FirebaseNotificationService {
           );
         }
       }
+    } else if (notificationType == 'donation_request') {
+      // Show donation request dialog when someone requests a donation
+      showDialog(
+        context: context!,
+        builder:
+            (context) => DonationRequestNotificationDialog(
+              requesterId: data['requesterId'] ?? '',
+              requesterName: data['requesterName'] ?? '',
+              requesterPhone: data['requesterPhone'] ?? '',
+              requesterEmail: data['requesterEmail'] ?? '',
+              requesterBloodType: data['requesterBloodType'] ?? '',
+              requesterAddress: data['requesterAddress'] ?? '',
+            ),
+      );
+    } else if (notificationType == 'blood_request') {
+      // Handle blood request notification - show dialog to accept or decline the request
+      showDialog(
+        context: context!,
+        builder:
+            (context) => BloodRequestNotificationDialog(
+              requestId: data['requestId'] ?? '',
+              requesterId: data['requesterId'] ?? '',
+              requesterName: data['requesterName'] ?? '',
+              requesterPhone: data['requesterPhone'] ?? '',
+              bloodType: data['bloodType'] ?? '',
+              location: data['location'] ?? '',
+              urgency: data['urgency'] ?? 'Normal',
+              notes: data['notes'] ?? '',
+              requestDate:
+                  data['requestDate'] ?? DateTime.now().toIso8601String(),
+            ),
+      );
     }
   }
 
@@ -285,6 +321,78 @@ class FirebaseNotificationService {
     }
   }
 
+  // Send notification when new blood request is created
+  Future<void> sendBloodRequestNotification({
+    required String recipientId,
+    required String requestId,
+    required String requesterId,
+    required String requesterName,
+    required String requesterPhone,
+    required String bloodType,
+    required String location,
+    required String urgency,
+    String notes = '',
+  }) async {
+    try {
+      // 1. Get recipient's device tokens from Firestore
+      final recipientDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(recipientId)
+              .get();
+
+      if (!recipientDoc.exists) {
+        debugPrint('Recipient document not found');
+        return;
+      }
+
+      final recipientData = recipientDoc.data();
+      if (recipientData == null) return;
+
+      final deviceTokens = recipientData['deviceTokens'];
+      if (deviceTokens == null ||
+          (deviceTokens is List && deviceTokens.isEmpty)) {
+        debugPrint('No device tokens found for recipient');
+        return;
+      }
+
+      // 2. Create the notification in Firestore
+      final notificationData = {
+        'userId': recipientId,
+        'title': 'New Blood Request',
+        'body':
+            '$requesterName needs blood type $bloodType${urgency.toLowerCase() == 'urgent' ? ' urgently' : ''}!',
+        'type': 'blood_request',
+        'read': false,
+        'createdAt': DateTime.now().toIso8601String(),
+        'metadata': {
+          'requestId': requestId,
+          'requesterId': requesterId,
+          'requesterName': requesterName,
+          'requesterPhone': requesterPhone,
+          'bloodType': bloodType,
+          'location': location,
+          'urgency': urgency,
+          'notes': notes,
+          'requestDate': DateTime.now().toIso8601String(),
+        },
+      };
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .add(notificationData);
+
+      debugPrint('Blood request notification created');
+
+      // Note: For actual push notifications, you would need a server-side component
+      // with Firebase Cloud Messaging (FCM) to send the notifications to the device tokens.
+      // This would typically be done with a Cloud Function or a backend server.
+    } catch (e) {
+      debugPrint('Error sending blood request notification: $e');
+    }
+  }
+
   Future<void> _subscribeToTopics() async {
     try {
       // Web platforms don't support topic subscription directly
@@ -292,10 +400,10 @@ class FirebaseNotificationService {
         debugPrint('Topic subscription not supported on web. Skipping...');
         return;
       }
-      
+
       // For mobile platforms, subscribe to topic
       await _firebaseMessaging.subscribeToTopic('blood_requests');
-      
+
       // Subscribe to user-specific topic for targeted notifications
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {

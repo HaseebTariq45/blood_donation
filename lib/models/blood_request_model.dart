@@ -9,8 +9,11 @@ class BloodRequestModel {
   final String location;
   final String urgency; // Normal, Urgent
   final DateTime requestDate;
-  final String status; // Pending, Fulfilled, Cancelled
+  final String status; // Pending, In Progress, Accepted, Fulfilled, Cancelled
   final String notes;
+  final String? responderId;
+  final String? responderName;
+  final String? responderPhone;
 
   BloodRequestModel({
     required this.id,
@@ -23,6 +26,9 @@ class BloodRequestModel {
     this.urgency = 'Normal',
     this.status = 'Pending',
     this.notes = '',
+    this.responderId,
+    this.responderName,
+    this.responderPhone,
   });
 
   String get formattedDate => DateFormat('MMM dd, yyyy').format(requestDate);
@@ -33,7 +39,7 @@ class BloodRequestModel {
     final bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     final urgencyTypes = ['Normal', 'Urgent'];
     final statusTypes = ['Pending', 'Fulfilled', 'Cancelled'];
-    
+
     return BloodRequestModel(
       id: 'request_$index',
       requesterId: 'requester_$index',
@@ -65,6 +71,9 @@ class BloodRequestModel {
       'requestDate': requestDate.toIso8601String(),
       'status': status,
       'notes': notes,
+      'responderId': responderId,
+      'responderName': responderName,
+      'responderPhone': responderPhone,
     };
   }
 
@@ -78,9 +87,15 @@ class BloodRequestModel {
       bloodType: map['bloodType'] ?? '',
       location: map['location'] ?? '',
       urgency: map['urgency'] ?? 'Normal',
-      requestDate: DateTime.parse(map['requestDate'] ?? DateTime.now().toIso8601String()),
+      requestDate:
+          map['requestDate'] != null
+              ? DateTime.parse(map['requestDate'])
+              : DateTime.now(),
       status: map['status'] ?? 'Pending',
       notes: map['notes'] ?? '',
+      responderId: map['responderId'],
+      responderName: map['responderName'],
+      responderPhone: map['responderPhone'],
     );
   }
-} 
+}
