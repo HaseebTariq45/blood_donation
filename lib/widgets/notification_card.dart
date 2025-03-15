@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../widgets/blood_response_notification_dialog.dart';
+import '../constants/app_constants.dart';
+import '../utils/theme_helper.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
@@ -29,6 +31,10 @@ class NotificationCard extends StatelessWidget {
         color = Colors.orange.shade700;
         iconData = Icons.calendar_today;
         break;
+      case 'urgent_request':
+        color = Colors.red.shade900;
+        iconData = Icons.priority_high;
+        break;
       case 'test':
         color = Colors.blue.shade700;
         iconData = Icons.notifications;
@@ -38,158 +44,255 @@ class NotificationCard extends StatelessWidget {
         iconData = Icons.notifications;
     }
 
-    return Card(
-      elevation: 2.0,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-        side: notification.read
-            ? BorderSide.none
-            : BorderSide(color: color.withOpacity(0.5), width: 1.5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          if (!notification.read)
+            BoxShadow(
+              color: color.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
       ),
-      child: InkWell(
-        onTap: () {
-          if (notification.type == 'blood_request_response') {
-            // Mark notification as read
-            onMarkAsRead(notification.id);
-            
-            // Get responder information
-            final String? responderId = notification.metadata?['responderId'];
-            final String? responderName = notification.metadata?['responderName'];
-            final String? responderPhone = notification.metadata?['responderPhone'];
-            final String? bloodType = notification.metadata?['bloodType'];
-            final String? requestId = notification.metadata?['requestId'];
-            
-            // Debug log
-            debugPrint('Notification card, responder info:');
-            debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
-            debugPrint('  requestId: $requestId');
-            
-            // Validate responderId
-            if (responderId != null && responderId.isNotEmpty) {
-              // Show blood response dialog with donor details
+      child: Material(
+        color: context.isDarkMode 
+            ? notification.read 
+                ? const Color(0xFF1E1E1E) 
+                : const Color(0xFF252525)
+            : notification.read 
+                ? Colors.white 
+                : Colors.white,
+        borderRadius: BorderRadius.circular(16.0),
+        elevation: notification.read ? 0 : 1,
+        child: InkWell(
+          onTap: () {
+            if (notification.type == 'blood_request_response') {
+              // Mark notification as read
+              onMarkAsRead(notification.id);
+              
+              // Get responder information
+              final String? responderId = notification.metadata?['responderId'];
+              final String? responderName = notification.metadata?['responderName'];
+              final String? responderPhone = notification.metadata?['responderPhone'];
+              final String? bloodType = notification.metadata?['bloodType'];
+              final String? requestId = notification.metadata?['requestId'];
+              
+              // Debug log
+              debugPrint('Notification card, responder info:');
+              debugPrint('  responderId: $responderId (${responderId?.isEmpty == true ? "empty" : "not empty"})');
+              debugPrint('  requestId: $requestId');
+              
+              // Validate responderId
+              if (responderId != null && responderId.isNotEmpty) {
+                // Show blood response dialog with donor details
+                showDialog(
+                  context: context,
+                  builder: (context) => BloodResponseNotificationDialog(
+                    responderName: responderName ?? 'Unknown',
+                    responderPhone: responderPhone ?? 'Unknown',
+                    bloodType: bloodType ?? 'Unknown',
+                    responderId: responderId,
+                    requestId: requestId ?? '',
+                    onViewRequest: () {
+                      // Handle viewing the request
+                      Navigator.pop(context);
+                      // TODO: Navigate to blood request detail page
+                    },
+                  ),
+                );
+              } else {
+                // Show error for missing responder ID
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Could not show details: Missing responder information'),
+                      ],
+                    ),
+                    backgroundColor: Colors.orange,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              }
+            } else {
+              // For other notification types
+              onMarkAsRead(notification.id);
+              
+              // Show a simple dialog for other notification types
               showDialog(
                 context: context,
-                builder: (context) => BloodResponseNotificationDialog(
-                  responderName: responderName ?? 'Unknown',
-                  responderPhone: responderPhone ?? 'Unknown',
-                  bloodType: bloodType ?? 'Unknown',
-                  responderId: responderId,
-                  requestId: requestId ?? '',
-                  onViewRequest: () {
-                    // Handle viewing the request
-                    Navigator.pop(context);
-                    // TODO: Navigate to blood request detail page
-                  },
-                ),
-              );
-            } else {
-              // Show error for missing responder ID
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Could not show details: Missing responder information'),
-                  backgroundColor: Colors.orange,
+                builder: (context) => AlertDialog(
+                  title: Text(
+                    notification.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: context.textColor,
+                    ),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notification.body,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: context.textColor.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Received: ${_formatDate(notification.createdAt)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  backgroundColor: context.isDarkMode ? const Color(0xFF252525) : Colors.white,
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Close',
+                        style: TextStyle(
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
-          } else {
-            // For other notification types
-            onMarkAsRead(notification.id);
-            
-            // Show a simple dialog for other notification types
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(notification.title),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(notification.body),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Received: ${_formatDate(notification.createdAt)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+          },
+          borderRadius: BorderRadius.circular(16.0),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              border: notification.read
+                  ? null
+                  : Border.all(
+                      color: color.withOpacity(0.5),
+                      width: 1.5,
                     ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon with colored background
+                Container(
+                  padding: const EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
-                ],
-              ),
-            );
-          }
-        },
-        borderRadius: BorderRadius.circular(12.0),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon with colored background
-              Container(
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.0),
+                  child: Icon(iconData, color: color, size: 24.0),
                 ),
-                child: Icon(iconData, color: color, size: 24.0),
-              ),
-              const SizedBox(width: 12.0),
-              // Notification content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            style: TextStyle(
-                              fontWeight: notification.read ? FontWeight.normal : FontWeight.bold,
-                              fontSize: 16.0,
+                const SizedBox(width: 16.0),
+                // Notification content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: TextStyle(
+                                fontWeight: notification.read ? FontWeight.w500 : FontWeight.bold,
+                                fontSize: 16.0,
+                                color: context.textColor,
+                              ),
                             ),
                           ),
+                          if (!notification.read)
+                            Container(
+                              width: 10.0,
+                              height: 10.0,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: color.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6.0),
+                      Text(
+                        notification.body,
+                        style: TextStyle(
+                          color: context.isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                          fontSize: 14.0,
+                          height: 1.3,
                         ),
-                        if (!notification.read)
-                          Container(
-                            width: 8.0,
-                            height: 8.0,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
+                      ),
+                      const SizedBox(height: 10.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _formatDate(notification.createdAt),
+                            style: TextStyle(
+                              color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                              fontSize: 12.0,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      notification.body,
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontSize: 14.0,
+                          if (notification.type == 'blood_request_response')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.bloodtype,
+                                    color: color,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    notification.metadata?['bloodType'] ?? 'Unknown',
+                                    style: TextStyle(
+                                      color: color,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8.0),
-                    Text(
-                      _formatDate(notification.createdAt),
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12.0,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

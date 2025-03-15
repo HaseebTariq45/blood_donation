@@ -91,7 +91,7 @@ class _SignupScreenState extends State<SignupScreen>
         'bloodType': _bloodType,
         'phoneNumber': _phoneController.text.trim(),
         'address': _addressController.text.trim(),
-        'isAvailableToDonate': true,
+        'isAvailableToDonate': _isAvailableToDonate,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -596,18 +596,27 @@ class _SignupScreenState extends State<SignupScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Blood Type',
-                              style: TextStyle(
-                                fontSize: sectionTitleFontSize,
-                                fontWeight: FontWeight.bold,
-                                color: context.textColor,
-                                letterSpacing: 0.5,
-                              ),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.bloodtype_outlined,
+                                  color: AppConstants.primaryColor,
+                                  size: sectionTitleFontSize + 4,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Blood Type',
+                                  style: TextStyle(
+                                    fontSize: sectionTitleFontSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.textColor,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                             SizedBox(height: verticalPadding),
                             Container(
-                              height: 70,
                               decoration: BoxDecoration(
                                 color: context.cardColor,
                                 borderRadius: BorderRadius.circular(12),
@@ -621,60 +630,82 @@ class _SignupScreenState extends State<SignupScreen>
                                   ),
                                 ],
                               ),
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.all(12),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 4,
+                                  childAspectRatio: 1.0,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                ),
                                 itemCount: _bloodTypes.length,
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
                                 itemBuilder: (context, index) {
                                   final bloodType = _bloodTypes[index];
                                   final isSelected = bloodType == _bloodType;
 
-                                  return AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 60,
-                                    margin: const EdgeInsets.symmetric(vertical: 12),
-                                    decoration: BoxDecoration(
-                                      gradient: isSelected
-                                          ? LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: [
-                                                AppConstants.primaryColor,
-                                                AppConstants.primaryColor.withOpacity(0.8),
-                                              ],
-                                            )
-                                          : null,
-                                      color: isSelected
-                                          ? null
-                                          : context.isDarkMode
-                                          ? Colors.grey[800]
-                                          : Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: AppConstants.primaryColor.withOpacity(0.3),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _bloodType = bloodType;
-                                        });
-                                      },
-                                      child: Center(
-                                        child: Text(
-                                          bloodType,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white : context.textColor,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 0.5,
-                                          ),
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _bloodType = bloodType;
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppConstants.primaryColor
+                                            : context.isDarkMode
+                                                ? Colors.grey[800]
+                                                : Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppConstants.primaryColor
+                                              : Colors.grey.withOpacity(0.3),
+                                          width: 1.5,
                                         ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: AppConstants.primaryColor.withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.water_drop,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : AppConstants.primaryColor,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            bloodType,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : context.textColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: bloodTypeFontSize - 2,
+                                            ),
+                                          ),
+                                          if (isSelected) ...[
+                                            const SizedBox(height: 4),
+                                            const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.white,
+                                              size: 12,
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                   );
@@ -682,6 +713,83 @@ class _SignupScreenState extends State<SignupScreen>
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      SizedBox(height: verticalPadding),
+                      // Donation Availability Section
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 750),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPadding * 0.8,
+                            vertical: verticalPadding,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.isDarkMode
+                                    ? Colors.black.withOpacity(0.1)
+                                    : Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.volunteer_activism,
+                                color: AppConstants.primaryColor,
+                                size: 24,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Available to donate blood',
+                                      style: TextStyle(
+                                        fontSize: formFontSize,
+                                        fontWeight: FontWeight.w500,
+                                        color: context.textColor,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Tooltip(
+                                      message: 'Indicate if you are willing and eligible to donate blood. This will make you visible to those in need of your blood type.',
+                                      triggerMode: TooltipTriggerMode.tap,
+                                      showDuration: const Duration(seconds: 3),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.primaryColor.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                      child: Icon(
+                                        Icons.info_outline,
+                                        size: 16,
+                                        color: AppConstants.primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _isAvailableToDonate,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _isAvailableToDonate = value;
+                                  });
+                                },
+                                activeColor: AppConstants.primaryColor,
+                                activeTrackColor: AppConstants.primaryColor.withOpacity(0.4),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       SizedBox(height: verticalPadding * 2),
