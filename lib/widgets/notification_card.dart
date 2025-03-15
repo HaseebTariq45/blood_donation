@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/notification_model.dart';
 import '../widgets/blood_response_notification_dialog.dart';
 import '../constants/app_constants.dart';
@@ -69,6 +70,9 @@ class NotificationCard extends StatelessWidget {
         elevation: notification.read ? 0 : 1,
         child: InkWell(
           onTap: () {
+            // Provide haptic feedback for better interaction
+            HapticFeedback.lightImpact();
+            
             if (notification.type == 'blood_request_response') {
               // Mark notification as read
               onMarkAsRead(notification.id);
@@ -179,6 +183,8 @@ class NotificationCard extends StatelessWidget {
             }
           },
           borderRadius: BorderRadius.circular(16.0),
+          splashColor: color.withOpacity(0.1),
+          highlightColor: color.withOpacity(0.05),
           child: Container(
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
@@ -199,6 +205,13 @@ class NotificationCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(iconData, color: color, size: 24.0),
                 ),
@@ -217,6 +230,7 @@ class NotificationCard extends StatelessWidget {
                                 fontWeight: notification.read ? FontWeight.w500 : FontWeight.bold,
                                 fontSize: 16.0,
                                 color: context.textColor,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ),
@@ -246,18 +260,29 @@ class NotificationCard extends StatelessWidget {
                           fontSize: 14.0,
                           height: 1.3,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 10.0),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _formatDate(notification.createdAt),
-                            style: TextStyle(
-                              color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                              fontSize: 12.0,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 12,
+                                color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                _formatDate(notification.createdAt),
+                                style: TextStyle(
+                                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                                  fontSize: 12.0,
+                                ),
+                              ),
+                            ],
                           ),
                           if (notification.type == 'blood_request_response')
                             Container(
@@ -265,6 +290,10 @@ class NotificationCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: color.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: color.withOpacity(0.3),
+                                  width: 1,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,

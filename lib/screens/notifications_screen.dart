@@ -123,10 +123,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
               floating: true,
               pinned: true,
               elevation: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
               backgroundColor: context.isDarkMode 
                   ? const Color(0xFF1E1E1E) 
                   : AppConstants.primaryColor,
               flexibleSpace: FlexibleSpaceBar(
+                titlePadding: const EdgeInsets.only(left: 50.0, bottom: 16.0),
                 title: Text(
                   'Notifications',
                   style: TextStyle(
@@ -172,16 +180,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           ),
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16.0, bottom: 60.0),
+                      Positioned(
+                        bottom: 60.0,
+                        right: 0,
+                        left: 0,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 50.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.notifications_active,
+                                hasUnreadNotifications 
+                                    ? Icons.notifications_active
+                                    : Icons.notifications_none_outlined,
                                 color: Colors.white.withOpacity(0.9),
-                                size: 28,
+                                size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -190,7 +208,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                                     : 'All caught up!',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -203,66 +222,72 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
               ),
               actions: [
                 if (hasUnreadNotifications)
-                  IconButton(
-                    icon: const Icon(Icons.done_all, color: Colors.white),
-                    tooltip: 'Mark all as read',
+                  Container(
+                    margin: const EdgeInsets.only(right: 4.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.done_all, color: Colors.white),
+                      tooltip: 'Mark all as read',
+                      onPressed: () {
+                        appProvider.markAllNotificationsAsRead();
+                        // Show a confirmation snackbar
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('All notifications marked as read'),
+                                ],
+                              ),
+                              backgroundColor: AppConstants.successColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                Container(
+                  margin: const EdgeInsets.only(right: 8.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    tooltip: 'Refresh notifications',
                     onPressed: () {
-                      appProvider.markAllNotificationsAsRead();
-                      // Show a confirmation snackbar
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.check_circle, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text('All notifications marked as read'),
-                              ],
-                            ),
-                            backgroundColor: AppConstants.successColor,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            duration: Duration(seconds: 2),
+                      appProvider.refreshNotifications();
+                      // Show loading indicator
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text('Refreshing notifications...'),
+                            ],
                           ),
-                        );
-                      }
+                          backgroundColor: context.isDarkMode 
+                              ? const Color(0xFF2C2C2C) 
+                              : Colors.grey[800],
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
                     },
                   ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  tooltip: 'Refresh notifications',
-                  onPressed: () {
-                    appProvider.refreshNotifications();
-                    // Show loading indicator
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Text('Refreshing notifications...'),
-                          ],
-                        ),
-                        backgroundColor: context.isDarkMode 
-                            ? const Color(0xFF2C2C2C) 
-                            : Colors.grey[800],
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
                 ),
               ],
             ),
@@ -305,21 +330,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                                Container(
+                                  margin: const EdgeInsets.only(top: 16.0),
+                                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
                                   child: Row(
                                     children: [
-                                      Text(
-                                        dateKey,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                        decoration: BoxDecoration(
                                           color: context.isDarkMode 
-                                              ? Colors.white70 
-                                              : Colors.grey[800],
+                                              ? AppConstants.primaryColor.withOpacity(0.15)
+                                              : AppConstants.primaryColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _getDateIcon(dateKey),
+                                              size: 14,
+                                              color: AppConstants.primaryColor,
+                                            ),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              dateKey,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: context.isDarkMode 
+                                                    ? AppConstants.primaryColor
+                                                    : AppConstants.primaryColor,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      SizedBox(width: 8),
+                                      SizedBox(width: 12),
                                       Expanded(
                                         child: Divider(
                                           color: context.isDarkMode 
@@ -379,5 +424,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
               ),
       ),
     );
+  }
+
+  // Helper method to get appropriate icon for date headers
+  IconData _getDateIcon(String dateKey) {
+    if (dateKey == 'Today') {
+      return Icons.today;
+    } else if (dateKey == 'Yesterday') {
+      return Icons.history;
+    } else if (dateKey.contains(',')) {
+      return Icons.calendar_month;
+    } else {
+      return Icons.calendar_today;
+    }
   }
 }

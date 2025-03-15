@@ -28,22 +28,38 @@ class EmptyState extends StatelessWidget {
           children: [
             FadeInDown(
               duration: const Duration(milliseconds: 600),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: context.isDarkMode
-                      ? AppConstants.primaryColor.withOpacity(0.15)
-                      : AppConstants.primaryColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 80,
-                  color: AppConstants.primaryColor,
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: context.isDarkMode
+                          ? AppConstants.primaryColor.withOpacity(0.15)
+                          : AppConstants.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: context.isDarkMode
+                          ? AppConstants.primaryColor.withOpacity(0.2)
+                          : AppConstants.primaryColor.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Icon(
+                    icon,
+                    size: 60,
+                    color: AppConstants.primaryColor,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             FadeInUp(
               duration: const Duration(milliseconds: 800),
               child: Text(
@@ -60,13 +76,16 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             FadeInUp(
               duration: const Duration(milliseconds: 1000),
-              child: Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                  height: 1.4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: context.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    height: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -74,7 +93,19 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: 32),
               FadeInUp(
                 duration: const Duration(milliseconds: 1200),
-                child: action!,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppConstants.primaryColor.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: action!,
+                ),
               ),
             ],
           ],
