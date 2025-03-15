@@ -87,11 +87,9 @@ class _SettingsScreenState extends State<SettingsScreen>
     final double itemTitleFontSize = isSmallScreen ? 14.0 : 16.0;
     final double subtitleFontSize = isSmallScreen ? 11.0 : 12.0;
     final double versionFontSize = isSmallScreen ? 10.0 : 12.0;
-    final double dropdownFontSize = isSmallScreen ? 12.0 : 14.0;
 
     // Calculate icon sizes
     final double iconSize = isSmallScreen ? 18.0 : 20.0;
-    final double indentedIconSize = isSmallScreen ? 16.0 : 18.0;
     final double iconContainerSize = isSmallScreen ? 36.0 : 40.0;
 
     // Calculate padding based on screen size
@@ -99,408 +97,597 @@ class _SettingsScreenState extends State<SettingsScreen>
     final double cardPadding = isSmallScreen ? 12.0 : 16.0;
     final double itemPadding = isSmallScreen ? 6.0 : 8.0;
     final double itemSpacing = isSmallScreen ? 12.0 : 16.0;
-    final double sectionSpacing = isSmallScreen ? 12.0 : 16.0;
+    final double sectionSpacing = isSmallScreen ? 16.0 : 24.0;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: CustomAppBar(title: 'settings'.tr(context), showBackButton: true),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return ListView(
-                padding: EdgeInsets.all(mainPadding),
-                children: [
-                  // App Settings Card
-                  _buildSettingsCard(
-                    title: 'app_settings'.tr(context),
-                    titleFontSize: titleFontSize,
-                    cardPadding: cardPadding,
-                    children: [
-                      // Dark Mode
-                      _buildSettingItem(
-                        title: 'dark_mode'.tr(context),
-                        subtitle: 'Switch between light and dark themes'.tr(
-                          context,
-                        ),
-                        icon: Icons.dark_mode,
-                        titleFontSize: itemTitleFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        trailing: Switch(
-                          value: appProvider.isDarkMode,
-                          onChanged: (value) {
-                            // Toggle theme mode in provider (UI only, as specified)
-                            setState(() {
-                              appProvider.toggleThemeMode();
-                            });
-                          },
-                          activeColor: AppConstants.primaryColor,
-                        ),
-                      ),
-                      const Divider(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).brightness == Brightness.dark
+                      ? AppConstants.primaryColor.withOpacity(0.05)
+                      : AppConstants.primaryColor.withOpacity(0.03),
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
+                stops: const [0.0, 0.3],
+              ),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ListView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: mainPadding,
+                    vertical: mainPadding * 1.5,
+                  ),
+                  children: [
+                    // Profile summary at the top
+                    _buildProfileSummary(context),
 
-                      // Language Selector
-                      _buildSettingItem(
-                        title: 'language'.tr(context),
-                        subtitle: 'Select your preferred language'.tr(context),
-                        icon: Icons.language,
-                        titleFontSize: itemTitleFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        trailing: Builder(
-                          builder:
-                              (context) => GestureDetector(
-                                onTap: () {
-                                  _showLanguageBottomSheet(
-                                    context,
-                                    appProvider,
-                                  );
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isSmallScreen ? 10 : 14,
-                                    vertical: isSmallScreen ? 8 : 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.primaryColor
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppConstants.primaryColor
-                                          .withOpacity(0.3),
-                                      width: 1.5,
+                    SizedBox(height: sectionSpacing * 1.2),
+
+                    // App Settings Card
+                    _buildAnimatedSettingsCard(
+                      title: 'app_settings'.tr(context),
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.settings,
+                      children: [
+                        // Dark Mode
+                        _buildSettingItem(
+                          title: 'dark_mode'.tr(context),
+                          subtitle: 'Switch between light and dark themes'.tr(
+                            context,
+                          ),
+                          icon: Icons.dark_mode,
+                          titleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          trailing: Switch(
+                            value: appProvider.isDarkMode,
+                            onChanged: (value) {
+                              setState(() {
+                                appProvider.toggleThemeMode();
+                              });
+                            },
+                            activeColor: AppConstants.primaryColor,
+                          ),
+                        ),
+                        const Divider(),
+
+                        // Language Selector
+                        _buildSettingItem(
+                          title: 'language'.tr(context),
+                          subtitle: 'Select your preferred language'.tr(
+                            context,
+                          ),
+                          icon: Icons.language,
+                          titleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          trailing: Builder(
+                            builder:
+                                (context) => GestureDetector(
+                                  onTap: () {
+                                    _showLanguageBottomSheet(
+                                      context,
+                                      appProvider,
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isSmallScreen ? 10 : 14,
+                                      vertical: isSmallScreen ? 8 : 10,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.primaryColor
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
                                         color: AppConstants.primaryColor
-                                            .withOpacity(0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
+                                            .withOpacity(0.3),
+                                        width: 1.5,
                                       ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _getLangEmoji(
-                                        appProvider.selectedLanguage,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        appProvider.selectedLanguage,
-                                        style: TextStyle(
-                                          color: AppConstants.primaryColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: isSmallScreen ? 13 : 14,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppConstants.primaryColor
+                                              .withOpacity(0.05),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
                                         ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.keyboard_arrow_down,
-                                        color: AppConstants.primaryColor,
-                                        size: 18,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _getLangEmoji(
+                                          appProvider.selectedLanguage,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          appProvider.selectedLanguage,
+                                          style: TextStyle(
+                                            color: AppConstants.primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: isSmallScreen ? 13 : 14,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down,
+                                          color: AppConstants.primaryColor,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  SizedBox(height: sectionSpacing),
+                    SizedBox(height: sectionSpacing),
 
-                  // Notification Settings Card
-                  _buildSettingsCard(
-                    title: 'notifications_settings'.tr(context),
-                    titleFontSize: titleFontSize,
-                    cardPadding: cardPadding,
-                    children: [
-                      _buildSettingItem(
-                        title: 'Notification Preferences'.tr(context),
-                        subtitle: 'Manage your notification preferences',
-                        icon: Icons.notifications,
-                        titleFontSize: itemTitleFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: isSmallScreen ? 16.0 : 18.0,
-                          color:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white60
-                                  : Colors.black54,
-                        ),
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/notification_settings',
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: sectionSpacing),
-
-                  // Privacy Settings Card
-                  _buildSettingsCard(
-                    title: 'privacy_permission'.tr(context),
-                    titleFontSize: titleFontSize,
-                    cardPadding: cardPadding,
-                    children: [
-                      _buildSettingItem(
-                        title: 'location_services'.tr(context),
-                        subtitle:
-                            'Allow app to access your location for nearby blood banks'
-                                .tr(context),
-                        icon: Icons.location_on,
-                        titleFontSize: itemTitleFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        trailing: Switch(
-                          value: _locationEnabled,
-                          onChanged: (value) async {
-                            final appProvider = Provider.of<AppProvider>(
+                    // Notification Settings Card
+                    _buildAnimatedSettingsCard(
+                      title: 'notifications_settings'.tr(context),
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.notifications_active,
+                      children: [
+                        _buildSettingItem(
+                          title: 'Notification Preferences'.tr(context),
+                          subtitle: 'Manage your notification preferences',
+                          icon: Icons.notifications,
+                          titleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            size: isSmallScreen ? 16.0 : 18.0,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white60
+                                    : Colors.black54,
+                          ),
+                          onTap: () {
+                            Navigator.pushNamed(
                               context,
-                              listen: false,
+                              '/notification_settings',
                             );
-
-                            if (value) {
-                              // Try to enable location
-                              final success =
-                                  await appProvider.enableLocation();
-                              if (!success) {
-                                _showLocationPermissionDialog();
-                              }
-                            } else {
-                              // Disable location
-                              await appProvider.disableLocation();
-                            }
-
-                            setState(() {
-                              _locationEnabled = appProvider.isLocationEnabled;
-                            });
                           },
-                          activeColor: AppConstants.primaryColor,
                         ),
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'data_usage'.tr(context),
-                        subtitle: 'Control how the app uses your data'.tr(
-                          context,
+                      ],
+                    ),
+
+                    SizedBox(height: sectionSpacing),
+
+                    // Privacy Settings Card
+                    _buildAnimatedSettingsCard(
+                      title: 'privacy_permission'.tr(context),
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.security,
+                      children: [
+                        _buildSettingItem(
+                          title: 'location_services'.tr(context),
+                          subtitle:
+                              'Allow app to access your location for nearby blood banks'
+                                  .tr(context),
+                          icon: Icons.location_on,
+                          titleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          trailing: Switch(
+                            value: _locationEnabled,
+                            onChanged: (value) async {
+                              final appProvider = Provider.of<AppProvider>(
+                                context,
+                                listen: false,
+                              );
+
+                              if (value) {
+                                // Try to enable location
+                                final success =
+                                    await appProvider.enableLocation();
+                                if (!success) {
+                                  _showLocationPermissionDialog();
+                                }
+                              } else {
+                                // Disable location
+                                await appProvider.disableLocation();
+                              }
+
+                              setState(() {
+                                _locationEnabled =
+                                    appProvider.isLocationEnabled;
+                              });
+                            },
+                            activeColor: AppConstants.primaryColor,
+                          ),
                         ),
-                        icon: Icons.data_usage,
-                        titleFontSize: itemTitleFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to data usage settings
-                          Navigator.push(
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'data_usage'.tr(context),
+                          subtitle: 'Control how the app uses your data'.tr(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const DataUsageScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                          ),
+                          icon: Icons.data_usage,
+                          titleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to data usage settings
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DataUsageScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
 
-                  SizedBox(height: sectionSpacing),
+                    SizedBox(height: sectionSpacing),
 
-                  // About & Legal Card
-                  _buildSettingsCard(
-                    title: 'about_legal'.tr(context),
-                    titleFontSize: titleFontSize,
-                    cardPadding: cardPadding,
-                    children: [
-                      _buildSettingItem(
-                        title: 'privacy_policy'.tr(context),
-                        icon: Icons.privacy_tip,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to privacy policy
-                          Navigator.pushNamed(context, '/privacy_policy');
-                        },
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'terms_of_service'.tr(context),
-                        icon: Icons.description,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to terms of service
-                          Navigator.pushNamed(context, '/terms_conditions');
-                        },
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'about_us'.tr(context),
-                        icon: Icons.info,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to about us
-                          Navigator.pushNamed(context, '/about_us');
-                        },
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'contact_support'.tr(context),
-                        icon: Icons.support_agent,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to support
-                        },
-                      ),
-                    ],
-                  ),
+                    // About & Legal Card
+                    _buildAnimatedSettingsCard(
+                      title: 'about_legal'.tr(context),
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.info_outline,
+                      children: [
+                        _buildSettingItem(
+                          title: 'privacy_policy'.tr(context),
+                          icon: Icons.privacy_tip,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to privacy policy
+                            Navigator.pushNamed(context, '/privacy_policy');
+                          },
+                        ),
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'terms_of_service'.tr(context),
+                          icon: Icons.description,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to terms of service
+                            Navigator.pushNamed(context, '/terms_conditions');
+                          },
+                        ),
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'about_us'.tr(context),
+                          icon: Icons.info,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to about us
+                            Navigator.pushNamed(context, '/about_us');
+                          },
+                        ),
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'contact_support'.tr(context),
+                          icon: Icons.support_agent,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to support
+                          },
+                        ),
+                      ],
+                    ),
 
-                  SizedBox(height: sectionSpacing),
+                    SizedBox(height: sectionSpacing),
 
-                  // Account Settings Card
-                  _buildSettingsCard(
-                    title: 'account'.tr(context),
-                    titleFontSize: titleFontSize,
-                    cardPadding: cardPadding,
-                    children: [
-                      _buildSettingItem(
-                        title: 'change_password'.tr(context),
-                        icon: Icons.lock,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Navigate to change password
-                          _showChangePasswordDialog(
-                            titleFontSize: titleFontSize,
-                            bodyFontSize: subtitleFontSize + 2,
-                          );
-                        },
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'logout'.tr(context),
-                        icon: Icons.logout,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          _showLogoutDialog(
-                            titleFontSize: titleFontSize,
-                            bodyFontSize: subtitleFontSize + 2,
-                          );
-                        },
-                      ),
-                      const Divider(),
-                      _buildSettingItem(
-                        title: 'delete_account'.tr(context),
-                        icon: Icons.delete_forever,
-                        iconColor: AppConstants.errorColor,
-                        titleColor: AppConstants.errorColor,
-                        titleFontSize: itemTitleFontSize,
-                        iconSize: iconSize,
-                        iconContainerSize: iconContainerSize,
-                        itemPadding: itemPadding,
-                        itemSpacing: itemSpacing,
-                        onTap: () {
-                          // Show delete account confirmation dialog
-                          _showDeleteAccountDialog(
-                            titleFontSize: titleFontSize,
-                            bodyFontSize: subtitleFontSize + 2,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                    // Account Settings Card
+                    _buildAnimatedSettingsCard(
+                      title: 'account'.tr(context),
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.account_circle,
+                      children: [
+                        _buildSettingItem(
+                          title: 'change_password'.tr(context),
+                          icon: Icons.lock,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Navigate to change password
+                            _showChangePasswordDialog(
+                              titleFontSize: titleFontSize,
+                              bodyFontSize: subtitleFontSize + 2,
+                            );
+                          },
+                        ),
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'logout'.tr(context),
+                          icon: Icons.logout,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            _showLogoutDialog(
+                              titleFontSize: titleFontSize,
+                              bodyFontSize: subtitleFontSize + 2,
+                            );
+                          },
+                        ),
+                        const Divider(),
+                        _buildSettingItem(
+                          title: 'delete_account'.tr(context),
+                          icon: Icons.delete_forever,
+                          iconColor: AppConstants.errorColor,
+                          titleColor: AppConstants.errorColor,
+                          titleFontSize: itemTitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                          onTap: () {
+                            // Show delete account confirmation dialog
+                            _showDeleteAccountDialog(
+                              titleFontSize: titleFontSize,
+                              bodyFontSize: subtitleFontSize + 2,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
 
-                  SizedBox(height: sectionSpacing * 1.5),
-                  Center(
-                    child: Builder(
-                      builder:
-                          (context) => Container(
-                            padding: EdgeInsets.all(isSmallScreen ? 10 : 12),
-                            decoration: BoxDecoration(
-                              color:
-                                  context.isDarkMode
-                                      ? Colors.grey[800]
-                                      : Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${'app_version'.tr(context)} 1.0.0',
-                              style: TextStyle(
+                    SizedBox(height: sectionSpacing * 1.5),
+
+                    // App version
+                    Center(
+                      child: Builder(
+                        builder:
+                            (context) => Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
                                 color:
                                     context.isDarkMode
-                                        ? Colors.grey[400]
-                                        : Colors.grey[500],
-                                fontSize: versionFontSize,
+                                        ? Colors.grey[800]
+                                        : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 14,
+                                    color:
+                                        context.isDarkMode
+                                            ? Colors.grey[400]
+                                            : Colors.grey[600],
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    '${'app_version'.tr(context)} 1.0.0',
+                                    style: TextStyle(
+                                      color:
+                                          context.isDarkMode
+                                              ? Colors.grey[400]
+                                              : Colors.grey[600],
+                                      fontSize: versionFontSize,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: sectionSpacing),
-                ],
-              );
-            },
+                    SizedBox(height: sectionSpacing),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsCard({
+  Widget _buildProfileSummary(BuildContext context) {
+    return Builder(
+      builder: (context) {
+        final appProvider = Provider.of<AppProvider>(context);
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).brightness == Brightness.dark
+                    ? AppConstants.primaryColor.withOpacity(0.12)
+                    : AppConstants.primaryColor.withOpacity(0.05),
+                Theme.of(context).cardColor,
+              ],
+            ),
+          ),
+          child: Row(
+            children: [
+              // Profile image
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  border: Border.all(
+                    color: AppConstants.primaryColor.withOpacity(0.5),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppConstants.primaryColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.person,
+                    color: AppConstants.primaryColor,
+                    size: 32,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appProvider.currentUser.name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      appProvider.currentUser.email,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Profile button
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.edit,
+                        color: AppConstants.primaryColor,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedSettingsCard({
     required String title,
     required List<Widget> children,
     required double titleFontSize,
     required double cardPadding,
+    required IconData icon,
   }) {
     return Builder(
       builder: (context) {
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             color: context.cardColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color:
@@ -516,15 +703,33 @@ class _SettingsScreenState extends State<SettingsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Card header with title and icon
               Padding(
                 padding: EdgeInsets.all(cardPadding),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: titleFontSize,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.primaryColor,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: AppConstants.primaryColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: AppConstants.primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Divider(height: 1, color: context.dividerColor),
