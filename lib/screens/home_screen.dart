@@ -585,64 +585,260 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showBloodTypeInfo(BuildContext context, String bloodType) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final bool isSmallScreen = screenWidth < 360;
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (context) => Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
             ),
+            elevation: 8,
             backgroundColor: Theme.of(context).cardColor,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.bloodtype, color: AppConstants.primaryColor),
-                SizedBox(width: 10),
-                Flexible(child: Text('Blood Type Information')),
-              ],
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with blood type
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.primaryColor.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.bloodtype,
+                            color: Colors.white,
+                            size: isSmallScreen ? 32 : 40,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            bloodType,
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 38 : 46,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Blood Type',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 14 : 16,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Compatibility sections
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Can donate to section
+                          _buildCompatibilitySection(
+                            context,
+                            title: 'You can donate to:',
+                            icon: Icons.arrow_upward_rounded,
+                            types: _getCompatibleRecipients(bloodType),
+                            isTopSection: true,
+                          ),
+
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+
+                          // Can receive from section
+                          _buildCompatibilitySection(
+                            context,
+                            title: 'You can receive from:',
+                            icon: Icons.arrow_downward_rounded,
+                            types: _getCompatibleDonors(bloodType),
+                            isTopSection: false,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Description
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppConstants.primaryColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: AppConstants.primaryColor,
+                                size: isSmallScreen ? 18 : 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Did you know?',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 15 : 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _getBloodTypeDescription(bloodType),
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 13 : 14,
+                              height: 1.4,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Close button
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.primaryColor,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  bloodType,
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.primaryColor,
-                  ),
+          ),
+    );
+  }
+
+  Widget _buildCompatibilitySection(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required List<String> types,
+    required bool isTopSection,
+  }) {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 360;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: isTopSection ? AppConstants.successColor : Colors.orange,
+                size: isSmallScreen ? 18 : 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14 : 16,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      isTopSection ? AppConstants.successColor : Colors.orange,
                 ),
-                SizedBox(height: 20),
-                _buildBloodTypeInfoRow(
-                  'Can donate to:',
-                  _getCompatibleRecipients(bloodType),
-                ),
-                SizedBox(height: 10),
-                _buildBloodTypeInfoRow(
-                  'Can receive from:',
-                  _getCompatibleDonors(bloodType),
-                ),
-                SizedBox(height: 16),
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    _getBloodTypeDescription(bloodType),
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                types
+                    .map(
+                      (type) => _buildCompatibilityBloodTypeChip(
+                        type,
+                        color:
+                            isTopSection
+                                ? AppConstants.successColor
+                                : Colors.orange,
+                      ),
+                    )
+                    .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompatibilityBloodTypeChip(String bloodType, {Color? color}) {
+    final Color chipColor = color ?? AppConstants.primaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: chipColor.withOpacity(0.4)),
+      ),
+      child: Text(
+        bloodType,
+        style: TextStyle(
+          color: chipColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+      ),
     );
   }
 }

@@ -35,7 +35,7 @@ class BloodTypeBadge extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Color(0xFF8E2DE2), // Vibrant purple color
+          color: Color.fromARGB(255, 255, 0, 0), // Vibrant purple color
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
