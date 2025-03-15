@@ -157,51 +157,59 @@ class _SettingsScreenState extends State<SettingsScreen>
                         itemSpacing: itemSpacing,
                         trailing: Builder(
                           builder:
-                              (context) => Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isSmallScreen ? 8 : 12,
-                                  vertical: isSmallScreen ? 6 : 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppConstants.primaryColor.withOpacity(
-                                    0.1,
+                              (context) => GestureDetector(
+                                onTap: () {
+                                  _showLanguageBottomSheet(
+                                    context,
+                                    appProvider,
+                                  );
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isSmallScreen ? 10 : 14,
+                                    vertical: isSmallScreen ? 8 : 10,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: DropdownButton<String>(
-                                  value: appProvider.selectedLanguage,
-                                  isDense: true,
-                                  underline: const SizedBox(),
-                                  icon: Icon(
-                                    Icons.arrow_drop_down,
-                                    color: AppConstants.primaryColor,
-                                    size: isSmallScreen ? 18 : 24,
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.primaryColor
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppConstants.primaryColor
+                                          .withOpacity(0.3),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppConstants.primaryColor
+                                            .withOpacity(0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  style: TextStyle(
-                                    color: AppConstants.primaryColor,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: dropdownFontSize,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _getLangEmoji(
+                                        appProvider.selectedLanguage,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        appProvider.selectedLanguage,
+                                        style: TextStyle(
+                                          color: AppConstants.primaryColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: isSmallScreen ? 13 : 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.keyboard_arrow_down,
+                                        color: AppConstants.primaryColor,
+                                        size: 18,
+                                      ),
+                                    ],
                                   ),
-                                  dropdownColor:
-                                      context.isDarkMode
-                                          ? const Color(0xFF1E1E1E)
-                                          : Colors.white,
-                                  onChanged: (String? newValue) {
-                                    if (newValue != null) {
-                                      setState(() {
-                                        appProvider.setLanguage(newValue);
-                                      });
-                                    }
-                                  },
-                                  items:
-                                      _languages.map<DropdownMenuItem<String>>((
-                                        String value,
-                                      ) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        );
-                                      }).toList(),
                                 ),
                               ),
                         ),
@@ -1454,5 +1462,114 @@ class _SettingsScreenState extends State<SettingsScreen>
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  void _showLanguageBottomSheet(BuildContext context, AppProvider appProvider) {
+    final languages = ['English', 'Spanish', 'French', 'Arabic', 'Urdu'];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Language',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: languages.length,
+                  itemBuilder: (context, index) {
+                    final language = languages[index];
+                    final isSelected = appProvider.selectedLanguage == language;
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color:
+                              isSelected
+                                  ? AppConstants.primaryColor
+                                  : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      tileColor:
+                          isSelected
+                              ? AppConstants.primaryColor.withOpacity(0.15)
+                              : null,
+                      leading: _getLangEmoji(language),
+                      title: Text(
+                        language,
+                        style: TextStyle(
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? AppConstants.primaryColor : null,
+                        ),
+                      ),
+                      trailing:
+                          isSelected
+                              ? Icon(
+                                Icons.check_circle,
+                                color: AppConstants.primaryColor,
+                              )
+                              : null,
+                      onTap: () {
+                        appProvider.setLanguage(language);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _getLangEmoji(String language) {
+    switch (language) {
+      case 'English':
+        return Text('🇺🇸', style: TextStyle(fontSize: 24));
+      case 'Spanish':
+        return Text('🇪🇸', style: TextStyle(fontSize: 24));
+      case 'French':
+        return Text('🇫🇷', style: TextStyle(fontSize: 24));
+      case 'Arabic':
+        return Text('🇸🇦', style: TextStyle(fontSize: 24));
+      case 'Urdu':
+        return Text('🇵🇰', style: TextStyle(fontSize: 24));
+      default:
+        return Text(
+          language.substring(0, 2).toUpperCase(),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        );
+    }
   }
 }
