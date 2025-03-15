@@ -223,6 +223,11 @@ class HomeScreen extends StatelessWidget {
                             BloodTypeBadge(
                               bloodType: currentUser.bloodType,
                               size: badgeSize * 1.15,
+                              onTap:
+                                  () => _showBloodTypeInfo(
+                                    context,
+                                    currentUser.bloodType,
+                                  ),
                             ),
                           ],
                         ),
@@ -470,5 +475,173 @@ class HomeScreen extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  // Blood type compatibility helper methods
+  Widget _buildBloodTypeInfoRow(String label, List<String> types) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: types.map((type) => _buildBloodTypeChip(type)).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBloodTypeChip(String bloodType) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppConstants.primaryColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppConstants.primaryColor.withOpacity(0.5)),
+      ),
+      child: Text(
+        bloodType,
+        style: TextStyle(
+          color: AppConstants.primaryColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  List<String> _getCompatibleRecipients(String bloodType) {
+    // Who can receive from this blood type
+    switch (bloodType) {
+      case 'O-':
+        return ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
+      case 'O+':
+        return ['O+', 'A+', 'B+', 'AB+'];
+      case 'A-':
+        return ['A-', 'A+', 'AB-', 'AB+'];
+      case 'A+':
+        return ['A+', 'AB+'];
+      case 'B-':
+        return ['B-', 'B+', 'AB-', 'AB+'];
+      case 'B+':
+        return ['B+', 'AB+'];
+      case 'AB-':
+        return ['AB-', 'AB+'];
+      case 'AB+':
+        return ['AB+'];
+      default:
+        return [];
+    }
+  }
+
+  List<String> _getCompatibleDonors(String bloodType) {
+    // Who can donate to this blood type
+    switch (bloodType) {
+      case 'O-':
+        return ['O-'];
+      case 'O+':
+        return ['O-', 'O+'];
+      case 'A-':
+        return ['O-', 'A-'];
+      case 'A+':
+        return ['O-', 'O+', 'A-', 'A+'];
+      case 'B-':
+        return ['O-', 'B-'];
+      case 'B+':
+        return ['O-', 'O+', 'B-', 'B+'];
+      case 'AB-':
+        return ['O-', 'A-', 'B-', 'AB-'];
+      case 'AB+':
+        return ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
+      default:
+        return [];
+    }
+  }
+
+  String _getBloodTypeDescription(String bloodType) {
+    switch (bloodType) {
+      case 'O-':
+        return 'You are a universal donor! Your blood can be given to anyone, making you extremely valuable in emergency situations. However, you can only receive O- blood.';
+      case 'O+':
+        return 'As the most common blood type, your donations are always in high demand. You can donate to all positive blood types but can only receive O+ and O- blood.';
+      case 'A-':
+        return 'Your blood is relatively rare and can be donated to both A and AB blood types. You can receive from A- and O- donors only.';
+      case 'A+':
+        return 'With the second most common blood type, your donations are always needed. You can donate to A+ and AB+ recipients and can receive from A+, A-, O+, and O- donors.';
+      case 'B-':
+        return 'Your blood type is uncommon and can be donated to both B and AB blood types. You can receive from B- and O- donors only.';
+      case 'B+':
+        return 'Your blood type is less common and can be donated to B+ and AB+ recipients. You can receive from B+, B-, O+, and O- donors.';
+      case 'AB-':
+        return 'You have a rare blood type and can donate to AB- and AB+ recipients. You are a universal recipient for negative blood types.';
+      case 'AB+':
+        return 'As a universal recipient, you can receive blood from anyone! However, you can only donate to other AB+ individuals.';
+      default:
+        return 'Information not available for this blood type.';
+    }
+  }
+
+  void _showBloodTypeInfo(BuildContext context, String bloodType) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Theme.of(context).cardColor,
+            title: Row(
+              children: [
+                Icon(Icons.bloodtype, color: AppConstants.primaryColor),
+                SizedBox(width: 10),
+                Text('Blood Type Information'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  bloodType,
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+                SizedBox(height: 20),
+                _buildBloodTypeInfoRow(
+                  'Can donate to:',
+                  _getCompatibleRecipients(bloodType),
+                ),
+                SizedBox(height: 10),
+                _buildBloodTypeInfoRow(
+                  'Can receive from:',
+                  _getCompatibleDonors(bloodType),
+                ),
+                SizedBox(height: 16),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    _getBloodTypeDescription(bloodType),
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ],
+          ),
+    );
   }
 }
