@@ -594,10 +594,11 @@ class HomeScreen extends StatelessWidget {
             ),
             backgroundColor: Theme.of(context).cardColor,
             title: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.bloodtype, color: AppConstants.primaryColor),
                 SizedBox(width: 10),
-                Text('Blood Type Information'),
+                Flexible(child: Text('Blood Type Information')),
               ],
             ),
             content: Column(
