@@ -351,8 +351,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                         iconContainerSize: iconContainerSize,
                         itemPadding: itemPadding,
                         itemSpacing: itemSpacing,
-                        onTap: () {
-                          Navigator.pushNamed(context, '/health_questionnaire');
+                        onTap: () async {
+                          await Navigator.pushNamed(context, '/health-questionnaire');
+                          // Refresh app provider data when returning from health questionnaire
+                          final appProvider = Provider.of<AppProvider>(context, listen: false);
+                          appProvider.refreshUserData();
                         },
                       ),
                       const Divider(),

@@ -427,6 +427,25 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  // Refresh user data from Firestore
+  Future<void> refreshUserData() async {
+    try {
+      if (_authService.isSignedIn) {
+        debugPrint('Refreshing user data from Firestore');
+        
+        // Get the user data from Firestore
+        UserModel? userData = await _authService.getUserData();
+        if (userData != null) {
+          _currentUser = userData;
+          notifyListeners();
+          debugPrint('User data refreshed successfully');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data: $e');
+    }
+  }
+
   // Toggle user availability to donate
   Future<void> toggleDonationAvailability() async {
     if (_currentUser != null) {
@@ -917,20 +936,6 @@ class AppProvider extends ChangeNotifier {
     // Initialize notification service
     final notificationService = NotificationService();
     await notificationService.initialize();
-  }
-
-  // Refresh user data from Firestore (useful after external auth changes)
-  Future<void> refreshUserData() async {
-    try {
-      // Get user profile data from Firestore
-      final userData = await _authService.getUserData();
-      if (userData != null) {
-        _currentUser = userData;
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Error refreshing user data: $e');
-    }
   }
 
   // Check and ensure user data exists in Firestore

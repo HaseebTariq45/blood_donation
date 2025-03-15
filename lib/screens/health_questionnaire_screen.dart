@@ -13,6 +13,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart'; // For haptic feedback
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 
 // Custom CheckMark painter for animating the checkmark
 class CheckMarkPainter extends CustomPainter {
@@ -163,9 +165,18 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
 
     // Calculate next donation date
     if (_lastDonationController.text.isNotEmpty) {
-      final lastDonation = DateTime.parse(_lastDonationController.text);
-      final nextDonation = lastDonation.add(const Duration(days: 56)); // Minimum 56 days between donations
-      _nextDonationDate = nextDonation.toString().split(' ')[0];
+      try {
+        final lastDonation = DateTime.parse(_lastDonationController.text);
+        // Standard waiting period is 56 days (8 weeks) between whole blood donations
+        final nextDonation = lastDonation.add(const Duration(days: 56));
+        _nextDonationDate = nextDonation.toString().split(' ')[0];
+        debugPrint('Calculated next donation date: $_nextDonationDate');
+      } catch (e) {
+        debugPrint('Error calculating next donation date: $e');
+        _nextDonationDate = '';
+      }
+    } else {
+      _nextDonationDate = '';
     }
   }
 
@@ -671,6 +682,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
+        // Load health questionnaire data
         final doc = await FirebaseFirestore.instance
             .collection('health_questionnaires')
             .doc(userId)
@@ -693,6 +705,41 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
           _hasAllergies = data['hasAllergies'] ?? false;
           _medicationsController.text = data['medications'] ?? '';
           _allergiesController.text = data['allergies'] ?? '';
+        }
+        
+        // If lastDonationDate is empty, try to get it from the user profile
+        if (_lastDonationController.text.isEmpty) {
+          try {
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .get();
+                
+            if (userDoc.exists && userDoc.data() != null) {
+              final userData = userDoc.data()!;
+              
+              if (userData['lastDonationDate'] != null) {
+                DateTime lastDonation;
+                
+                if (userData['lastDonationDate'] is Timestamp) {
+                  lastDonation = (userData['lastDonationDate'] as Timestamp).toDate();
+                } else if (userData['lastDonationDate'] is int) {
+                  lastDonation = DateTime.fromMillisecondsSinceEpoch(userData['lastDonationDate']);
+                } else if (userData['lastDonationDate'] is String) {
+                  lastDonation = DateTime.parse(userData['lastDonationDate']);
+                } else {
+                  throw Exception('Unsupported lastDonationDate format');
+                }
+                
+                // Format as YYYY-MM-DD
+                _lastDonationController.text = lastDonation.toString().split(' ')[0];
+                debugPrint('Loaded lastDonationDate from user profile: ${_lastDonationController.text}');
+              }
+            }
+          } catch (e) {
+            debugPrint('Error loading lastDonationDate from user profile: $e');
+            // Continue even if this fails
+          }
         }
       }
     } catch (e) {
@@ -725,6 +772,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
+        // Save to health_questionnaires collection
         await FirebaseFirestore.instance
             .collection('health_questionnaires')
             .doc(userId)
@@ -745,6 +793,35 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
           'medications': _medicationsController.text,
           'allergies': _allergiesController.text,
         });
+
+        // Update lastDonationDate in users collection if it has been set
+        if (_lastDonationController.text.isNotEmpty) {
+          try {
+            // Convert string date to timestamp
+            final lastDonationDate = DateTime.parse(_lastDonationController.text);
+            
+            // Update the user document
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .update({
+              'lastDonationDate': lastDonationDate.millisecondsSinceEpoch,
+            });
+            
+            // Also update the user model in the app provider
+            final appProvider = Provider.of<AppProvider>(context, listen: false);
+            final currentUser = appProvider.currentUser;
+            final updatedUser = currentUser.copyWith(
+              lastDonationDate: lastDonationDate,
+            );
+            await appProvider.updateUserProfile(updatedUser);
+            
+            debugPrint('Updated lastDonationDate in users collection: ${lastDonationDate.toIso8601String()}');
+          } catch (e) {
+            debugPrint('Error updating lastDonationDate in users collection: $e');
+            // Continue with the rest of the function even if this update fails
+          }
+        }
 
         if (mounted) {
           // Provide haptic feedback when data is saved
@@ -786,6 +863,10 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     // Reset and start the animation
     _successAnimationController.reset();
     _successAnimationController.forward();
+    
+    // Refresh app provider data
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    appProvider.refreshUserData();
     
     showGeneralDialog(
       context: context,
