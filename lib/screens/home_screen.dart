@@ -57,7 +57,11 @@ class HomeScreen extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.favorite, size: iconSize),
+              Icon(
+                Icons.favorite,
+                color: AppConstants.primaryColor,
+                size: iconSize,
+              ),
               SizedBox(width: horizontalPadding * 0.4),
               Text(
                 'BloodLine',
@@ -65,6 +69,16 @@ class HomeScreen extends StatelessWidget {
                   fontSize: titleFontSize,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
+                  foreground:
+                      Paint()
+                        ..shader = LinearGradient(
+                          colors: [
+                            AppConstants.primaryColor,
+                            AppConstants.primaryColor.withOpacity(0.8),
+                          ],
+                        ).createShader(
+                          const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0),
+                        ),
                 ),
               ),
             ],
@@ -77,8 +91,7 @@ class HomeScreen extends StatelessWidget {
             icon: Stack(
               children: [
                 Icon(Icons.notifications, size: isSmallScreen ? 22 : 24),
-                if (appProvider
-                    .hasUnreadNotifications) // Add notification indicator
+                if (appProvider.hasUnreadNotifications)
                   Positioned(
                     right: 0,
                     top: 0,
@@ -184,20 +197,36 @@ class HomeScreen extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                'Hello, ${currentUser.name.split(' ')[0]}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: headerFontSize,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Hello,',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: bodyTextFontSize + 2,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${currentUser.name.split(' ')[0]}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: headerFontSize,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
-                            BloodTypeBadge(bloodType: currentUser.bloodType),
+                            BloodTypeBadge(
+                              bloodType: currentUser.bloodType,
+                              size: badgeSize * 1.15,
+                            ),
                           ],
                         ),
-                        SizedBox(height: verticalPadding * 0.4),
+                        SizedBox(height: verticalPadding * 0.6),
                         Row(
                           children: [
                             Icon(
@@ -389,10 +418,7 @@ class HomeScreen extends StatelessWidget {
                                 title: 'Health Tips',
                                 icon: Icons.health_and_safety,
                                 onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/health_tips',
-                                  );
+                                  Navigator.pushNamed(context, '/health_tips');
                                 },
                                 index: 5,
                               ),
