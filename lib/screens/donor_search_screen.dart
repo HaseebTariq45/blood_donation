@@ -8,6 +8,8 @@ import '../widgets/blood_type_badge.dart';
 import '../widgets/custom_button.dart';
 import '../models/user_model.dart';
 import '../utils/theme_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DonorSearchScreen extends StatefulWidget {
   const DonorSearchScreen({super.key});
@@ -938,6 +940,29 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed:
+                            donor.isAvailableToDonate
+                                ? () => _requestDonation(donor)
+                                : null,
+                        icon: const Icon(Icons.bloodtype_outlined, size: 16),
+                        label: const Text('Request Donation'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppConstants.primaryColor,
+                          side: BorderSide(
+                            color: AppConstants.primaryColor,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -950,15 +975,20 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
   }
 
   // Launch phone call
-  void _launchCall(String phoneNumber) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling $phoneNumber'),
-        backgroundColor: AppConstants.primaryColor,
-      ),
-    );
-    // In a real app, use url_launcher to launch phone call
-    // launch('tel:$phoneNumber');
+  void _launchCall(String phoneNumber) async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not launch phone call'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Launch SMS
@@ -1148,5 +1178,109 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
         ],
       ),
     );
+  }
+
+  // Request blood donation from donor
+  Future<void> _requestDonation(UserModel donor) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final currentUser = appProvider.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You need to be logged in to request a donation'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final bool confirm =
+        await showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Request Donation'),
+                content: Text(
+                  'Are you sure you want to request a blood donation from ${donor.name}? '
+                  'This will send a notification to the donor with your contact details.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Confirm'),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+
+    if (!confirm) return;
+
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Create notification data
+      final notificationData = {
+        'userId': donor.id, // Send to donor
+        'title': 'Blood Donation Request',
+        'body': '${currentUser.name} is requesting a blood donation from you',
+        'type': 'donation_request',
+        'read': false,
+        'createdAt': DateTime.now().toIso8601String(),
+        'metadata': {
+          'requesterId': currentUser.id,
+          'requesterName': currentUser.name,
+          'requesterPhone': currentUser.phoneNumber,
+          'requesterEmail': currentUser.email,
+          'requesterBloodType': currentUser.bloodType,
+          'requesterAddress': currentUser.address,
+        },
+      };
+
+      // Add notification to Firestore
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .add(notificationData);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Donation request sent to ${donor.name}'),
+            backgroundColor: AppConstants.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send donation request: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

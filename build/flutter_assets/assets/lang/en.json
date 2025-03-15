@@ -174,5 +174,22 @@
   "privacy_changes_content": "We may update our Privacy Policy from time to time. If we make material changes, we will notify you through the app or by email prior to the changes becoming effective. Your continued use of the app after we post modifications to the Privacy Policy constitutes your acknowledgment of the modifications and your consent to abide by them.",
   
   "privacy_contact_title": "Contact Us",
-  "privacy_contact_content": "If you have questions or concerns about this Privacy Policy, please contact us at privacy@blooddonation.com."
+  "privacy_contact_content": "If you have questions or concerns about this Privacy Policy, please contact us at privacy@blooddonation.com.",
+
+  "hello": "Hello,",
+  "next_donation_in_days": "Next donation in {days} days",
+  "eligible_today": "You are eligible to donate today!",
+  "eligible_to_donate": "Eligible to Donate",
+  "not_eligible_yet": "Not Eligible Yet",
+  "services": "Services",
+  "tap_access_service": "Tap on any card to access the service",
+  "find_blood_donors": "Find Blood Donors",
+  "request_blood": "Request Blood",
+  "nearby_blood_banks": "Nearby Blood Banks",
+  "health_tips": "Health Tips",
+  "emergency_contacts": "Emergency Contacts",
+  "did_you_know": "Did you know?",
+  "select_language": "Select Language",
+  "you_can_donate_to": "You can donate to:",
+  "you_can_receive_from": "You can receive from:"
 } 

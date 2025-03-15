@@ -1,1 +1,0 @@
-flutter run -d edge --web-port 8081
