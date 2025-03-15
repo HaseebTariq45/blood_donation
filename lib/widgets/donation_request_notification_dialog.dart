@@ -256,225 +256,225 @@ class _DonationRequestNotificationDialogState
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Main content
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                    border: Border.all(
-                      color: AppConstants.primaryColor.withOpacity(0.2),
-                      width: 1,
-                    ),
+          // Main content with fixed header, scrollable details, and fixed buttons
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header - Fixed position
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                decoration: BoxDecoration(
+                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
                   ),
-                  child: Column(
-                    children: [
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Text(
-                          'Blood Donation Request',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppConstants.primaryColor,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildBloodTypeBadge(widget.requesterBloodType),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Urgent Request',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Needs Assistance',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+                  border: Border.all(
+                    color: AppConstants.primaryColor.withOpacity(0.2),
+                    width: 1,
                   ),
                 ),
-
-                // Requester information
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  children: [
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Text(
+                        'Blood Donation Request',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppConstants.primaryColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Requester Information',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Requester details
-                        _buildDetailRow(
-                          context,
-                          Icons.person,
-                          'Name',
-                          widget.requesterName,
-                          onCopy:
-                              () => _copyToClipboard(
-                                widget.requesterName,
-                                'Name',
+                        _buildBloodTypeBadge(widget.requesterBloodType),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Urgent Request',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: context.textColor,
                               ),
-                          showCopy: true,
-                        ),
-
-                        _buildDetailRow(
-                          context,
-                          Icons.phone,
-                          'Phone',
-                          widget.requesterPhone,
-                          onCopy:
-                              () => _copyToClipboard(
-                                widget.requesterPhone,
-                                'Phone',
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
                               ),
-                          showCopy: true,
-                          onCall: _launchCall,
-                          showCall: true,
-                          onMessage: _launchSms,
-                          showMessage: true,
-                        ),
-
-                        if (widget.requesterEmail.isNotEmpty)
-                          _buildDetailRow(
-                            context,
-                            Icons.email,
-                            'Email',
-                            widget.requesterEmail,
-                            onCopy:
-                                () => _copyToClipboard(
-                                  widget.requesterEmail,
-                                  'Email',
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Needs Assistance',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                            showCopy: true,
-                            onEmail: _launchEmail,
-                            showEmail: true,
-                          ),
-
-                        _buildDetailRow(
-                          context,
-                          Icons.location_on,
-                          'Address',
-                          widget.requesterAddress,
-                          onCopy:
-                              () => _copyToClipboard(
-                                widget.requesterAddress,
-                                'Address',
                               ),
-                          showCopy: true,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
+              ),
 
-                // Action buttons
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        context.isDarkMode
-                            ? Colors.black12
-                            : Colors.grey.shade50,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
+              // Requester information - Scrollable
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Requester Information',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: context.textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Requester details
+                          _buildDetailRow(
+                            context,
+                            Icons.person,
+                            'Name',
+                            widget.requesterName,
+                            onCopy:
+                                () => _copyToClipboard(
+                                  widget.requesterName,
+                                  'Name',
+                                ),
+                            showCopy: true,
+                          ),
+
+                          _buildDetailRow(
+                            context,
+                            Icons.phone,
+                            'Phone',
+                            widget.requesterPhone,
+                            onCopy:
+                                () => _copyToClipboard(
+                                  widget.requesterPhone,
+                                  'Phone',
+                                ),
+                            showCopy: true,
+                            onCall: _launchCall,
+                            showCall: true,
+                            onMessage: _launchSms,
+                            showMessage: true,
+                          ),
+
+                          if (widget.requesterEmail.isNotEmpty)
+                            _buildDetailRow(
+                              context,
+                              Icons.email,
+                              'Email',
+                              widget.requesterEmail,
+                              onCopy:
+                                  () => _copyToClipboard(
+                                    widget.requesterEmail,
+                                    'Email',
+                                  ),
+                              showCopy: true,
+                              onEmail: _launchEmail,
+                              showEmail: true,
+                            ),
+
+                          _buildDetailRow(
+                            context,
+                            Icons.location_on,
+                            'Address',
+                            widget.requesterAddress,
+                            onCopy:
+                                () => _copyToClipboard(
+                                  widget.requesterAddress,
+                                  'Address',
+                                ),
+                            showCopy: true,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: _declineDonationRequest,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey[600],
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'DECLINE',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _acceptDonationRequest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppConstants.primaryColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'ACCEPT',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                ),
+              ),
+
+              // Action buttons - Fixed position at bottom
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      context.isDarkMode ? Colors.black12 : Colors.grey.shade50,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
                   ),
                 ),
-              ],
-            ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: _declineDonationRequest,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'DECLINE',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _acceptDonationRequest,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppConstants.primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'ACCEPT',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
 
           // Close button
