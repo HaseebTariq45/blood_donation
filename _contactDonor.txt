@@ -1,0 +1,56 @@
+void _contactDonor(String phone) {
+  // Show contact options dialog
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (BuildContext context) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Contact Donor',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.call, color: Colors.green),
+              ),
+              title: const Text('Call'),
+              subtitle: Text(phone),
+              onTap: () {
+                Navigator.pop(context);
+                _makePhoneCall(phone);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.message, color: Colors.blue),
+              ),
+              title: const Text('Send SMS'),
+              subtitle: Text(phone),
+              onTap: () {
+                Navigator.pop(context);
+                _sendSMS(phone);
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
