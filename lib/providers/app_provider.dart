@@ -1487,20 +1487,9 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
     
     try {
-      // Check if we're dealing with a Google Drive URL (large file scenario)
-      bool isGoogleDriveUrl = _updateDownloadUrl.contains('drive.google.com');
-      debugPrint('Is Google Drive URL: $isGoogleDriveUrl');
-      
-      // Extract file ID from Google Drive URL if present
-      String fileId = '';
-      if (isGoogleDriveUrl) {
-        final RegExp fileIdRegex = RegExp(r'id=([^&]+)');
-        final match = fileIdRegex.firstMatch(_updateDownloadUrl);
-        if (match != null && match.group(1) != null) {
-          fileId = match.group(1)!;
-          debugPrint('Extracted file ID: $fileId');
-        }
-      }
+      // Check if we're dealing with a Dropbox URL
+      bool isDropboxUrl = _updateDownloadUrl.contains('dropbox.com');
+      debugPrint('Is Dropbox URL: $isDropboxUrl');
       
       // Try in-app download first
       try {
@@ -1529,24 +1518,14 @@ class AppProvider extends ChangeNotifier {
           (error) async {
             debugPrint('Error downloading update in-app: $error');
             
-            // If the in-app download fails and this is a Google Drive URL,
-            // try browser download as fallback for large files
-            if (isGoogleDriveUrl) {
+            // If the in-app download fails, try browser download as fallback
+            if (isDropboxUrl) {
               debugPrint('Trying browser download as fallback...');
-              bool browserStarted = false;
               
-              // Try with direct URL with confirm parameter
-              if (fileId.isNotEmpty) {
-                final directUrl = AppUpdater.getDirectDownloadUrl(fileId);
-                browserStarted = await AppUpdater.downloadWithBrowser(directUrl);
-                debugPrint('Browser download with direct URL: $browserStarted');
-              }
-              
-              // If that fails, try with original URL
-              if (!browserStarted) {
-                browserStarted = await AppUpdater.downloadWithBrowser(_updateDownloadUrl);
-                debugPrint('Browser download with original URL: $browserStarted');
-              }
+              // Get direct download URL and try browser download
+              final directUrl = AppUpdater.getDirectDownloadUrl(_updateDownloadUrl);
+              final browserStarted = await AppUpdater.downloadWithBrowser(directUrl);
+              debugPrint('Browser download with Dropbox URL: $browserStarted');
               
               if (browserStarted) {
                 // Update UI to show browser download started
@@ -1568,7 +1547,7 @@ class AppProvider extends ChangeNotifier {
         notifyListeners();
         
         // Try browser download as last resort
-        if (isGoogleDriveUrl) {
+        if (isDropboxUrl) {
           await AppUpdater.downloadWithBrowser(_updateDownloadUrl);
         }
       }

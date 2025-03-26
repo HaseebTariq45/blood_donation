@@ -64,7 +64,7 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     
     // Java 8+ API desugaring support
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.2")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../constants/app_constants.dart';
 import '../widgets/blood_response_notification_dialog.dart';
@@ -13,9 +13,8 @@ import '../widgets/blood_request_notification_dialog.dart';
 
 class FirebaseNotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  // Temporarily removed flutter_local_notifications
-  // final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-  //     FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // Singleton pattern
   static final FirebaseNotificationService _instance =
@@ -38,44 +37,45 @@ class FirebaseNotificationService {
       'User notification permission status: ${settings.authorizationStatus}',
     );
 
-    // Initialize local notifications - temporarily disabled
-    /*
-    const AndroidInitializationSettings androidInitializationSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Skip local notifications setup on web platform
+    if (!kIsWeb) {
+      // Initialize local notifications
+      const AndroidInitializationSettings androidInitializationSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosInitializationSettings =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+      const DarwinInitializationSettings iosInitializationSettings =
+          DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: androidInitializationSettings,
-          iOS: iosInitializationSettings,
-        );
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+            android: androidInitializationSettings,
+            iOS: iosInitializationSettings,
+          );
 
-    await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse details) async {
-        final payload = details.payload;
-        if (payload != null && context != null) {
-          try {
-            final data = json.decode(payload);
-            await _handleNotificationTap(data, context);
-          } catch (e) {
-            debugPrint('Error parsing notification payload: $e');
+      await _flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse details) async {
+          final payload = details.payload;
+          if (payload != null && context != null) {
+            try {
+              final data = json.decode(payload);
+              await _handleNotificationTap(data, context);
+            } catch (e) {
+              debugPrint('Error parsing notification payload: $e');
+            }
           }
-        }
-      },
-    );
-    */
+        },
+      );
+    }
 
     // Handle foreground notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Got a message whilst in the foreground!');
-      // Temporarily disabled: _showLocalNotification(message);
+      _showLocalNotification(message);
       
       // Print notification info instead
       if (message.notification != null) {
@@ -131,17 +131,17 @@ class FirebaseNotificationService {
     }
   }
 
-  // Show a local notification - temporarily disabled
+  // Show a local notification
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    /* 
+    // Skip showing local notifications on web platform
+    if (kIsWeb) return;
+    
     final androidDetails = AndroidNotificationDetails(
       'blood_donation_channel',
       'Blood Donation Notifications',
       channelDescription: 'Notifications for blood donation app',
-      importance: Importance.max,
+      importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-      color: AppConstants.primaryColor,
     );
 
     final iosDetails = const DarwinNotificationDetails(
@@ -167,7 +167,6 @@ class FirebaseNotificationService {
         payload: json.encode(data),
       );
     }
-    */
   }
 
   // Subscribe to relevant notification topics

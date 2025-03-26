@@ -36,41 +36,28 @@ class AppUpdater {
     }
   }
   
-  // Google Drive direct download handling
-  static String _getProperGoogleDriveUrl(String url) {
+  // Dropbox direct download handling
+  static String _getProperDropboxUrl(String url) {
     if (url.isEmpty) return '';
     
-    // Check if this is a Google Drive URL
-    if (url.contains('drive.google.com') && url.contains('/d/')) {
-      // Extract file ID
-      String? fileId;
-      
-      // Format: https://drive.google.com/file/d/FILE_ID/view
-      if (url.contains('/file/d/')) {
-        final RegExp regExp = RegExp(r'/file/d/([^/]+)');
-        final match = regExp.firstMatch(url);
-        fileId = match?.group(1);
+    // Check if this is a Dropbox URL
+    if (url.contains('dropbox.com')) {
+      // Format: https://www.dropbox.com/s/FILE_PATH/FILENAME?dl=0
+      // Convert to direct download URL by changing dl=0 to dl=1
+      if (url.contains('dl=0')) {
+        return url.replaceAll('dl=0', 'dl=1');
       } 
-      // Format: https://drive.google.com/open?id=FILE_ID
-      else if (url.contains('id=')) {
-        final Uri uri = Uri.parse(url);
-        fileId = uri.queryParameters['id'];
+      // If no dl parameter, add it
+      else if (!url.contains('dl=')) {
+        return url.contains('?') ? '$url&dl=1' : '$url?dl=1';
       }
-      // Format: https://drive.google.com/uc?export=download&id=FILE_ID
-      else if (url.contains('uc?') && url.contains('export=download')) {
-        // This is already in the correct format, return as is
+      // If already has dl=1, return as is
+      else if (url.contains('dl=1')) {
         return url;
-      }
-      
-      if (fileId != null && fileId.isNotEmpty) {
-        debugPrint('Extracted Google Drive file ID: $fileId');
-        // For large files, use the export=download&confirm=t format
-        // which is more reliable than the regular export=download
-        return 'https://drive.google.com/uc?export=download&id=$fileId&confirm=t';
       }
     }
     
-    // Not a Google Drive URL or couldn't parse, return original
+    // Not a Dropbox URL or already properly formatted, return original
     return url;
   }
   
@@ -92,17 +79,9 @@ class AppUpdater {
         final latestVersion = data['latestVersion'] ?? '';
         final releaseNotes = data['releaseNotes'] ?? 'New features and bug fixes';
         final downloadUrl = data['downloadUrl'] ?? '';
-        final apkFileId = data['apkFileId'] ?? '';
         
-        // Construct the download URL if we have an apkFileId
-        String finalDownloadUrl = downloadUrl.isNotEmpty 
-            ? downloadUrl 
-            : apkFileId.isNotEmpty 
-                ? 'https://drive.google.com/uc?export=download&id=$apkFileId' 
-                : '';
-                
-        // Make sure we have a proper download URL for Google Drive
-        finalDownloadUrl = _getProperGoogleDriveUrl(finalDownloadUrl);
+        // Make sure we have a proper download URL for Dropbox
+        String finalDownloadUrl = _getProperDropboxUrl(downloadUrl);
         debugPrint('Final download URL: $finalDownloadUrl');
         
         // Save the latest APK URL for later use
@@ -170,181 +149,6 @@ class AppUpdater {
     }
   }
   
-  // Check if a Google Drive file is large and requires confirmation
-  static Future<String> _handleGoogleDriveConfirmation(String url) async {
-    if (!url.contains('drive.google.com')) {
-      return url; // Not a Google Drive URL
-    }
-    
-    try {
-      debugPrint('Checking if Google Drive file requires confirmation...');
-      
-      // Set browser-like headers to avoid being detected as a bot
-      final headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Referer': 'https://drive.google.com/',
-        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'same-origin',
-        'Upgrade-Insecure-Requests': '1',
-      };
-      
-      // First request to check if we get a confirmation page
-      final response = await http.get(Uri.parse(url), headers: headers);
-      final body = response.body;
-      
-      // Debug the response
-      debugPrint('Response status code: ${response.statusCode}');
-      debugPrint('Response content type: ${response.headers['content-type']}');
-      debugPrint('Response body length: ${body.length}');
-      
-      // Check if we received a confirmation page instead of the file
-      if (body.contains('Virus scan warning') || 
-          body.contains('Google Drive can\'t scan this file for viruses') ||
-          body.contains('confirm=') ||
-          body.contains('Download anyway') ||
-          (response.headers['content-type']?.contains('text/html') ?? false)) {
-        
-        debugPrint('Google Drive confirmation page detected, extracting download link...');
-        
-        // Look for the direct download link - Method 1: Look for confirmation token
-        final RegExp confirmRegex = RegExp(r'confirm=([^&"]+)');
-        final match = confirmRegex.firstMatch(body);
-        
-        if (match != null && match.group(1) != null) {
-          final confirmToken = match.group(1);
-          debugPrint('Found confirmation token: $confirmToken');
-          
-          // Create a URL with the confirmation token
-          if (url.contains('?')) {
-            if (url.contains('confirm=')) {
-              // Already has confirm, replace it
-              final newUrl = url.replaceAll(RegExp(r'confirm=[^&]+'), 'confirm=$confirmToken');
-              debugPrint('Replaced confirm token: $newUrl');
-              return newUrl;
-            } else {
-              // Has other parameters, add confirm
-              debugPrint('Adding confirm token: $url&confirm=$confirmToken');
-              return '$url&confirm=$confirmToken';
-            }
-          } else {
-            // No parameters yet
-            debugPrint('Adding confirm token as first param: $url?confirm=$confirmToken');
-            return '$url?confirm=$confirmToken';
-          }
-        }
-        
-        // Method 2: Look for the download button
-        final downloadButtonRegex = RegExp(r'href="(/uc[^"]+)"\s+id="(downloadForm|download-button)"');
-        final downloadButtonMatch = downloadButtonRegex.firstMatch(body);
-        
-        if (downloadButtonMatch != null && downloadButtonMatch.group(1) != null) {
-          final downloadPath = downloadButtonMatch.group(1)!.replaceAll('&amp;', '&');
-          final downloadUrl = 'https://drive.google.com${downloadPath}';
-          debugPrint('Found download button link: $downloadUrl');
-          return downloadUrl;
-        }
-        
-        // Alternative pattern for download button with single quotes
-        final downloadButtonRegex2 = RegExp(r"href='(/uc[^']+)'\s+id='(downloadForm|download-button)'");
-        final downloadButtonMatch2 = downloadButtonRegex2.firstMatch(body);
-        
-        if (downloadButtonMatch2 != null && downloadButtonMatch2.group(1) != null) {
-          final downloadPath = downloadButtonMatch2.group(1)!.replaceAll('&amp;', '&');
-          final downloadUrl = 'https://drive.google.com${downloadPath}';
-          debugPrint('Found download button link (alt): $downloadUrl');
-          return downloadUrl;
-        }
-        
-        // Method 3: Look for the "Download anyway" button link with double quotes
-        final downloadAnywayRegex = RegExp(r'href="([^"]*\/uc\?[^"]*export=download[^"]*)"');
-        final downloadAnywayMatch = downloadAnywayRegex.firstMatch(body);
-        
-        if (downloadAnywayMatch != null && downloadAnywayMatch.group(1) != null) {
-          String downloadLink = downloadAnywayMatch.group(1)!.replaceAll('&amp;', '&');
-          // If it's a relative URL, prepend the Google Drive domain
-          if (downloadLink.startsWith('/')) {
-            downloadLink = 'https://drive.google.com${downloadLink}';
-          }
-          debugPrint('Found "Download anyway" link: $downloadLink');
-          return downloadLink;
-        }
-        
-        // Alternative pattern for download anyway with single quotes
-        final downloadAnywayRegex2 = RegExp(r"href='([^']*\/uc\?[^']*export=download[^']*)'");
-        final downloadAnywayMatch2 = downloadAnywayRegex2.firstMatch(body);
-        
-        if (downloadAnywayMatch2 != null && downloadAnywayMatch2.group(1) != null) {
-          String downloadLink = downloadAnywayMatch2.group(1)!.replaceAll('&amp;', '&');
-          if (downloadLink.startsWith('/')) {
-            downloadLink = 'https://drive.google.com${downloadLink}';
-          }
-          debugPrint('Found "Download anyway" link (alt): $downloadLink');
-          return downloadLink;
-        }
-        
-        // Method 4: Look for the form action with double quotes
-        final formActionRegex = RegExp(r'action="(/uc\?[^"]+)"');
-        final formActionMatch = formActionRegex.firstMatch(body);
-        
-        if (formActionMatch != null && formActionMatch.group(1) != null) {
-          final formAction = 'https://drive.google.com${formActionMatch.group(1)!.replaceAll('&amp;', '&')}';
-          debugPrint('Found form action: $formAction');
-          return formAction;
-        }
-        
-        // Alternative pattern for form action with single quotes
-        final formActionRegex2 = RegExp(r"action='(/uc\?[^']+)'");
-        final formActionMatch2 = formActionRegex2.firstMatch(body);
-        
-        if (formActionMatch2 != null && formActionMatch2.group(1) != null) {
-          final formAction = 'https://drive.google.com${formActionMatch2.group(1)!.replaceAll('&amp;', '&')}';
-          debugPrint('Found form action (alt): $formAction');
-          return formAction;
-        }
-        
-        // Method 5: If file ID is in URL, construct a forced download URL
-        final RegExp fileIdRegex = RegExp(r'id=([^&]+)');
-        final fileIdMatch = fileIdRegex.firstMatch(url);
-        
-        if (fileIdMatch != null && fileIdMatch.group(1) != null) {
-          final fileId = fileIdMatch.group(1);
-          final forceDownloadUrl = 'https://drive.google.com/uc?export=download&id=$fileId&confirm=t';
-          debugPrint('Constructed forced download URL from file ID: $forceDownloadUrl');
-          return forceDownloadUrl;
-        }
-        
-        // If all extraction methods fail, add &confirm=t to the URL as a fallback
-        if (!url.contains('confirm=')) {
-          final fallbackUrl = url.contains('?') ? '$url&confirm=t' : '$url?confirm=t';
-          debugPrint('Using fallback URL with confirm=t: $fallbackUrl');
-          return fallbackUrl;
-        }
-      } else if (response.statusCode == 302 || response.statusCode == 303) {
-        // Handle redirects
-        final redirectUrl = response.headers['location'];
-        if (redirectUrl != null && redirectUrl.isNotEmpty) {
-          debugPrint('Following redirect to: $redirectUrl');
-          return redirectUrl;
-        }
-      }
-      
-      // If we get here, no confirmation needed or couldn't parse
-      debugPrint('No confirmation page detected or couldn\'t parse it');
-      return url;
-    } catch (e) {
-      debugPrint('Error checking Google Drive confirmation: $e');
-      return url; // Return original URL if anything fails
-    }
-  }
-  
   // Download and install the update
   static Future<void> downloadUpdate(
     String url, 
@@ -353,53 +157,49 @@ class AppUpdater {
     Function(String) onError
   ) async {
     try {
-      if (url.isEmpty) {
-        onError('Download URL is empty');
-        return;
-      }
-      
       debugPrint('Starting download from URL: $url');
       isUpdateInProgress = true;
       
-      // Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
+      // Request storage permission for saving the APK
+      final permissionStatus = await Permission.storage.request();
+      if (permissionStatus.isDenied) {
         isUpdateInProgress = false;
-        onError('Storage permission not granted');
-        debugPrint('Storage permission denied');
+        onError('Storage permission denied. Please grant permission to download updates.');
         return;
       }
       
-      // Get temporary directory for downloading
-      final directory = await getExternalStorageDirectory() ?? await getTemporaryDirectory();
-      final filePath = '${directory.path}/$appName-${DateTime.now().millisecondsSinceEpoch}.apk';
-      debugPrint('File will be saved to: $filePath');
+      // Get the temporary directory for storing the APK
+      final tempDir = await getTemporaryDirectory();
+      final saveDir = tempDir.path;
+      final fileName = 'bloodline_update.apk';
+      final savePath = '$saveDir/$fileName';
+      
+      debugPrint('Will save APK to: $savePath');
       
       try {
-        // Handle Google Drive confirmation for large files
+        // Handle Dropbox URL
         String downloadUrl = url;
         
-        // Only use the complex confirmation handling for Google Drive URLs
-        if (url.contains('drive.google.com')) {
-          debugPrint('Detected Google Drive URL, handling confirmation page...');
-          downloadUrl = await _handleGoogleDriveConfirmation(url);
+        // Make sure we have a proper download URL for Dropbox
+        if (url.contains('dropbox.com')) {
+          debugPrint('Detected Dropbox URL, ensuring direct download...');
+          downloadUrl = _getProperDropboxUrl(url);
           
           if (downloadUrl != url) {
-            debugPrint('Using updated Google Drive URL with confirmation: $downloadUrl');
+            debugPrint('Using updated Dropbox URL: $downloadUrl');
           }
         }
         
         // Download the file with custom headers
         Map<String, String> headers = {};
         
-        // Add browser-like headers for Google Drive to avoid bot detection
-        if (downloadUrl.contains('drive.google.com')) {
+        // Add browser-like headers for Dropbox to avoid any issues
+        if (downloadUrl.contains('dropbox.com')) {
           headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'application/octet-stream, application/vnd.android.package-archive',
             'Accept-Language': 'en-US,en;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
-            'Referer': 'https://drive.google.com/',
             'Connection': 'keep-alive',
           };
           
@@ -460,7 +260,7 @@ class AppUpdater {
           }
           
           // Create the file and open a sink for writing
-          final file = File(filePath);
+          final file = File(savePath);
           final sink = file.openWrite();
           int receivedBytes = 0;
           
@@ -523,8 +323,8 @@ class AppUpdater {
               final errorMsg = 'Downloaded file is HTML, not an APK. Received a webpage instead of the APK file.';
               debugPrint(errorMsg);
               // Save the HTML content for debugging
-              await File('${directory.path}/error_response.html').writeAsString(await file.readAsString());
-              debugPrint('Saved HTML response to ${directory.path}/error_response.html for debugging');
+              await File('${saveDir}/error_response.html').writeAsString(await file.readAsString());
+              debugPrint('Saved HTML response to ${saveDir}/error_response.html for debugging');
               isUpdateInProgress = false;
               onError(errorMsg);
               return;
@@ -542,11 +342,11 @@ class AppUpdater {
             if (Platform.isAndroid) {
               // On Android, open the APK for installation
               debugPrint('Download successful, proceeding to installation');
-              onComplete(filePath);
+              onComplete(savePath);
             } else {
               // On iOS or other platforms, share the file
               debugPrint('Download successful, sharing file on non-Android platform');
-              await Share.shareXFiles([XFile(filePath)], text: 'Install $appName update');
+              await Share.shareXFiles([XFile(savePath)], text: 'Install $appName update');
               onComplete('Update downloaded. Please install the shared file.');
             }
             
@@ -616,22 +416,10 @@ class AppUpdater {
     try {
       debugPrint('Trying to download with external browser: $url');
       
-      // For Google Drive URLs, ensure we have the proper parameters
-      if (url.contains('drive.google.com')) {
-        // Extract the file ID if present
-        final RegExp fileIdRegex = RegExp(r'id=([^&]+)');
-        final match = fileIdRegex.firstMatch(url);
-        
-        if (match != null && match.group(1) != null) {
-          final fileId = match.group(1);
-          // Force the mobile URL format which works better in browser
-          url = 'https://drive.google.com/uc?export=download&id=$fileId&confirm=t';
-          debugPrint('Using modified Google Drive URL: $url');
-        } else if (!url.contains('confirm=')) {
-          // Add confirm parameter if not present
-          url = url.contains('?') ? '$url&confirm=t' : '$url?confirm=t';
-          debugPrint('Added confirm parameter: $url');
-        }
+      // For Dropbox URLs, ensure we have the direct download link
+      if (url.contains('dropbox.com')) {
+        url = _getProperDropboxUrl(url);
+        debugPrint('Using modified Dropbox URL: $url');
       }
       
       // Launch URL in external browser
@@ -651,8 +439,8 @@ class AppUpdater {
   }
   
   // Get a direct download URL for the APK
-  static String getDirectDownloadUrl(String fileId) {
-    if (fileId.isEmpty) return '';
-    return 'https://drive.google.com/uc?export=download&id=$fileId&confirm=t';
+  static String getDirectDownloadUrl(String url) {
+    if (url.isEmpty) return '';
+    return _getProperDropboxUrl(url);
   }
 } 
