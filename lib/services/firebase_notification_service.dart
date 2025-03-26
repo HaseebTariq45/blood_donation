@@ -173,6 +173,12 @@ class FirebaseNotificationService {
   // Subscribe to relevant notification topics
   Future<void> _subscribeToTopics() async {
     try {
+      // Skip topic subscription on web platforms
+      if (kIsWeb) {
+        debugPrint('Topic subscription skipped on web platform');
+        return;
+      }
+      
       // Subscribe to general topic
       await _firebaseMessaging.subscribeToTopic('all_users');
       

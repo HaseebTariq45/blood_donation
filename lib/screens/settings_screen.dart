@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:math';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
 import '../widgets/custom_app_bar.dart';
@@ -11,6 +12,7 @@ import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
 import 'data_usage_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/app_updater.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -52,6 +54,11 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     // Load settings from provider
     _loadSettings();
+    
+    // Check for updates when the settings screen is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AppProvider>(context, listen: false).checkForUpdates();
+    });
   }
 
   void _loadSettings() {
@@ -510,6 +517,26 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ],
                     ),
 
+                    SizedBox(height: sectionSpacing),
+                    
+                    // Updates Card
+                    _buildAnimatedSettingsCard(
+                      title: 'Updates',
+                      titleFontSize: titleFontSize,
+                      cardPadding: cardPadding,
+                      icon: Icons.system_update,
+                      children: [
+                        _buildUpdateSection(
+                          itemTitleFontSize: itemTitleFontSize,
+                          subtitleFontSize: subtitleFontSize,
+                          iconSize: iconSize,
+                          iconContainerSize: iconContainerSize,
+                          itemPadding: itemPadding,
+                          itemSpacing: itemSpacing,
+                        ),
+                      ],
+                    ),
+
                     SizedBox(height: sectionSpacing * 1.5),
 
                     // App version
@@ -548,7 +575,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                   ),
                                   SizedBox(width: 6),
                                   Text(
-                                    '${'app_version'.tr(context)} 1.0.0',
+                                    '${'app_version'.tr(context)} ${AppUpdater.currentVersion}',
                                     style: TextStyle(
                                       color:
                                           context.isDarkMode
@@ -1798,5 +1825,810 @@ class _SettingsScreenState extends State<SettingsScreen>
       case ThemeMode.system:
         return Icons.brightness_auto;
     }
+  }
+
+  // Build the update section for the settings screen
+  Widget _buildUpdateSection({
+    required double itemTitleFontSize,
+    required double subtitleFontSize,
+    required double iconSize,
+    required double iconContainerSize,
+    required double itemPadding,
+    required double itemSpacing,
+  }) {
+    final appProvider = Provider.of<AppProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppConstants.primaryColor;
+    final cardBgColor = isDarkMode ? Colors.grey[850] : Colors.grey[50];
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    
+    // Show error message when something goes wrong
+    void _showUpdateErrorMessage(String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(10),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Check for updates
+        _buildSettingItem(
+          title: 'Check for Updates',
+          subtitle: appProvider.updateAvailable 
+              ? 'New version ${appProvider.latestVersion} available!'
+              : 'Current version: ${AppUpdater.currentVersion}',
+          icon: Icons.update,
+          titleFontSize: itemTitleFontSize,
+          subtitleFontSize: subtitleFontSize,
+          iconSize: iconSize,
+          iconContainerSize: iconContainerSize,
+          itemPadding: itemPadding,
+          itemSpacing: itemSpacing,
+          trailing: appProvider.isCheckingForUpdate 
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                  ),
+                )
+              : Container(
+                  decoration: BoxDecoration(
+                    color: appProvider.updateAvailable 
+                        ? Colors.green.withOpacity(0.1)
+                        : primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      appProvider.updateAvailable 
+                          ? Icons.new_releases_outlined
+                          : Icons.refresh,
+                      color: appProvider.updateAvailable 
+                          ? Colors.green 
+                          : primaryColor,
+                    ),
+                    onPressed: () {
+                      appProvider.checkForUpdates();
+                    },
+                    tooltip: 'Check for updates',
+                  ),
+                ),
+          onTap: () {
+            if (!appProvider.isCheckingForUpdate) {
+              appProvider.checkForUpdates();
+            }
+          },
+        ),
+        
+        if (appProvider.updateAvailable) ...[
+          const Divider(),
+          // Update available section
+          Container(
+            margin: EdgeInsets.symmetric(vertical: itemSpacing),
+            padding: EdgeInsets.all(itemPadding),
+            decoration: BoxDecoration(
+              color: cardBgColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Version information header with badge
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.new_releases,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Update Available',
+                            style: TextStyle(
+                              fontSize: subtitleFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    // Version badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDarkMode 
+                            ? Colors.blueGrey.withOpacity(0.3) 
+                            : Colors.blueGrey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isDarkMode 
+                              ? Colors.blueGrey.withOpacity(0.5) 
+                              : Colors.blueGrey.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        appProvider.latestVersion,
+                        style: TextStyle(
+                          fontSize: subtitleFontSize - 2,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white70 : Colors.blueGrey[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Version comparison
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDarkMode 
+                        ? Colors.grey[800]!.withOpacity(0.5) 
+                        : Colors.grey[100]!.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDarkMode 
+                          ? Colors.grey[700]! 
+                          : Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Current',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize - 2,
+                                color: textColor.withOpacity(0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppUpdater.currentVersion,
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: textColor.withOpacity(0.4),
+                        size: 20,
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'New',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize - 2,
+                                color: textColor.withOpacity(0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              appProvider.latestVersion,
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Release notes
+                if (appProvider.releaseNotes.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.article_outlined,
+                        size: 18,
+                        color: textColor.withOpacity(0.7),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'What\'s New',
+                        style: TextStyle(
+                          fontSize: subtitleFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode 
+                          ? Colors.grey[800] 
+                          : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDarkMode 
+                            ? Colors.grey[700]! 
+                            : Colors.grey[300]!,
+                      ),
+                    ),
+                    child: Text(
+                      appProvider.releaseNotes,
+                      style: TextStyle(
+                        fontSize: subtitleFontSize - 1,
+                        height: 1.4,
+                        color: textColor.withOpacity(0.9),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                
+                // Download section
+                if (appProvider.isDownloadingUpdate) ...[
+                  // Downloading state
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                              value: appProvider.downloadProgress > 0 
+                                  ? appProvider.downloadProgress 
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Downloading Update...',
+                            style: TextStyle(
+                              fontSize: subtitleFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Progress bar with percentage
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Download Progress',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize - 2,
+                                  color: textColor.withOpacity(0.7),
+                                ),
+                              ),
+                              Text(
+                                appProvider.downloadProgress > 0
+                                    ? '${(appProvider.downloadProgress * 100).toStringAsFixed(0)}%'
+                                    : 'Preparing...',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize - 2,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: appProvider.downloadProgress > 0 
+                                  ? appProvider.downloadProgress 
+                                  : null,
+                              backgroundColor: isDarkMode 
+                                  ? Colors.grey[700] 
+                                  : Colors.grey[300],
+                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                              minHeight: 8,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Cancel button
+                      Center(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            appProvider.resetUpdateState();
+                          },
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text('Cancel Download'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            side: BorderSide(color: Colors.grey[400]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (appProvider.downloadProgress == 1.0 && appProvider.installationStarted) ...[
+                  // Download complete and installation was started
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.check, color: Colors.green, size: iconSize - 4),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Download Complete',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Installation should start automatically',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize - 2,
+                                      color: textColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'If the installation didn\'t start automatically, you can try again:',
+                          style: TextStyle(
+                            fontSize: subtitleFontSize - 1,
+                            color: textColor.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                appProvider.resetUpdateState();
+                              },
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Start Over'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
+                                side: BorderSide(color: Colors.grey[400]!),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                try {
+                                  appProvider.retryInstallation();
+                                } catch (e) {
+                                  _showUpdateErrorMessage('Failed to install: ${e.toString()}');
+                                }
+                              },
+                              icon: const Icon(Icons.android, size: 18),
+                              label: const Text('Install Again'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else if (appProvider.downloadProgress > 0 && appProvider.downloadProgress < 1) ...[
+                  // Download was interrupted or failed
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.red.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.error_outline, color: Colors.red[700], size: iconSize - 4),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Download Interrupted',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Progress: ${(appProvider.downloadProgress * 100).toStringAsFixed(0)}%',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize - 2,
+                                      color: textColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'The download was interrupted. You can retry in-app or use the browser download option.',
+                          style: TextStyle(
+                            fontSize: subtitleFontSize - 1,
+                            color: textColor.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                appProvider.resetUpdateState();
+                              },
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Reset'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
+                                side: BorderSide(color: Colors.grey[400]!),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                try {
+                                  appProvider.resetUpdateState();
+                                  appProvider.downloadUpdate();
+                                } catch (e) {
+                                  _showUpdateErrorMessage('Failed to retry download: ${e.toString()}');
+                                }
+                              },
+                              icon: const Icon(Icons.replay, size: 18),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Alternative download options
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.lightbulb_outline,
+                                    size: 18,
+                                    color: Colors.amber[700],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Alternative Download',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize - 1,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'For large APK files, the browser download option is recommended.',
+                                style: TextStyle(
+                                  fontSize: subtitleFontSize - 2,
+                                  color: textColor.withOpacity(0.7),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Center(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    try {
+                                      appProvider.openDownloadInBrowser();
+                                    } catch (e) {
+                                      _showUpdateErrorMessage('Failed to open browser: ${e.toString()}');
+                                    }
+                                  },
+                                  icon: const Icon(Icons.open_in_browser, size: 18),
+                                  label: const Text('Download in Browser'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                    side: BorderSide(
+                                      color: isDarkMode ? Colors.blue[700]! : Colors.blue[300]!,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  // Initial download buttons
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.system_update_outlined,
+                            size: 18,
+                            color: textColor.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Download Options',
+                            style: TextStyle(
+                              fontSize: subtitleFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Main download button
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: LinearGradient(
+                            colors: [primaryColor, primaryColor.withBlue(min(255, primaryColor.blue + 30))],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            try {
+                              appProvider.downloadUpdate();
+                            } catch (e) {
+                              _showUpdateErrorMessage('Failed to download update: ${e.toString()}');
+                            }
+                          },
+                          icon: const Icon(Icons.download, size: 22),
+                          label: const Text(
+                            'Download Update',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Alternative download container
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Colors.amber[700],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Large APK File?',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize - 1,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber[800],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'If the in-app download fails or takes too long, try downloading directly in your browser.',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize - 2,
+                                color: textColor.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  try {
+                                    appProvider.openDownloadInBrowser();
+                                  } catch (e) {
+                                    _showUpdateErrorMessage('Failed to open browser: ${e.toString()}');
+                                  }
+                                },
+                                icon: const Icon(Icons.open_in_browser, size: 18),
+                                label: const Text('Download in Browser'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                  side: BorderSide(
+                                    color: isDarkMode ? Colors.blue[700]! : Colors.blue[300]!,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

@@ -19,6 +19,8 @@ import '../firebase/firebase_user_service.dart';
 import '../firebase/firebase_donation_service.dart';
 import '../firebase/firebase_emergency_contact_service.dart';
 import '../firebase/firebase_notification_service.dart';
+import '../utils/app_updater.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppProvider extends ChangeNotifier {
   // Firebase services - lazy initialization
@@ -122,6 +124,28 @@ class AppProvider extends ChangeNotifier {
 
   // System theme change listener
   VoidCallback? _systemThemeChangeListener;
+
+  // Update-related properties
+  bool _isCheckingForUpdate = false;
+  bool _updateAvailable = false;
+  String _latestVersion = '';
+  String _updateDownloadUrl = '';
+  String _releaseNotes = '';
+  bool _isDownloadingUpdate = false;
+  double _downloadProgress = 0.0;
+  bool _installationStarted = false;
+  String _downloadedFilePath = '';
+
+  // Update getters
+  bool get isCheckingForUpdate => _isCheckingForUpdate;
+  bool get updateAvailable => _updateAvailable;
+  String get latestVersion => _latestVersion;
+  String get updateDownloadUrl => _updateDownloadUrl;
+  String get releaseNotes => _releaseNotes;
+  bool get isDownloadingUpdate => _isDownloadingUpdate;
+  double get downloadProgress => _downloadProgress;
+  bool get installationStarted => _installationStarted;
+  String get downloadedFilePath => _downloadedFilePath;
 
   // Constructor - load data for app
   AppProvider() {
@@ -1391,5 +1415,194 @@ class AppProvider extends ChangeNotifier {
       debugPrint('Error accepting blood request response: $e');
       return;
     }
+  }
+
+  // Update management methods
+  Future<void> checkForUpdates() async {
+    _isCheckingForUpdate = true;
+    notifyListeners();
+    
+    try {
+      // Get update information from Firestore through the AppUpdater
+      final updateInfo = await AppUpdater.checkForUpdates();
+      
+      _updateAvailable = updateInfo['hasUpdate'] ?? false;
+      _latestVersion = updateInfo['latestVersion'] ?? '';
+      _updateDownloadUrl = updateInfo['downloadUrl'] ?? '';
+      _releaseNotes = updateInfo['releaseNotes'] ?? '';
+      
+      _isCheckingForUpdate = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error checking for updates: $e');
+      _isCheckingForUpdate = false;
+      _updateAvailable = false;
+      notifyListeners();
+    }
+  }
+  
+  // Open the download URL in browser as fallback
+  Future<void> openDownloadInBrowser() async {
+    if (_updateDownloadUrl.isEmpty) {
+      debugPrint('No download URL available');
+      return;
+    }
+    
+    try {
+      // Make sure we're using the proper Google Drive URL for direct download
+      String browserUrl = _updateDownloadUrl;
+      
+      // For Google Drive, we need to ensure it has the confirmation token
+      if (browserUrl.contains('drive.google.com')) {
+        debugPrint('Processing Google Drive URL for browser download');
+        
+        // If it doesn't already have the confirm parameter, add it
+        if (!browserUrl.contains('confirm=')) {
+          browserUrl = '$browserUrl&confirm=t';
+        }
+      }
+      
+      final url = Uri.parse(browserUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+        debugPrint('Opened download URL in browser: $browserUrl');
+      } else {
+        debugPrint('Could not launch URL: $browserUrl');
+      }
+    } catch (e) {
+      debugPrint('Error opening browser for download: $e');
+    }
+  }
+  
+  Future<void> downloadUpdate() async {
+    if (!_updateAvailable || _updateDownloadUrl.isEmpty) {
+      debugPrint('No update available or download URL is empty');
+      return;
+    }
+    
+    _isDownloadingUpdate = true;
+    _installationStarted = false;
+    _downloadProgress = 0.0;
+    _downloadedFilePath = '';
+    notifyListeners();
+    
+    try {
+      // Check if we're dealing with a Google Drive URL (large file scenario)
+      bool isGoogleDriveUrl = _updateDownloadUrl.contains('drive.google.com');
+      debugPrint('Is Google Drive URL: $isGoogleDriveUrl');
+      
+      // Extract file ID from Google Drive URL if present
+      String fileId = '';
+      if (isGoogleDriveUrl) {
+        final RegExp fileIdRegex = RegExp(r'id=([^&]+)');
+        final match = fileIdRegex.firstMatch(_updateDownloadUrl);
+        if (match != null && match.group(1) != null) {
+          fileId = match.group(1)!;
+          debugPrint('Extracted file ID: $fileId');
+        }
+      }
+      
+      // Try in-app download first
+      try {
+        await AppUpdater.downloadUpdate(
+          _updateDownloadUrl,
+          (progress) {
+            _downloadProgress = progress;
+            notifyListeners();
+          },
+          (filePath) async {
+            _isDownloadingUpdate = false;
+            _downloadProgress = 1.0;
+            _downloadedFilePath = filePath;
+            notifyListeners();
+            
+            // Install the APK
+            try {
+              _installationStarted = true;
+              notifyListeners();
+              await AppUpdater.installApk(filePath);
+            } catch (e) {
+              debugPrint('Error installing APK: $e');
+              // Keep installationStarted as true so user can retry manually
+            }
+          },
+          (error) async {
+            debugPrint('Error downloading update in-app: $error');
+            
+            // If the in-app download fails and this is a Google Drive URL,
+            // try browser download as fallback for large files
+            if (isGoogleDriveUrl) {
+              debugPrint('Trying browser download as fallback...');
+              bool browserStarted = false;
+              
+              // Try with direct URL with confirm parameter
+              if (fileId.isNotEmpty) {
+                final directUrl = AppUpdater.getDirectDownloadUrl(fileId);
+                browserStarted = await AppUpdater.downloadWithBrowser(directUrl);
+                debugPrint('Browser download with direct URL: $browserStarted');
+              }
+              
+              // If that fails, try with original URL
+              if (!browserStarted) {
+                browserStarted = await AppUpdater.downloadWithBrowser(_updateDownloadUrl);
+                debugPrint('Browser download with original URL: $browserStarted');
+              }
+              
+              if (browserStarted) {
+                // Update UI to show browser download started
+                _isDownloadingUpdate = false;
+                _downloadProgress = 0.0;
+                notifyListeners();
+                return;
+              }
+            }
+            
+            // If all attempts fail, reset download state
+            _isDownloadingUpdate = false;
+            notifyListeners();
+          },
+        );
+      } catch (e) {
+        debugPrint('Exception in downloadUpdate: $e');
+        _isDownloadingUpdate = false;
+        notifyListeners();
+        
+        // Try browser download as last resort
+        if (isGoogleDriveUrl) {
+          await AppUpdater.downloadWithBrowser(_updateDownloadUrl);
+        }
+      }
+    } catch (e) {
+      debugPrint('Exception in downloadUpdate: $e');
+      _isDownloadingUpdate = false;
+      notifyListeners();
+    }
+  }
+  
+  // Retry installation of already downloaded APK
+  Future<void> retryInstallation() async {
+    if (_downloadedFilePath.isEmpty) {
+      debugPrint('No downloaded APK file to install');
+      return;
+    }
+    
+    try {
+      _installationStarted = true;
+      notifyListeners();
+      await AppUpdater.installApk(_downloadedFilePath);
+    } catch (e) {
+      debugPrint('Error retrying APK installation: $e');
+      // Keep installationStarted as true so user can retry again
+    }
+  }
+  
+  // Reset update state to allow retry
+  void resetUpdateState() {
+    _isDownloadingUpdate = false;
+    _downloadProgress = 0.0;
+    _installationStarted = false;
+    _downloadedFilePath = '';
+    notifyListeners();
+    debugPrint('Update state reset, retry is now possible');
   }
 }

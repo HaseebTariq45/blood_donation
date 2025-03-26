@@ -53,6 +53,7 @@ dependencies:
   http: ^1.2.0
   fl_chart: ^0.66.2
   get_it: ^7.6.7
+  package_info_plus: ^8.3.0
   
   # Notifications
   firebase_messaging: ^14.6.9
@@ -98,7 +99,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/lang/
-    - assets/animations/
+    - assets/config/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

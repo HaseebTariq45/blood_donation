@@ -34,6 +34,7 @@ import 'utils/localization/app_localization.dart';
 import 'firebase/firebase_service.dart';
 import 'services/firebase_notification_service.dart';
 import 'widgets/blood_request_notification_dialog.dart';
+import 'utils/app_updater.dart';
 
 // Create a separate function for initialization
 Future<void> _initializeApp() async {
@@ -51,10 +52,19 @@ Future<void> _initializeApp() async {
 
   // Load environment variables but don't halt execution if file is missing
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: "assets/config/.env");
     debugPrint('Environment variables loaded successfully');
   } catch (e) {
     debugPrint('Failed to load .env file: $e');
+    // Continue execution despite the error
+  }
+  
+  // Initialize AppUpdater to get current app version
+  try {
+    await AppUpdater.initialize();
+    debugPrint('AppUpdater initialized with version: ${AppUpdater.currentVersion}');
+  } catch (e) {
+    debugPrint('Failed to initialize AppUpdater: $e');
     // Continue execution despite the error
   }
 }

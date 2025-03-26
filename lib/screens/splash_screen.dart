@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
+import '../providers/app_provider.dart';
+import '../firebase/firebase_auth_service.dart';
+import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,24 +17,49 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-
+  
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
     );
+    
     _animation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    _animationController.forward();
+    
+    _animationController.repeat(reverse: true);
 
-    // Navigate to login screen after 3 seconds
+    // Check authentication and navigate after a delay
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacementNamed('/login');
+      _checkAuthAndNavigate();
     });
+  }
+
+  // Check if user is already authenticated and navigate accordingly
+  Future<void> _checkAuthAndNavigate() async {
+    // Access the app provider to check authentication state
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final authService = FirebaseAuthService();
+    
+    // Check if user is already signed in
+    if (authService.isSignedIn) {
+      // Refresh user data to ensure we have the latest
+      await appProvider.refreshUserData();
+      
+      // Navigate to home screen
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } else {
+      // Navigate to login screen
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    }
   }
 
   @override
@@ -41,109 +70,161 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Get current theme mode from the app provider
+    final appProvider = Provider.of<AppProvider>(context);
+    final isDarkMode = appProvider.isDarkMode;
+
     // Get screen size for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
     final double screenWidth = screenSize.width;
     final double screenHeight = screenSize.height;
     final bool isSmallScreen = screenWidth < 360;
-
-    // Calculate logo size based on screen size
-    final double logoSize = screenWidth * 0.35;
-    final double iconSize = logoSize * 0.5;
+    
+    // Get theme colors
+    final ThemeData theme = Theme.of(context);
+    final Color primaryColor = AppConstants.primaryColor;
+    final Color backgroundColor = theme.scaffoldBackgroundColor;
+    final Color textColor = theme.textTheme.bodyLarge!.color!;
+    
+    // Define gradient colors based on theme
+    final List<Color> gradientColors = isDarkMode 
+        ? [
+            Colors.black,
+            Color(0xFF1A1A2E),
+            Color(0xFF16213E),
+          ]
+        : [
+            Colors.white,
+            Color(0xFFF9F9F9),
+            Color(0xFFF0F0F0),
+          ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      // Use SafeArea to avoid system UI overlays
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo animation
-                  ScaleTransition(
-                    scale: _animation,
-                    child: FadeIn(
-                      duration: const Duration(seconds: 1),
+      // Use gradient background instead of solid color
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Animated background circles
+              Positioned(
+                top: -screenHeight * 0.1,
+                left: -screenWidth * 0.2,
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: _animationController.value * 2 * math.pi / 10,
                       child: Container(
-                        width: logoSize,
-                        height: logoSize,
+                        width: screenWidth * 0.6,
+                        height: screenWidth * 0.6,
                         decoration: BoxDecoration(
-                          color: AppConstants.primaryColor,
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppConstants.primaryColor.withOpacity(0.3),
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
+                          color: primaryColor.withOpacity(0.05),
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.favorite,
-                            color: Colors.white,
-                            size: iconSize,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                bottom: -screenHeight * 0.1,
+                right: -screenWidth * 0.2,
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: -_animationController.value * 2 * math.pi / 10,
+                      child: Container(
+                        width: screenWidth * 0.7,
+                        height: screenWidth * 0.7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primaryColor.withOpacity(0.05),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Main content - centered both horizontally and vertically
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // App name animation with FittedBox for text scaling
+                    FadeInUp(
+                      from: 30,
+                      duration: const Duration(milliseconds: 800),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'BloodLine',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: isSmallScreen ? 32 : 40,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.05),
-                  // App name animation with FittedBox for text scaling
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 500),
-                    duration: const Duration(milliseconds: 800),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
+                    SizedBox(height: screenHeight * 0.02),
+                    // Tagline animation with FittedBox
+                    FadeInUp(
+                      from: 30,
+                      delay: const Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 800),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Give Blood, Save Lives',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: isSmallScreen ? 16 : 20,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
+                    // Loading indicator with custom animation
+                    FadeIn(
+                      delay: const Duration(milliseconds: 1000),
+                      child: SizedBox(
+                        width: screenWidth * 0.1,
+                        height: screenWidth * 0.1,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            primaryColor,
+                          ),
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Additional loading text
+                    FadeIn(
+                      delay: const Duration(milliseconds: 1200),
                       child: Text(
-                        'BLOOD DONATION',
+                        'Loading...',
                         style: TextStyle(
-                          color: AppConstants.primaryColor,
-                          fontSize: isSmallScreen ? 20 : 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
+                          color: textColor.withOpacity(0.7),
+                          fontSize: 14,
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  // Tagline animation with FittedBox
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 1000),
-                    duration: const Duration(milliseconds: 800),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        'Give Blood, Save Lives',
-                        style: TextStyle(
-                          color: AppConstants.darkTextColor,
-                          fontSize: isSmallScreen ? 14 : 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.07),
-                  // Loading indicator
-                  FadeIn(
-                    delay: const Duration(milliseconds: 1500),
-                    child: SizedBox(
-                      width: screenWidth * 0.1,
-                      height: screenWidth * 0.1,
-                      child: const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppConstants.primaryColor,
-                        ),
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
