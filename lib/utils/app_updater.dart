@@ -606,24 +606,52 @@ class AppUpdater {
   static Future<bool> openDownloadsFolder() async {
     try {
       if (Platform.isAndroid) {
-        debugPrint('Attempting to open Downloads folder using open_file_manager package');
+        debugPrint('Attempting to open Downloads folder in file manager');
         
-        // Try using the open_file_manager package which works better on most devices
-        // including Realme/ColorOS phones
-        try {
-          await openFileManager(
-            androidConfig: AndroidConfig(
-              folderType: AndroidFolderType.download,
-            ),
-          );
-          debugPrint('Opened Downloads folder using open_file_manager package');
-          return true;
-        } catch (e) {
-          debugPrint('Error opening Downloads folder with open_file_manager: $e');
-          // Continue with fallback methods
+        // Try to directly open file manager first with specific path for different manufacturers
+        final List<Map<String, String>> fileManagerIntents = [
+          // ColorOS/Realme/OPPO file manager
+          {'package': 'com.coloros.filemanager', 'activity': '.FileManagerActivity'},
+          {'package': 'com.oppo.filemanager', 'activity': '.FileManagerActivity'},
+          {'package': 'com.realme.filemanager', 'activity': '.FileManagerActivity'},
+          
+          // Samsung file manager
+          {'package': 'com.sec.android.app.myfiles', 'activity': '.common.MainActivity'},
+          
+          // Xiaomi file manager
+          {'package': 'com.mi.android.globalFileexplorer', 'activity': '.FileExplorerTabActivity'},
+          
+          // Google Files app
+          {'package': 'com.google.android.apps.nbu.files', 'activity': '.home.HomeActivity'},
+          
+          // Common file managers
+          {'package': 'com.android.documentsui', 'activity': '.files.FilesActivity'},
+          {'package': 'com.google.android.documentsui', 'activity': '.files.FilesActivity'},
+        ];
+        
+        for (final fileManager in fileManagerIntents) {
+          try {
+            final packageName = fileManager['package']!;
+            final activityName = fileManager['activity']!;
+            final intentUri = Uri.parse('intent:#Intent;component=$packageName$activityName;end');
+            
+            if (await canLaunchUrl(intentUri)) {
+              final bool result = await launchUrl(
+                intentUri,
+                mode: LaunchMode.externalApplication,
+              );
+              if (result) {
+                debugPrint('Opened file manager directly: $packageName');
+                return true;
+              }
+            }
+          } catch (e) {
+            debugPrint('Error opening file manager: $e');
+          }
         }
         
-        // If that fails, try using a specific path for Realme phones
+        // Try using the open_file_manager package with 'other' folder type
+        // which is more likely to open the actual file manager
         try {
           await openFileManager(
             androidConfig: AndroidConfig(
@@ -631,110 +659,73 @@ class AppUpdater {
               folderPath: '/storage/emulated/0/Download',
             ),
           );
-          debugPrint('Opened specific Download path using open_file_manager');
+          debugPrint('Opened file manager with specific Download path');
           return true;
         } catch (e) {
           debugPrint('Error opening specific Downloads path: $e');
-          // Continue with previous fallback methods
+          // Continue with fallback methods
         }
         
-        // For Realme/OPPO phones - trying their specific file manager first
-        final List<String> realmeFileManagers = [
-          'com.coloros.filemanager',         // ColorOS File Manager
-          'com.realme.filemanager',          // Realme File Manager
-          'com.coloros.files',               // Another possible variant
-          'com.oppo.filemanager',            // OPPO File Manager
+        // Try with standard methods that might open the file manager
+        final List<Uri> fileManagerUris = [
+          // Generic file explorer with primary storage
+          Uri.parse('content://com.android.externalstorage.documents/root/primary'),
+          
+          // Documents provider with downloads path
+          Uri.parse('content://com.android.externalstorage.documents/document/primary%3ADownload'),
+          
+          // File path to Downloads
+          Uri.parse('file:///storage/emulated/0/Download'),
+          
+          // Alternative content URI
+          Uri.parse('content://com.android.providers.media.documents/root/downloads'),
         ];
         
-        for (final String packageName in realmeFileManagers) {
+        for (final uri in fileManagerUris) {
           try {
-            final Uri fileManagerUri = Uri.parse('$packageName://downloads');
-            if (await canLaunchUrl(fileManagerUri)) {
+            if (await canLaunchUrl(uri)) {
               final bool result = await launchUrl(
-                fileManagerUri,
+                uri,
                 mode: LaunchMode.externalApplication,
               );
               if (result) {
-                debugPrint('Opened Realme/ColorOS file manager directly: $packageName');
+                debugPrint('Opened file manager using URI: $uri');
                 return true;
               }
             }
           } catch (e) {
-            debugPrint('Error opening Realme file manager $packageName: $e');
+            debugPrint('Error with URI $uri: $e');
           }
         }
         
-        // Try a more direct approach with intent scheme
-        final intentUri = Uri.parse('intent://downloads#Intent;action=android.intent.action.VIEW;category=android.intent.category.DEFAULT;end');
-        if (await canLaunchUrl(intentUri)) {
-          final bool result = await launchUrl(
-            intentUri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (result) {
-            debugPrint('Opened Downloads using intent scheme');
+        // Try with ACTION_VIEW intent for directory mimetype
+        try {
+          final Uri uri = Uri.parse('content://com.android.externalstorage.documents/document/primary%3ADownload');
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            debugPrint('Opened file manager using document provider URI');
             return true;
           }
+        } catch (e) {
+          debugPrint('Error with document URI: $e');
         }
         
-        // Try with fixed path for Realme standard Downloads location
-        final realmeDownloadsUri = Uri.parse('content://com.android.filemanager/storage/emulated/0/Download');
-        if (await canLaunchUrl(realmeDownloadsUri)) {
-          final bool result = await launchUrl(
-            realmeDownloadsUri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (result) {
-            debugPrint('Opened Downloads using content provider');
-            return true;
+        // As a last resort, try to find a file manager in the Play Store
+        try {
+          final Uri marketUri = Uri.parse('market://search?q=file+manager&c=apps');
+          if (await canLaunchUrl(marketUri)) {
+            debugPrint('No file manager found, could open Play Store to install one');
+            // We don't actually launch this automatically,
+            // but could guide the user to install a file manager if needed
           }
+        } catch (e) {
+          debugPrint('Error checking for file manager in Play Store: $e');
         }
         
-        // Method 1: Try using simple intent for Downloads folder (most reliable)
-        // This uses ACTION_VIEW with a simple downloads path
-        final String downloadsDirectoryPath = '/storage/emulated/0/Download';
-        final uri = Uri.parse('content://com.android.externalstorage.documents/document/primary%3ADownload');
-        
-        if (await canLaunchUrl(uri)) {
-          final bool result = await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (result) {
-            debugPrint('Opened Downloads using externalstorage documents provider');
-            return true;
-          }
-        }
-        
-        // Method 2: Try a simple file path with external-only mode
-        final fileUri = Uri.parse('file://$downloadsDirectoryPath');
-        if (await canLaunchUrl(fileUri)) {
-          final bool result = await launchUrl(
-            fileUri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (result) {
-            debugPrint('Opened Downloads using file path');
-            return true;
-          }
-        }
-        
-        // Last resort: try to directly start the Realme file manager app
-        // First try FileManager activity with direct intent
-        final realmeFMIntent = Uri.parse('intent:#Intent;component=com.coloros.filemanager/.FileManagerActivity;end');
-        if (await canLaunchUrl(realmeFMIntent)) {
-          final bool result = await launchUrl(
-            realmeFMIntent,
-            mode: LaunchMode.externalApplication,
-          );
-          if (result) {
-            debugPrint('Opened Realme File Manager app directly');
-            return true;
-          }
-        }
-        
-        // Last resort: Show message to user
-        debugPrint('All methods to open Downloads folder failed');
+        debugPrint('All methods to open file manager failed');
         return false;
       }
       
