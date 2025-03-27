@@ -418,7 +418,9 @@ class AppUpdater {
                   subject: 'Install $appName', 
                 );
                 debugPrint('Share result: $result');
-                onComplete('Update downloaded to Downloads folder. Please select "Package Installer" to install the app.');
+                
+                // Inform user about the saved file location
+                onComplete('Update downloaded to: $savePath\n\nSelect "Package Installer" from the share menu to install the app. The APK file has also been saved to your Downloads folder.');
                 
                 // After sharing, try to directly install as backup
                 Future.delayed(Duration(seconds: 2), () async {
@@ -443,7 +445,7 @@ class AppUpdater {
                 } catch (e2) {
                   // If installation fails, still mark as complete but show error
                   debugPrint('Error during APK installation: $e2');
-                  onComplete('Update downloaded to: ${file.parent.path}\nPlease install manually from your Downloads folder.');
+                  onComplete('Update downloaded to: ${file.parent.path}\nPlease install manually by opening the APK file from your Downloads folder.');
                 }
               }
             } else {
@@ -488,77 +490,78 @@ class AppUpdater {
         
         // For Android, we need to use multiple approaches
         if (Platform.isAndroid) {
-          // Try using direct intent with MIME type
-          final uri = Uri.file(filePath);
-          final Map<String, dynamic> intentParams = {
-            'action': 'android.intent.action.VIEW',
-            'data': uri.toString(),
-            'flags': '268435456', // FLAG_ACTIVITY_NEW_TASK
-            'type': 'application/vnd.android.package-archive',
-          };
-          
-          debugPrint('Attempting direct installation with intent params: $intentParams');
-          
-          // Create a URI with intent parameters
-          final uriWithParams = Uri.https('', '', intentParams);
-          
-          if (await canLaunchUrl(uri)) {
-            debugPrint('Launching with file URI...');
-            await launchUrl(
-              uri,
-              mode: LaunchMode.externalApplication,
+          // First try the most reliable approach - just share the file
+          try {
+            debugPrint('Trying to share the APK file for installation...');
+            final result = await Share.shareXFiles(
+              [XFile(filePath, mimeType: 'application/vnd.android.package-archive')], 
+              text: 'Install $appName update',
             );
+            debugPrint('Share result: $result');
             return;
+          } catch (e) {
+            debugPrint('Failed to share APK: $e. Trying direct installation methods...');
           }
           
-          // Second approach: try using a direct content:// URI approach
+          // Try using direct intent with MIME type
           try {
-            // Some devices require removing the initial slash
-            final String adjustedPath = filePath.startsWith('/') 
-                ? filePath.substring(1) 
-                : filePath;
+            final uri = Uri.file(filePath);
+            debugPrint('Attempting to launch file directly with: $uri');
             
-            // Create a simple content URI
-            debugPrint('Trying content URI approach...');
-            final contentUri = Uri.parse('content://$adjustedPath');
+            if (await canLaunchUrl(uri)) {
+              debugPrint('Launching with file URI...');
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
+              return;
+            }
+          } catch (e) {
+            debugPrint('Error launching file URI: $e');
+          }
+          
+          // Try using content URI as fallback
+          try {
+            final contentUri = Uri.parse('content://$filePath');
+            debugPrint('Trying content URI: $contentUri');
             
             if (await canLaunchUrl(contentUri)) {
               await launchUrl(
-                contentUri, 
+                contentUri,
                 mode: LaunchMode.externalApplication,
               );
               debugPrint('Launched with content URI');
               return;
             }
           } catch (e) {
-            debugPrint('Error with content URI approach: $e');
+            debugPrint('Error with content URI: $e');
           }
           
-          // Final fallback: Try to open file with default app selector
+          // Final fallback - try opening with platform default
           try {
-            debugPrint('Trying generic file opener...');
+            debugPrint('Trying platform default opener...');
             await launchUrl(
               Uri.file(filePath),
               mode: LaunchMode.platformDefault,
             );
             return;
           } catch (e) {
-            debugPrint('Failed to open file with default app selector: $e');
+            debugPrint('Failed with platform default: $e');
           }
           
-          throw 'All installation methods failed. Downloaded APK is at: $filePath';
+          throw 'All installation methods failed. The APK is downloaded at: $filePath - please open it manually from your file manager.';
         } else {
-          // For other platforms
-        if (await canLaunchUrl(Uri.file(filePath))) {
-          await launchUrl(Uri.file(filePath), mode: LaunchMode.externalApplication);
+          // For other platforms, try to open file
+          if (await canLaunchUrl(Uri.file(filePath))) {
+            await launchUrl(Uri.file(filePath), mode: LaunchMode.externalApplication);
             debugPrint('File opened for installation');
-        } else {
-          throw 'Could not launch $filePath';
+          } else {
+            throw 'Could not launch $filePath';
           }
         }
       } else {
         debugPrint('APK file not found at: $filePath');
-        throw 'APK file not found';
+        throw 'APK file not found. Please try downloading again.';
       }
     } catch (e) {
       debugPrint('Error installing APK: $e');
@@ -630,6 +633,48 @@ class AppUpdater {
       return permissionGranted;
     } catch (e) {
       debugPrint('Error checking update permissions: $e');
+      return false;
+    }
+  }
+  
+  // Open the device's Downloads folder
+  static Future<bool> openDownloadsFolder() async {
+    try {
+      if (Platform.isAndroid) {
+        // Try to open the Downloads folder using the file manager
+        final downloadsUri = Uri.parse('content://downloads/all_downloads');
+        
+        if (await canLaunchUrl(downloadsUri)) {
+          await launchUrl(downloadsUri, mode: LaunchMode.externalApplication);
+          debugPrint('Opened Downloads folder with content URI');
+          return true;
+        }
+        
+        // Alternative approach - try to open the file system at the Downloads location
+        final downloadsDirUri = Uri.parse('file:///storage/emulated/0/Download');
+        
+        if (await canLaunchUrl(downloadsDirUri)) {
+          await launchUrl(downloadsDirUri, mode: LaunchMode.externalApplication);
+          debugPrint('Opened Downloads folder with file URI');
+          return true;
+        }
+        
+        // Last resort - try to use a generic file explorer intent
+        final intent = Uri.parse('android-app://com.android.documentsui/document/recent');
+        
+        if (await canLaunchUrl(intent)) {
+          await launchUrl(intent, mode: LaunchMode.externalApplication);
+          debugPrint('Opened file explorer using documents UI intent');
+          return true;
+        }
+        
+        debugPrint('Could not open Downloads folder directly');
+        return false;
+      }
+      
+      return false;
+    } catch (e) {
+      debugPrint('Error opening Downloads folder: $e');
       return false;
     }
   }

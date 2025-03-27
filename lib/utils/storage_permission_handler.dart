@@ -84,10 +84,11 @@ class StoragePermissionHandler {
             const Text('Please follow these steps:'),
             const SizedBox(height: 8),
             const Text('1. Tap "OPEN SETTINGS" below'),
-            const Text('2. Select "Files and media"'),
-            const Text('3. Choose "Allow access to manage all files"'),
-            const Text('4. Toggle the switch to ON'),
-            const Text('5. Return to the app to continue'),
+            const Text('2. In the App settings screen, tap "Permissions"'),
+            const Text('3. Tap "Files and media" or "Storage"'),
+            const Text('4. Select "Allow management of all files"'),
+            const Text('5. Toggle the switch to ON when prompted'),
+            const Text('6. Return to the app to continue'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(8),
@@ -101,7 +102,7 @@ class StoragePermissionHandler {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'This permission is only used to save update files to your Downloads folder.',
+                      'Note: If you\'re redirected to Play Store or cannot find this setting, please manually go to Settings > Apps > BloodLine > Permissions > Files and media > Allow management of all files',
                       style: TextStyle(fontSize: 12),
                     ),
                   ),
@@ -156,29 +157,26 @@ class StoragePermissionHandler {
     if (!Platform.isAndroid) return false;
     
     try {
-      // The specific intent for "All Files Access" settings in Android 11+
-      final uri = Uri.parse('android-app://com.android.settings/.applications.ManageAppAllFilesAccessPermission');
+      // On Android 11+, we need to use the correct ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION intent
+      // This action opens the system settings screen for All Files Access
+
+      // First try the standard approach using the settings action
+      final uri = Uri.parse('package:com.codematesolution.bloodline');
       
       if (await canLaunchUrl(uri)) {
-        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+        debugPrint('Opening specific All Files Access settings screen');
+        return await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
       }
       
-      // Alternative approach: try to use ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-      final actionUri = Uri.parse('package:com.codematesolution.bloodline');
-      if (await canLaunchUrl(actionUri)) {
-        return await launchUrl(actionUri, mode: LaunchMode.externalApplication);
-      }
-      
-      // Last resort - try direct settings URI
-      final settingsUri = Uri.parse('android-app://com.android.settings/.Settings\$AppListActivity');
-      if (await canLaunchUrl(settingsUri)) {
-        return await launchUrl(settingsUri, mode: LaunchMode.externalApplication);
-      }
+      // If that fails, try to open the main app settings
+      debugPrint('Could not open specific settings, trying app settings');
+      return await openAppSettings();
     } catch (e) {
       debugPrint('Error launching All Files Access settings: $e');
+      return await openAppSettings();
     }
-    
-    // Fallback to app settings
-    return await openAppSettings();
   }
 } 

@@ -2316,174 +2316,24 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ] else if (appProvider.downloadProgress > 0 && appProvider.downloadProgress < 1) ...[
-                  // Download was interrupted or failed
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.red.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(Icons.error_outline, color: Colors.red[700], size: iconSize - 4),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Download Interrupted',
-                                    style: TextStyle(
-                                      fontSize: subtitleFontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red[700],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Progress: ${(appProvider.downloadProgress * 100).toStringAsFixed(0)}%',
-                                    style: TextStyle(
-                                      fontSize: subtitleFontSize - 2,
-                                      color: textColor.withOpacity(0.7),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 16),
-                        Text(
-                          'The download was interrupted. You can retry in-app or use the browser download option.',
-                          style: TextStyle(
-                            fontSize: subtitleFontSize - 1,
-                            color: textColor.withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                appProvider.resetUpdateState();
-                              },
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Reset'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.grey[700],
-                                side: BorderSide(color: Colors.grey[400]!),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              ),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await AppUpdater.openDownloadsFolder();
+                            } catch (e) {
+                              _showUpdateErrorMessage('Failed to open Downloads folder: ${e.toString()}');
+                            }
+                          },
+                          icon: const Icon(Icons.folder_open, size: 16),
+                          label: const Text('Find APK in Downloads'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.amber[800],
+                            side: BorderSide(color: Colors.amber[300]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 12),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                try {
-                                  appProvider.resetUpdateState();
-                                  appProvider.downloadUpdate(context: context);
-                                } catch (e) {
-                                  _showUpdateErrorMessage('Failed to retry download: ${e.toString()}');
-                                }
-                              },
-                              icon: const Icon(Icons.replay, size: 18),
-                              label: const Text('Retry'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Alternative download options
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.lightbulb_outline,
-                                    size: 18,
-                                    color: Colors.amber[700],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Alternative Download',
-                                    style: TextStyle(
-                                      fontSize: subtitleFontSize - 1,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.amber[800],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'For large APK files, the browser download option is recommended.',
-                                style: TextStyle(
-                                  fontSize: subtitleFontSize - 2,
-                                  color: textColor.withOpacity(0.7),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Center(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    try {
-                                      appProvider.openDownloadInBrowser();
-                                    } catch (e) {
-                                      _showUpdateErrorMessage('Failed to open browser: ${e.toString()}');
-                                    }
-                                  },
-                                  icon: const Icon(Icons.open_in_browser, size: 18),
-                                  label: const Text('Download in Browser'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: isDarkMode ? Colors.blue[300] : Colors.blue[700],
-                                    side: BorderSide(
-                                      color: isDarkMode ? Colors.blue[700]! : Colors.blue[300]!,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           ),
                         ),
                       ],
