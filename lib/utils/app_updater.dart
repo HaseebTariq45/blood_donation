@@ -10,16 +10,11 @@ import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// Import for Android platform channel
-import 'package:flutter/services.dart';
 
 class AppUpdater {
   // Default version in case we can't get it from PackageInfo
   static String currentVersion = '1.0.0';
   static const String appName = 'BloodLine';
-  
-  // Platform channel for native code - use the correct applicationId from build.gradle
-  static const platform = MethodChannel('com.codematesolution.bloodline/updates');
   
   // Firestore collection and document for app updates
   static const String updateCollection = 'app_updates';
@@ -183,12 +178,52 @@ class AppUpdater {
         return;
       }
       
-      // Create a temporary file in app's cache to download first
-      final tempDir = await getTemporaryDirectory();
+      // Save to Downloads folder instead of app-specific directory
       final fileName = 'bloodline_update.apk';
-      final tempFilePath = '${tempDir.path}/$fileName';
+      String? savePath;
       
-      debugPrint('Will save initially to temporary path: $tempFilePath');
+      if (Platform.isAndroid) {
+        // Get the Downloads directory path on Android
+        Directory? downloadsDir;
+        try {
+          // This is the path to the Downloads folder on most Android devices
+          downloadsDir = Directory('/storage/emulated/0/Download');
+          if (!await downloadsDir.exists()) {
+            // Try alternative path
+            downloadsDir = Directory('/storage/emulated/0/Downloads');
+            if (!await downloadsDir.exists()) {
+              // Fallback to app's external directory
+              final appDir = await getExternalStorageDirectory();
+              if (appDir != null) {
+                downloadsDir = appDir;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Error accessing Downloads directory: $e');
+          // Fallback to app's external directory
+          final appDir = await getExternalStorageDirectory();
+          if (appDir != null) {
+            downloadsDir = appDir;
+          }
+        }
+        
+        if (downloadsDir != null) {
+          savePath = '${downloadsDir.path}/$fileName';
+          debugPrint('Will save APK to Downloads folder: $savePath');
+        } else {
+          final errorMsg = 'Could not access Downloads directory';
+          debugPrint(errorMsg);
+          isUpdateInProgress = false;
+          onError(errorMsg);
+          return;
+        }
+      } else {
+        // For iOS and other platforms
+        final appDir = await getApplicationDocumentsDirectory();
+        savePath = '${appDir.path}/$fileName';
+      debugPrint('Will save APK to: $savePath');
+      }
       
       try {
         // Handle Dropbox URL
@@ -274,7 +309,7 @@ class AppUpdater {
           }
           
           // Create the file and open a sink for writing
-          final file = File(tempFilePath);
+          final file = File(savePath!);
           final sink = file.openWrite();
           int receivedBytes = 0;
           
@@ -354,60 +389,6 @@ class AppUpdater {
             
             debugPrint('APK file downloaded successfully and validated');
             
-            // Now try to save to the BloodLine folder using native platform methods
-            String finalPath = tempFilePath;
-            
-            if (Platform.isAndroid) {
-              try {
-                // First try to create the BloodLine folder using platform channel
-                final String? bloodLineFolderPath = await platform.invokeMethod('createBloodLineFolder');
-                
-                if (bloodLineFolderPath != null && bloodLineFolderPath.isNotEmpty) {
-                  debugPrint('BloodLine folder created: $bloodLineFolderPath');
-                  
-                  // Try to save the file to BloodLine folder
-                  final String? bloodLinePath = await platform.invokeMethod(
-                    'saveToBloodLine',
-                    {
-                      'sourcePath': tempFilePath,
-                      'fileName': fileName,
-                    }
-                  );
-                  
-                  if (bloodLinePath != null && bloodLinePath.isNotEmpty) {
-                    debugPrint('Successfully saved to BloodLine folder: $bloodLinePath');
-                    finalPath = bloodLinePath;
-                  }
-                }
-              } catch (e) {
-                debugPrint('Error using native BloodLine folder: $e');
-                // Continue with fallback approaches
-              }
-              
-              // If BloodLine folder attempt failed, try Downloads folder
-              if (finalPath == tempFilePath) {
-                try {
-                  final String? downloadsPath = await platform.invokeMethod(
-                    'saveToDownloads',
-                    {
-                      'sourcePath': tempFilePath,
-                      'fileName': fileName,
-                    }
-                  );
-                  
-                  if (downloadsPath != null && downloadsPath.isNotEmpty) {
-                    debugPrint('Successfully saved to Downloads folder: $downloadsPath');
-                    finalPath = downloadsPath;
-                  }
-                } catch (e) {
-                  debugPrint('Error saving to Downloads folder: $e');
-                  // Continue with temporary file
-                }
-              }
-            }
-            
-            debugPrint('Final APK path for installation: $finalPath');
-            
             // Installation handled differently based on platform
             if (Platform.isAndroid) {
               // On Android, directly install the APK using the installApk method
@@ -416,30 +397,22 @@ class AppUpdater {
               try {
                 // Share file for installation - this is the most reliable approach
                 final result = await Share.shareXFiles(
-                  [XFile(finalPath)], 
+                  [XFile(savePath, mimeType: 'application/vnd.android.package-archive')], 
                   text: 'Install $appName update',
-                  subject: 'Install $appName',
-                  sharePositionOrigin: null,
+                  subject: 'Install $appName', 
                 );
                 debugPrint('Share result: $result');
-                
-                // Determine the appropriate message based on the file path
-                String locationMsg;
-                if (finalPath.contains('BloodLine')) {
-                  locationMsg = 'Downloads/BloodLine folder';
-                } else if (finalPath.contains('Download')) {
-                  locationMsg = 'Downloads folder';
-                } else {
-                  locationMsg = 'temporary location';
-                }
-                
-                onComplete('Update downloaded to the $locationMsg. Please select "Package Installer" to install the app.');
+                onComplete('Update downloaded to Downloads folder. Please select "Package Installer" to install the app.');
                 
                 // After sharing, try to directly install as backup
                 Future.delayed(Duration(seconds: 2), () async {
                   try {
-                    await installApk(finalPath);
-                    debugPrint('Delayed installation started directly');
+                    if (savePath != null) {
+                      await installApk(savePath);
+                      debugPrint('Delayed installation started directly');
+                    } else {
+                      debugPrint('Cannot install: savePath is null');
+                    }
                   } catch (e) {
                     debugPrint('Could not start direct installation: $e');
                     // It's OK if this fails since we already shared the file
@@ -449,29 +422,18 @@ class AppUpdater {
                 // If sharing fails, try direct installation
                 debugPrint('Error sharing APK: $e. Trying direct installation.');
                 try {
-                  await installApk(finalPath);
+                  await installApk(savePath);
                   onComplete('Update download completed. Installation started.');
                 } catch (e2) {
                   // If installation fails, still mark as complete but show error
                   debugPrint('Error during APK installation: $e2');
-                  
-                  // Determine the appropriate message based on the file path
-                  String locationMsg;
-                  if (finalPath.contains('BloodLine')) {
-                    locationMsg = 'Downloads/BloodLine folder';
-                  } else if (finalPath.contains('Download')) {
-                    locationMsg = 'Downloads folder';
-                  } else {
-                    locationMsg = file.parent.path;
-                  }
-                  
-                  onComplete('Update downloaded to: $locationMsg\nPlease install manually using your file manager.');
+                  onComplete('Update downloaded to: ${file.parent.path}\nPlease install manually from your Downloads folder.');
                 }
               }
             } else {
               // On iOS or other platforms, share the file
               debugPrint('Download successful, sharing file on non-Android platform');
-              await Share.shareXFiles([XFile(finalPath)], text: 'Install $appName update');
+              await Share.shareXFiles([XFile(savePath)], text: 'Install $appName update');
               isUpdateInProgress = false;
               onComplete('Update downloaded. Please install the shared file.');
             }
@@ -571,11 +533,11 @@ class AppUpdater {
           throw 'All installation methods failed. Downloaded APK is at: $filePath';
         } else {
           // For other platforms
-          if (await canLaunchUrl(Uri.file(filePath))) {
-            await launchUrl(Uri.file(filePath), mode: LaunchMode.externalApplication);
+        if (await canLaunchUrl(Uri.file(filePath))) {
+          await launchUrl(Uri.file(filePath), mode: LaunchMode.externalApplication);
             debugPrint('File opened for installation');
-          } else {
-            throw 'Could not launch $filePath';
+        } else {
+          throw 'Could not launch $filePath';
           }
         }
       } else {
