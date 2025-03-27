@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'storage_permission_handler.dart';
 
 class AppUpdater {
   // Default version in case we can't get it from PackageInfo
@@ -164,18 +165,33 @@ class AppUpdater {
     String url, 
     Function(double) onProgress, 
     Function(String) onComplete,
-    Function(String) onError
+    Function(String) onError,
+    {BuildContext? context}
   ) async {
     try {
       debugPrint('Starting download from URL: $url');
       isUpdateInProgress = true;
       
-      // Request storage permission for saving the APK
-      final permissionStatus = await Permission.storage.request();
-      if (permissionStatus.isDenied) {
-        isUpdateInProgress = false;
-        onError('Storage permission denied. Please grant permission to download updates.');
-        return;
+      // Request proper storage permissions based on Android version
+      bool hasPermission = await StoragePermissionHandler.hasStoragePermission();
+      
+      if (!hasPermission) {
+        if (context != null && context.mounted) {
+          // If we have context, show the proper UI prompt
+          debugPrint('Showing storage permission dialog');
+          hasPermission = await StoragePermissionHandler.showAllFilesAccessDialog(context);
+        } else {
+          // Otherwise just try to request it directly
+          debugPrint('Requesting storage permission without UI');
+          hasPermission = await StoragePermissionHandler.requestStoragePermission();
+        }
+        
+        if (!hasPermission) {
+          debugPrint('Storage permission denied');
+          isUpdateInProgress = false;
+          onError('Storage permission required for downloading updates. Please grant permission in app settings.');
+          return;
+        }
       }
       
       // Save to Downloads folder instead of app-specific directory
@@ -593,9 +609,73 @@ class AppUpdater {
     }
   }
   
+  // Helper to check and request all required update permissions
+  static Future<bool> checkAndRequestUpdatePermissions(BuildContext context) async {
+    try {
+      debugPrint('Checking all required permissions for app updates');
+      
+      // We need ALL_FILES_ACCESS permission for Android 11+
+      // and regular storage permission for older versions
+      final hasPermission = await StoragePermissionHandler.hasStoragePermission();
+      
+      if (hasPermission) {
+        debugPrint('Already have required permissions for updates');
+        return true;
+      }
+      
+      // Request permissions with UI flow
+      debugPrint('Requesting required permissions for updates');
+      final permissionGranted = await StoragePermissionHandler.showAllFilesAccessDialog(context);
+      
+      return permissionGranted;
+    } catch (e) {
+      debugPrint('Error checking update permissions: $e');
+      return false;
+    }
+  }
+  
   // Get a direct download URL for the APK
   static String getDirectDownloadUrl(String url) {
     if (url.isEmpty) return '';
     return _getProperDropboxUrl(url);
+  }
+  
+  // Open Android settings for "All Files Access" permission
+  static Future<bool> openAllFilesAccessSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        // For Android 11+ (API 30+), open the "All Files Access" permission screen directly if possible
+        debugPrint('Opening All Files Access settings');
+        
+        // First try using the direct action if available
+        if (await Permission.manageExternalStorage.status.isPermanentlyDenied) {
+          return await openAppSettings();
+        }
+        
+        // Alternative approach using intent
+        const action = 'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION';
+        final packageName = 'com.codematesolution.bloodline';
+        final uri = Uri.parse('package:$packageName');
+        
+        if (await canLaunchUrl(uri)) {
+          return await launchUrl(
+            uri, 
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          // Fallback to regular app settings
+          return await openAppSettings();
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error opening All Files Access settings: $e');
+      // Fallback to regular app settings as a last resort
+      try {
+        return await openAppSettings();
+      } catch (_) {
+        return false;
+      }
+    }
   }
 } 

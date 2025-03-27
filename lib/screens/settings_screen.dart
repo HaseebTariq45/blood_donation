@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 import 'dart:math';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
@@ -10,6 +11,7 @@ import '../utils/localization/app_localization.dart';
 import '../utils/theme_helper.dart';
 import '../utils/location_service.dart';
 import '../utils/notification_service.dart';
+import '../widgets/all_files_access_setting.dart';
 import 'data_usage_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_updater.dart';
@@ -363,6 +365,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ),
                         ),
                         const Divider(),
+                        // All Files Access Setting
+                        if (Platform.isAndroid) 
+                          Column(
+                            children: [
+                              const AllFilesAccessSetting(),
+                              const Divider(),
+                            ],
+                          ),
                         _buildSettingItem(
                           title: 'data_usage'.tr(context),
                           subtitle: 'Control how the app uses your data'.tr(
@@ -2390,7 +2400,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                               onPressed: () {
                                 try {
                                   appProvider.resetUpdateState();
-                                  appProvider.downloadUpdate();
+                                  appProvider.downloadUpdate(context: context);
                                 } catch (e) {
                                   _showUpdateErrorMessage('Failed to retry download: ${e.toString()}');
                                 }
@@ -2524,7 +2534,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: ElevatedButton.icon(
                           onPressed: () {
                             try {
-                              appProvider.downloadUpdate();
+                              appProvider.downloadUpdate(context: context);
                             } catch (e) {
                               _showUpdateErrorMessage('Failed to download update: ${e.toString()}');
                             }

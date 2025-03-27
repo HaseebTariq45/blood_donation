@@ -1474,7 +1474,7 @@ class AppProvider extends ChangeNotifier {
     }
   }
   
-  Future<void> downloadUpdate() async {
+  Future<void> downloadUpdate({BuildContext? context}) async {
     if (!_updateAvailable || _updateDownloadUrl.isEmpty) {
       debugPrint('No update available or download URL is empty');
       return;
@@ -1540,6 +1540,7 @@ class AppProvider extends ChangeNotifier {
             _isDownloadingUpdate = false;
             notifyListeners();
           },
+          context: context,
         );
       } catch (e) {
         debugPrint('Exception in downloadUpdate: $e');
