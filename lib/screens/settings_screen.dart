@@ -2316,7 +2316,29 @@ class _SettingsScreenState extends State<SettingsScreen>
                               child: ElevatedButton.icon(
                                 onPressed: () async {
                                   try {
-                                    await AppUpdater.openDownloadsFolder();
+                                    final bool success = await AppUpdater.openDownloadsFolder();
+                                    if (!success && context.mounted) {
+                                      // Show message to user if all methods failed
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text('Could Not Open Downloads'),
+                                            content: const Text(
+                                              'Unable to open the Downloads folder automatically. Please open your file manager manually and navigate to the Downloads folder to find your APK file.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }
                                   } catch (e) {
                                     _showUpdateErrorMessage('Failed to open Downloads folder: ${e.toString()}');
                                   }
