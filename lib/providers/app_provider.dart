@@ -133,7 +133,6 @@ class AppProvider extends ChangeNotifier {
   String _releaseNotes = '';
   bool _isDownloadingUpdate = false;
   double _downloadProgress = 0.0;
-  bool _installationStarted = false;
   String _downloadedFilePath = '';
 
   // Update getters
@@ -144,7 +143,6 @@ class AppProvider extends ChangeNotifier {
   String get releaseNotes => _releaseNotes;
   bool get isDownloadingUpdate => _isDownloadingUpdate;
   double get downloadProgress => _downloadProgress;
-  bool get installationStarted => _installationStarted;
   String get downloadedFilePath => _downloadedFilePath;
 
   // Constructor - load data for app
@@ -1481,7 +1479,6 @@ class AppProvider extends ChangeNotifier {
     }
     
     _isDownloadingUpdate = true;
-    _installationStarted = false;
     _downloadProgress = 0.0;
     _downloadedFilePath = '';
     notifyListeners();
@@ -1504,16 +1501,6 @@ class AppProvider extends ChangeNotifier {
             _downloadProgress = 1.0;
             _downloadedFilePath = filePath;
             notifyListeners();
-            
-            // Install the APK
-            try {
-              _installationStarted = true;
-              notifyListeners();
-              await AppUpdater.installApk(filePath);
-            } catch (e) {
-              debugPrint('Error installing APK: $e');
-              // Keep installationStarted as true so user can retry manually
-            }
           },
           (error) async {
             debugPrint('Error downloading update in-app: $error');
@@ -1559,28 +1546,10 @@ class AppProvider extends ChangeNotifier {
     }
   }
   
-  // Retry installation of already downloaded APK
-  Future<void> retryInstallation() async {
-    if (_downloadedFilePath.isEmpty) {
-      debugPrint('No downloaded APK file to install');
-      return;
-    }
-    
-    try {
-      _installationStarted = true;
-      notifyListeners();
-      await AppUpdater.installApk(_downloadedFilePath);
-    } catch (e) {
-      debugPrint('Error retrying APK installation: $e');
-      // Keep installationStarted as true so user can retry again
-    }
-  }
-  
   // Reset update state to allow retry
   void resetUpdateState() {
     _isDownloadingUpdate = false;
     _downloadProgress = 0.0;
-    _installationStarted = false;
     _downloadedFilePath = '';
     notifyListeners();
     debugPrint('Update state reset, retry is now possible');

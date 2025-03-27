@@ -405,49 +405,13 @@ class AppUpdater {
             
             debugPrint('APK file downloaded successfully and validated');
             
-            // Installation handled differently based on platform
+            // Just notify the user where the file was saved without trying to install
             if (Platform.isAndroid) {
-              // On Android, directly install the APK using the installApk method
-              debugPrint('Proceeding to APK installation');
+              debugPrint('Download completed successfully');
               isUpdateInProgress = false;
-              try {
-                // Share file for installation - this is the most reliable approach
-                final result = await Share.shareXFiles(
-                  [XFile(savePath, mimeType: 'application/vnd.android.package-archive')], 
-                  text: 'Install $appName update',
-                  subject: 'Install $appName', 
-                );
-                debugPrint('Share result: $result');
-                
-                // Inform user about the saved file location
-                onComplete('Update downloaded to: $savePath\n\nSelect "Package Installer" from the share menu to install the app. The APK file has also been saved to your Downloads folder.');
-                
-                // After sharing, try to directly install as backup
-                Future.delayed(Duration(seconds: 2), () async {
-                  try {
-                    if (savePath != null) {
-                      await installApk(savePath);
-                      debugPrint('Delayed installation started directly');
-                    } else {
-                      debugPrint('Cannot install: savePath is null');
-                    }
-                  } catch (e) {
-                    debugPrint('Could not start direct installation: $e');
-                    // It's OK if this fails since we already shared the file
-                  }
-                });
-              } catch (e) {
-                // If sharing fails, try direct installation
-                debugPrint('Error sharing APK: $e. Trying direct installation.');
-                try {
-                  await installApk(savePath);
-                  onComplete('Update download completed. Installation started.');
-                } catch (e2) {
-                  // If installation fails, still mark as complete but show error
-                  debugPrint('Error during APK installation: $e2');
-                  onComplete('Update downloaded to: ${file.parent.path}\nPlease install manually by opening the APK file from your Downloads folder.');
-                }
-              }
+              
+              // Show message with file path
+              onComplete('Update downloaded successfully to: $savePath\n\nYou can find the APK file in your Downloads folder.');
             } else {
               // On iOS or other platforms, share the file
               debugPrint('Download successful, sharing file on non-Android platform');

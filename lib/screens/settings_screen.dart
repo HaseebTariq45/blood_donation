@@ -2217,8 +2217,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ],
                   ),
-                ] else if (appProvider.downloadProgress == 1.0 && appProvider.installationStarted) ...[
-                  // Download complete and installation was started
+                ] else if (appProvider.downloadProgress == 1.0) ...[
+                  // Download complete - simplified UI without installation options
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -2255,10 +2255,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Installation should start automatically',
+                                    'The update has been downloaded to your device. You can find it in your Downloads folder.',
                                     style: TextStyle(
-                                      fontSize: subtitleFontSize - 2,
-                                      color: textColor.withOpacity(0.7),
+                                      fontSize: subtitleFontSize - 1,
+                                      color: textColor.withOpacity(0.8),
                                     ),
                                   ),
                                 ],
@@ -2266,12 +2266,28 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'If the installation didn\'t start automatically, you can try again:',
-                          style: TextStyle(
-                            fontSize: subtitleFontSize - 1,
-                            color: textColor.withOpacity(0.8),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'After opening the Downloads folder, tap on the APK file to install it manually.',
+                                  style: TextStyle(
+                                    fontSize: subtitleFontSize - 2,
+                                    color: Colors.amber.shade800,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -2295,15 +2311,15 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                             const SizedBox(width: 12),
                             ElevatedButton.icon(
-                              onPressed: () {
+                              onPressed: () async {
                                 try {
-                                  appProvider.retryInstallation();
+                                  await AppUpdater.openDownloadsFolder();
                                 } catch (e) {
-                                  _showUpdateErrorMessage('Failed to install: ${e.toString()}');
+                                  _showUpdateErrorMessage('Failed to open Downloads folder: ${e.toString()}');
                                 }
                               },
-                              icon: const Icon(Icons.android, size: 18),
-                              label: const Text('Install Again'),
+                              icon: const Icon(Icons.folder_open, size: 18),
+                              label: const Text('Open Downloads'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                                 foregroundColor: Colors.white,
@@ -2315,26 +2331,6 @@ class _SettingsScreenState extends State<SettingsScreen>
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await AppUpdater.openDownloadsFolder();
-                            } catch (e) {
-                              _showUpdateErrorMessage('Failed to open Downloads folder: ${e.toString()}');
-                            }
-                          },
-                          icon: const Icon(Icons.folder_open, size: 16),
-                          label: const Text('Find APK in Downloads'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.amber[800],
-                            side: BorderSide(color: Colors.amber[300]!),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          ),
                         ),
                       ],
                     ),
