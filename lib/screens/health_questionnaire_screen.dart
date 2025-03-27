@@ -75,12 +75,14 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
   bool _isSaving = false;
   Timer? _autoSaveTimer;
   bool _hasUnsavedChanges = false;
+  final ScrollController _scrollController = ScrollController();
   
   // Animation controllers for dialogs
   late AnimationController _successAnimationController;
   late Animation<double> _successAnimation;
   late AnimationController _errorAnimationController;
   late Animation<double> _errorAnimation;
+  late AnimationController _scrollAnimationController;
 
   // Form controllers
   final _heightController = TextEditingController();
@@ -129,6 +131,20 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
       parent: _errorAnimationController,
       curve: Curves.easeInOut,
     );
+    
+    _scrollAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    // Add scroll listener for animations
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels > 50 && !_scrollAnimationController.isCompleted) {
+        _scrollAnimationController.forward();
+      } else if (_scrollController.position.pixels <= 50 && _scrollAnimationController.isCompleted) {
+        _scrollAnimationController.reverse();
+      }
+    });
   }
 
   @override
@@ -141,6 +157,8 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     _allergiesController.dispose();
     _successAnimationController.dispose();
     _errorAnimationController.dispose();
+    _scrollAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -177,294 +195,573 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: 'Health Questionnaire',
-        showBackButton: !widget.isPostSignup,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[900]
+            : Colors.white,
+        elevation: 0,
+        title: Text(
+          'Health Questionnaire',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        iconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black87,
+        ),
+        leading: widget.isPostSignup
+            ? null
+            : IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
         actions: [
           if (_hasUnsavedChanges)
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Tooltip(
-                message: 'You have unsaved changes',
-                child: Icon(
-                  Icons.save_alt,
-                  color: Colors.orange,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Tooltip(
+                  message: 'You have unsaved changes',
+                  child: Icon(
+                    Icons.info_outline,
+                    color: Colors.amber[800],
+                    size: 20,
+                  ),
                 ),
               ),
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.isPostSignup)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppConstants.primaryColor),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: AppConstants.primaryColor,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Please complete your health questionnaire to continue. This information is important for blood donation eligibility.',
-                            style: TextStyle(
-                              color: AppConstants.primaryColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                _buildHealthStatusIndicator(),
-                const SizedBox(height: 24),
-                _buildSectionCard(
-                  title: 'Basic Information',
-                  icon: Icons.person_outline,
-                  child: Column(
-                    children: [
-                      _buildCustomField(
-                        controller: _heightController,
-                        label: 'Height (cm)',
-                        icon: Icons.height,
-                        hint: 'Enter your height',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your height';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildCustomField(
-                        controller: _weightController,
-                        label: 'Weight (kg)',
-                        icon: Icons.monitor_weight_outlined,
-                        hint: 'Enter your weight',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your weight';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDropdownField(
-                        label: 'Gender',
-                        value: _gender,
-                        items: ['Male', 'Female', 'Other'],
-                        icon: Icons.person,
-                        onChanged: (value) {
-                          setState(() {
-                            _gender = value!;
-                            _hasUnsavedChanges = true;
-                          });
-                          _startAutoSaveTimer();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildSectionCard(
-                  title: 'Donation History',
-                  icon: Icons.history,
-                  child: Column(
-                    children: [
-                      _buildCustomField(
-                        controller: _lastDonationController,
-                        label: 'Last Donation Date',
-                        icon: Icons.calendar_today,
-                        isDate: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please select a date';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildSectionCard(
-                  title: 'Health Status',
-                  icon: Icons.health_and_safety,
-                  child: Column(
-                    children: [
-                      _buildSwitchField(
-                        title: 'Recent Tattoo',
-                        subtitle: 'Tattoo within the last 6 months',
-                        value: _hasTattoo,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasTattoo = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Recent Piercing',
-                        subtitle: 'Piercing within the last 6 months',
-                        value: _hasPiercing,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasPiercing = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Recent Travel',
-                        subtitle: 'Traveled outside the country in the last 6 months',
-                        value: _hasTraveled,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasTraveled = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Recent Surgery',
-                        subtitle: 'Surgery within the last 6 months',
-                        value: _hasSurgery,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasSurgery = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Recent Blood Transfusion',
-                        subtitle: 'Blood transfusion within the last 6 months',
-                        value: _hasTransfusion,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasTransfusion = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Recent Pregnancy',
-                        subtitle: 'Pregnant or planning to become pregnant',
-                        value: _hasPregnancy,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasPregnancy = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Chronic Disease',
-                        subtitle: 'Any chronic disease or condition',
-                        value: _hasDisease,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasDisease = value;
-                          });
-                        },
-                      ),
-                      _buildSwitchField(
-                        title: 'Current Medications',
-                        subtitle: 'Taking any medications',
-                        value: _hasMedication,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasMedication = value;
-                          });
-                        },
-                      ),
-                      if (_hasMedication) ...[
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _medicationsController,
-                          label: 'List your medications',
-                          prefixIcon: Icons.medication,
-                          keyboardType: TextInputType.text,
-                          maxLines: 3,
-                          validator: (value) {
-                            if (_hasMedication && (value == null || value.isEmpty)) {
-                              return 'Please specify your medications';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                      _buildSwitchField(
-                        title: 'Allergies',
-                        subtitle: 'Allergies to any substances',
-                        value: _hasAllergies,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasAllergies = value;
-                          });
-                        },
-                      ),
-                      if (_hasAllergies) ...[
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _allergiesController,
-                          label: 'List your allergies',
-                          prefixIcon: Icons.warning_amber,
-                          keyboardType: TextInputType.text,
-                          maxLines: 3,
-                          validator: (value) {
-                            if (_hasAllergies && (value == null || value.isEmpty)) {
-                              return 'Please specify your allergies';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveHealthInfo,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: Theme.of(context).brightness == Brightness.dark ? 4 : 2,
-                      shadowColor: Theme.of(context).brightness == Brightness.dark 
-                        ? AppConstants.primaryColor.withOpacity(0.5) 
-                        : Colors.black.withOpacity(0.2),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            widget.isPostSignup ? 'Complete Profile' : 'Save Health Information',
-                            style: const TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+      floatingActionButton: AnimatedBuilder(
+        animation: _scrollAnimationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 100 * (1 - _scrollAnimationController.value)),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _scrollAnimationController.value,
+              child: FloatingActionButton(
+                onPressed: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                  );
+                },
+                backgroundColor: AppConstants.primaryColor,
+                child: const Icon(Icons.arrow_upward_rounded),
+                mini: true,
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
+      body: _isLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: AppConstants.primaryColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading your health information...',
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : Colors.black54,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.isPostSignup)
+                        FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: _successAnimationController,
+                            curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+                          ),
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, -0.2),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: _successAnimationController,
+                              curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+                            )),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 24),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    AppConstants.primaryColor.withOpacity(0.15),
+                                    AppConstants.primaryColor.withOpacity(0.05),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppConstants.primaryColor.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppConstants.primaryColor.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.primaryColor.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      color: AppConstants.primaryColor,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Complete Your Profile',
+                                          style: TextStyle(
+                                            color: AppConstants.primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Please complete your health questionnaire to continue. This information is important for blood donation eligibility.',
+                                          style: TextStyle(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white.withOpacity(0.8)
+                                                : Colors.black87.withOpacity(0.7),
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.4,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 3,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: _successAnimationController,
+                          curve: const Interval(0.1, 0.7, curve: Curves.easeOut),
+                        ),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.2),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: _successAnimationController,
+                            curve: const Interval(0.1, 0.7, curve: Curves.easeOut),
+                          )),
+                          child: _buildHealthStatusIndicator(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: _successAnimationController,
+                          curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
+                        ),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.2),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: _successAnimationController,
+                            curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
+                          )),
+                          child: _buildSectionCard(
+                            title: 'Basic Information',
+                            icon: Icons.person_outline,
+                            child: Column(
+                              children: [
+                                _buildCustomField(
+                                  controller: _heightController,
+                                  label: 'Height (cm)',
+                                  icon: Icons.height,
+                                  hint: 'Enter your height',
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your height';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildCustomField(
+                                  controller: _weightController,
+                                  label: 'Weight (kg)',
+                                  icon: Icons.monitor_weight_outlined,
+                                  hint: 'Enter your weight',
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your weight';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDropdownField(
+                                  label: 'Gender',
+                                  value: _gender,
+                                  items: ['Male', 'Female', 'Other'],
+                                  icon: Icons.person,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _gender = value!;
+                                      _hasUnsavedChanges = true;
+                                    });
+                                    _startAutoSaveTimer();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: _successAnimationController,
+                          curve: const Interval(0.3, 0.9, curve: Curves.easeOut),
+                        ),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.2),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: _successAnimationController,
+                            curve: const Interval(0.3, 0.9, curve: Curves.easeOut),
+                          )),
+                          child: _buildSectionCard(
+                            title: 'Donation History',
+                            icon: Icons.history,
+                            child: Column(
+                              children: [
+                                _buildCustomField(
+                                  controller: _lastDonationController,
+                                  label: 'Last Donation Date',
+                                  icon: Icons.calendar_today,
+                                  isDate: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please select a date';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: _successAnimationController,
+                          curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+                        ),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.2),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: _successAnimationController,
+                            curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+                          )),
+                          child: _buildSectionCard(
+                            title: 'Health Status',
+                            icon: Icons.health_and_safety,
+                            child: Column(
+                              children: [
+                                _buildSwitchField(
+                                  title: 'Recent Tattoo',
+                                  subtitle: 'Tattoo within the last 6 months',
+                                  value: _hasTattoo,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasTattoo = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Recent Piercing',
+                                  subtitle: 'Piercing within the last 6 months',
+                                  value: _hasPiercing,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasPiercing = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Recent Travel',
+                                  subtitle: 'Traveled outside the country in the last 6 months',
+                                  value: _hasTraveled,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasTraveled = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Recent Surgery',
+                                  subtitle: 'Surgery within the last 6 months',
+                                  value: _hasSurgery,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasSurgery = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Recent Blood Transfusion',
+                                  subtitle: 'Blood transfusion within the last 6 months',
+                                  value: _hasTransfusion,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasTransfusion = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Recent Pregnancy',
+                                  subtitle: 'Pregnant or planning to become pregnant',
+                                  value: _hasPregnancy,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasPregnancy = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Chronic Disease',
+                                  subtitle: 'Any chronic disease or condition',
+                                  value: _hasDisease,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasDisease = value;
+                                    });
+                                  },
+                                ),
+                                _buildSwitchField(
+                                  title: 'Current Medications',
+                                  subtitle: 'Taking any medications',
+                                  value: _hasMedication,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasMedication = value;
+                                    });
+                                  },
+                                ),
+                                if (_hasMedication) ...[
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _medicationsController,
+                                    label: 'List your medications',
+                                    prefixIcon: Icons.medication,
+                                    keyboardType: TextInputType.text,
+                                    maxLines: 3,
+                                    validator: (value) {
+                                      if (_hasMedication && (value == null || value.isEmpty)) {
+                                        return 'Please specify your medications';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                                _buildSwitchField(
+                                  title: 'Allergies',
+                                  subtitle: 'Allergies to any substances',
+                                  value: _hasAllergies,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasAllergies = value;
+                                    });
+                                  },
+                                ),
+                                if (_hasAllergies) ...[
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _allergiesController,
+                                    label: 'List your allergies',
+                                    prefixIcon: Icons.warning_amber,
+                                    keyboardType: TextInputType.text,
+                                    maxLines: 3,
+                                    validator: (value) {
+                                      if (_hasAllergies && (value == null || value.isEmpty)) {
+                                        return 'Please specify your allergies';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      if (_hasUnsavedChanges)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.amber.withOpacity(0.3),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.amber[700],
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'You have unsaved changes. Save to update your health information.',
+                                  style: TextStyle(
+                                    color: Colors.amber[800],
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppConstants.primaryColor,
+                              AppConstants.primaryColor.withOpacity(0.8),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppConstants.primaryColor.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _saveHealthInfo,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      widget.isPostSignup ? Icons.check_circle_outline : Icons.save_outlined,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Flexible(
+                                      child: Text(
+                                        widget.isPostSignup ? 'Complete Profile' : 'Save Health Information',
+                                        style: const TextStyle(
+                                          fontSize: 16, 
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 
@@ -478,49 +775,62 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
         color: isDarkMode ? Colors.grey[850] : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: isDarkMode 
-                ? Colors.black.withOpacity(0.3) 
-                : Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+                ? Colors.black.withOpacity(0.25) 
+                : Colors.grey.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+            spreadRadius: 2,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Header
+          // Section Header with gradient
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
-              color: isDarkMode
-                  ? AppConstants.primaryColor.withOpacity(0.2)
-                  : AppConstants.primaryColor.withOpacity(0.1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppConstants.primaryColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                  AppConstants.primaryColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: isDarkMode
-                        ? AppConstants.primaryColor.withOpacity(0.3)
-                        : AppConstants.primaryColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.white.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppConstants.primaryColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     icon,
                     color: AppConstants.primaryColor,
-                    size: 20,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Text(
                   title,
                   style: TextStyle(
@@ -529,14 +839,24 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                         : Colors.black87,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
             ),
           ),
-          // Section Content
-          Padding(
-            padding: const EdgeInsets.all(20),
+          // Section Content with subtle background
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: isDarkMode 
+                  ? Colors.grey[850] 
+                  : Colors.grey[50]!.withOpacity(0.5),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
             child: child,
           ),
         ],
@@ -554,48 +874,100 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     String? Function(String?)? validator,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      readOnly: isDate,
-      onTap: isDate ? () => _selectDate(controller) : null,
-      validator: validator,
-      onChanged: (_) {
-        setState(() {
-          _hasUnsavedChanges = true;
-        });
-        _startAutoSaveTimer();
-      },
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(
-          icon,
-          color: AppConstants.primaryColor,
-          size: 22,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        filled: true,
-        fillColor: isDarkMode 
-            ? Colors.grey[800] 
-            : Colors.grey[50],
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: 1,
           ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ],
       ),
-      style: TextStyle(
-        fontSize: 16,
-        color: isDarkMode ? Colors.white : Colors.black87,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        readOnly: isDate,
+        onTap: isDate ? () => _selectDate(controller) : null,
+        validator: validator,
+        onChanged: (_) {
+          setState(() {
+            _hasUnsavedChanges = true;
+          });
+          _startAutoSaveTimer();
+        },
+        style: TextStyle(
+          fontSize: 16,
+          color: isDarkMode ? Colors.white : Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          prefixIcon: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: AppConstants.primaryColor,
+              size: 20,
+            ),
+          ),
+          suffixIcon: isDate
+              ? Icon(
+                  Icons.calendar_today_rounded,
+                  color: AppConstants.primaryColor.withOpacity(0.7),
+                  size: 20,
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+              width: 1.0,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: AppConstants.primaryColor,
+              width: 1.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Colors.redAccent,
+              width: 1.5,
+            ),
+          ),
+          filled: true,
+          fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+          labelStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+          hintStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+            fontWeight: FontWeight.w400,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        ),
       ),
     );
   }
@@ -644,48 +1016,89 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      readOnly: readOnly,
-      maxLines: maxLines,
-      onTap: onTap,
-      validator: validator,
-      onChanged: (_) {
-        setState(() {
-          _hasUnsavedChanges = true;
-        });
-        _startAutoSaveTimer();
-      },
-      style: TextStyle(
-        color: isDarkMode ? Colors.white : Colors.black87,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(
-          prefixIcon,
-          color: AppConstants.primaryColor,
-          size: 22,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: 1,
           ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        readOnly: readOnly,
+        maxLines: maxLines,
+        onTap: onTap,
+        validator: validator,
+        onChanged: (_) {
+          setState(() {
+            _hasUnsavedChanges = true;
+          });
+          _startAutoSaveTimer();
+        },
+        style: TextStyle(
+          fontSize: 16,
+          color: isDarkMode ? Colors.white : Colors.black87,
+          fontWeight: FontWeight.w500,
         ),
-        filled: true,
-        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
-        labelStyle: TextStyle(
-          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+        decoration: InputDecoration(
+          labelText: label,
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          prefixIcon: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              prefixIcon,
+              color: AppConstants.primaryColor,
+              size: 20,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+              width: 1.0,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: AppConstants.primaryColor,
+              width: 1.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(
+              color: Colors.redAccent,
+              width: 1.5,
+            ),
+          ),
+          filled: true,
+          fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+          labelStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
@@ -703,46 +1116,88 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: isDarkMode ? Colors.grey[800] : Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: 1,
+          ),
+        ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+          color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+          width: 1.0,
         ),
       ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
-        iconSize: 24,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: icon != null ? Icon(icon, color: AppConstants.primaryColor) : null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          border: InputBorder.none,
-          labelStyle: TextStyle(
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-          ),
-        ),
-        style: TextStyle(
-          color: isDarkMode ? Colors.white : Colors.black87,
-          fontSize: 16,
-        ),
-        dropdownColor: isDarkMode ? Colors.grey[850] : Colors.white,
-        items: items.map<DropdownMenuItem<String>>((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(
-              value,
-              style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black87,
-              ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: DropdownButtonFormField<String>(
+          value: value,
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: AppConstants.primaryColor,
+              size: 28,
             ),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            _hasUnsavedChanges = true;
-          });
-          onChanged(newValue);
-        },
+          ),
+          iconSize: 24,
+          decoration: InputDecoration(
+            labelText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            prefixIcon: icon != null 
+              ? Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppConstants.primaryColor,
+                    size: 20,
+                  ),
+                )
+              : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            border: InputBorder.none,
+            labelStyle: TextStyle(
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          dropdownColor: isDarkMode ? Colors.grey[850] : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          menuMaxHeight: 300,
+          isExpanded: true,
+          items: items.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _hasUnsavedChanges = true;
+            });
+            onChanged(newValue);
+          },
+        ),
       ),
     );
   }
@@ -754,52 +1209,224 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     required ValueChanged<bool> onChanged,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutQuart,
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDarkMode
-            ? (value ? AppConstants.primaryColor.withOpacity(0.2) : Colors.grey[800])
-            : (value ? AppConstants.primaryColor.withOpacity(0.1) : Colors.grey[50]),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: value
+              ? [
+                  AppConstants.primaryColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                  AppConstants.primaryColor.withOpacity(isDarkMode ? 0.15 : 0.05),
+                ]
+              : [
+                  isDarkMode ? Colors.grey[800]! : Colors.grey[50]!,
+                  isDarkMode ? Colors.grey[850]! : Colors.grey[100]!,
+                ],
+        ),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: value 
-              ? AppConstants.primaryColor
-              : (isDarkMode ? Colors.grey[600]! : Colors.grey[300]!),
+          color: value
+              ? AppConstants.primaryColor.withOpacity(isDarkMode ? 0.6 : 0.4)
+              : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
           width: value ? 1.5 : 1.0,
         ),
+        boxShadow: [
+          if (value)
+            BoxShadow(
+              color: AppConstants.primaryColor.withOpacity(isDarkMode ? 0.15 : 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          else
+            BoxShadow(
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+        ],
       ),
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-            color: isDarkMode ? Colors.white : Colors.black87,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onChanged(!value);
+              _updateHealthStatus();
+            },
+            splashColor: AppConstants.primaryColor.withOpacity(0.15),
+            highlightColor: value 
+                ? AppConstants.primaryColor.withOpacity(0.05)
+                : Colors.grey.withOpacity(0.05),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: value
+                                ? AppConstants.primaryColor.withOpacity(isDarkMode ? 0.9 : 1.0)
+                                : (isDarkMode ? Colors.white : Colors.black87),
+                            letterSpacing: 0.2,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDarkMode
+                                ? Colors.grey[400]
+                                : Colors.grey[700],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 60,
+                    child: _buildCustomSwitch(
+                      value: value,
+                      onChanged: (newValue) {
+                        HapticFeedback.mediumImpact();
+                        onChanged(newValue);
+                        _updateHealthStatus();
+                      },
+                      activeColor: AppConstants.primaryColor,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 13,
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-          ),
+      ),
+    );
+  }
+
+  // Custom switch with smooth animation
+  Widget _buildCustomSwitch({
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color activeColor,
+    required bool isDarkMode,
+  }) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        width: 50,
+        height: 28,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: value 
+              ? activeColor 
+              : isDarkMode ? Colors.grey[700] : Colors.grey[300],
+          boxShadow: [
+            BoxShadow(
+              color: value
+                  ? activeColor.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              spreadRadius: 0.5,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        value: value,
-        onChanged: (newValue) {
-          // Add haptic feedback
-          HapticFeedback.lightImpact();
-          onChanged(newValue);
-          _updateHealthStatus();
-        },
-        activeColor: AppConstants.primaryColor,
-        activeTrackColor: AppConstants.primaryColor.withOpacity(0.4),
-        inactiveThumbColor: isDarkMode ? Colors.grey[400] : Colors.grey[50],
-        inactiveTrackColor: isDarkMode ? Colors.grey[700] : Colors.grey[300],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        dense: false,
-        controlAffinity: ListTileControlAffinity.trailing,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Stack(
+            children: [
+              // Track overlay
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                left: value ? 2 : 0,
+                right: value ? 0 : 2,
+                top: 0,
+                bottom: 0,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: value ? 1.0 : 0.0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          activeColor.withOpacity(0.1),
+                          activeColor.withOpacity(0.2),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Knob
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: value
+                            ? activeColor.withOpacity(0.4)
+                            : Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        spreadRadius: 0.5,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: value ? 1.0 : 0.0,
+                    child: Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: activeColor.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -810,19 +1437,25 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
     
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode
-            ? _healthStatusColor.withOpacity(0.15)
-            : _healthStatusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _healthStatusColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+            _healthStatusColor.withOpacity(isDarkMode ? 0.1 : 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _healthStatusColor.withOpacity(isDarkMode ? 0.5 : 0.3),
+          color: _healthStatusColor.withOpacity(isDarkMode ? 0.3 : 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: _healthStatusColor.withOpacity(isDarkMode ? 0.2 : 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: _healthStatusColor.withOpacity(isDarkMode ? 0.1 : 0.05),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -830,52 +1463,70 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Status Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _healthStatusColor.withOpacity(isDarkMode ? 0.25 : 0.2),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(18),
+              topRight: Radius.circular(18),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? _healthStatusColor.withOpacity(0.3)
-                        : _healthStatusColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _getHealthStatusIcon(),
-                    color: _healthStatusColor,
-                    size: 22,
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _healthStatusColor.withOpacity(isDarkMode ? 0.35 : 0.25),
+                    _healthStatusColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'Donation Eligibility',
-                  style: TextStyle(
-                    color: isDarkMode
-                        ? Colors.white
-                        : Colors.black87,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.black.withOpacity(0.2)
+                          : Colors.white.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _healthStatusColor.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _getHealthStatusIcon(),
+                      color: _healthStatusColor,
+                      size: 24,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 14),
+                  Text(
+                    'Donation Eligibility',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? Colors.white
+                          : Colors.black87,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           // Status Content
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Current Status: ',
@@ -883,38 +1534,86 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                         color: isDarkMode
                             ? Colors.white.withOpacity(0.8)
                             : Colors.black87.withOpacity(0.7),
-                        fontSize: 15,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Text(
-                      _healthStatus,
-                      style: TextStyle(
-                        color: _healthStatusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _healthStatusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: _healthStatusColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getHealthStatusIcon(),
+                              color: _healthStatusColor,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                _healthStatus,
+                                style: TextStyle(
+                                  color: _healthStatusColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 if (_nextDonationDate.isNotEmpty) ...[
-                  Text(
-                    'Next donation possible after:',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.black87.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _nextDonationDate,
-                    style: TextStyle(
-                      color: _healthStatusColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 20,
+                        color: isDarkMode
+                            ? Colors.white.withOpacity(0.6)
+                            : Colors.black87.withOpacity(0.5),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Next donation possible after:',
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Colors.black87.withOpacity(0.6),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _nextDonationDate,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ],
@@ -997,30 +1696,30 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                 
                 // Format as YYYY-MM-DD
                 _lastDonationController.text = lastDonation.toString().split(' ')[0];
-                debugPrint('Loaded lastDonationDate from user profile: ${_lastDonationController.text}');
               }
             }
           } catch (e) {
-            debugPrint('Error loading lastDonationDate from user profile: $e');
-            // Continue even if this fails
+            debugPrint('Error fetching user data: $e');
           }
         }
+        
+        _updateHealthStatus();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading health information: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      debugPrint('Error loading health info: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading health information: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
+      
+      // Start animations after loading is complete
+      _successAnimationController.forward();
     }
   }
 
