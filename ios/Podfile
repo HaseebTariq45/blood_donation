@@ -66,9 +66,13 @@ post_install do |installer|
       # Set deployment target
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
       
-      # Add build settings to suppress warnings
-      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      # Remove problematic compiler flags that can cause the '-G' error
+      if config.build_settings['OTHER_CFLAGS']
+        config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].reject { |flag| flag.include?('-G') }
+      end
+      
+      # Safe version of warning suppressions that don't use problematic flags
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
       
       # Increase build timeout for CI environments
       config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'

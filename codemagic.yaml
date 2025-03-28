@@ -16,6 +16,12 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Update Flutter
+        script: |
+          echo "Updating Flutter to latest stable version"
+          flutter upgrade
+          flutter --version
+      
       - name: Set specific CocoaPods version
         script: |
           echo "Setting CocoaPods version to $COCOAPODS_VERSION"
@@ -27,6 +33,11 @@ workflows:
         script: |
           chmod +x fix_ci_permissions.sh
           ./fix_ci_permissions.sh
+          
+      - name: Fix compiler flags
+        script: |
+          chmod +x fix_g_compiler_flags.sh
+          ./fix_g_compiler_flags.sh
           
       - name: Check dependencies
         script: |
@@ -53,6 +64,12 @@ workflows:
           echo "Setting minimum iOS version to $MIN_IOS_VERSION"
           sed -i '' "s/platform :ios, '.*'/platform :ios, '$MIN_IOS_VERSION'/g" ios/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = .*/IPHONEOS_DEPLOYMENT_TARGET = $MIN_IOS_VERSION;/g" ios/Runner.xcodeproj/project.pbxproj
+          
+      - name: Fix problematic compiler flags
+        script: |
+          echo "Fixing problematic compiler flags in project.pbxproj"
+          # Remove problematic -G flags from project.pbxproj
+          sed -i '' 's/-G[^\ ]*//g' ios/Runner.xcodeproj/project.pbxproj
           
       - name: Add Framework Search Paths
         script: |
@@ -109,8 +126,12 @@ workflows:
           # Disable concurrent builds to avoid memory issues on CI
           export FLUTTER_XCODE_ONLY_ACTIVE_ARCH=YES
           
+          # Add special env vars to help with the build
+          export FLUTTER_BUILD_MODE=release
+          export COMPILER_INDEX_STORE_ENABLE=NO
+          
           echo "Building Flutter iOS app..."
-          flutter build ios --release --no-codesign --verbose || {
+          flutter build ios --release --no-codesign || {
             echo "Build failed, checking for common issues..."
             
             # Check for common issues
@@ -122,6 +143,10 @@ workflows:
             
             echo "Checking for missing pods..."
             ls -la ios/Pods 2>/dev/null || echo "Pods directory not found!"
+            
+            # Check for problematic flags
+            echo "Checking for problematic compiler flags..."
+            grep -r -- "-G" ios/Runner.xcodeproj/project.pbxproj || echo "No -G flags found"
             
             # Try with simpler build flags
             echo "Attempting simpler build for debugging..."
