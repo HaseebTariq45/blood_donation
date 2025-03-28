@@ -86,7 +86,7 @@ workflows:
           if [ ! -d "Pods/GoogleMaps" ]; then
             echo "Warning: GoogleMaps pod not found, trying to fix..."
             # Try adding GoogleMaps dependency directly
-            echo "pod 'GoogleMaps', '~> 7.3.0'" >> Podfile
+            echo "pod 'GoogleMaps', '~> 8.4.0'" >> Podfile
             pod install --verbose
           fi
           

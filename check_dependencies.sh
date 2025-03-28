@@ -57,12 +57,34 @@ if grep -q "google_maps_flutter:" pubspec.yaml; then
     fi
   fi
   
+  # Check for google_maps_flutter_ios plugin
+  if grep -q "google_maps_flutter_ios:" pubspec.yaml; then
+    echo "✅ google_maps_flutter_ios found in pubspec.yaml"
+    # Show the version
+    grep "google_maps_flutter_ios:" pubspec.yaml
+    echo "This plugin requires GoogleMaps 8.4.0 or higher"
+  fi
+  
   # Check for proper iOS version in Podfile
   if grep -q "platform :ios, '14.0'" ios/Podfile; then
     echo "✅ iOS deployment target set to 14.0 in Podfile (required for Google Maps)"
   else
     echo "❌ ERROR: iOS deployment target in Podfile might not be set to 14.0"
     echo "Google Maps Flutter plugin requires iOS 14.0+"
+  fi
+  
+  # Check for GoogleMaps in Podfile
+  if grep -q "pod 'GoogleMaps'" ios/Podfile; then
+    PODFILE_MAPS_VERSION=$(grep "pod 'GoogleMaps'" ios/Podfile | sed -n "s/.*'~> \(.*\)'.*/\1/p")
+    echo "GoogleMaps pod version in Podfile: $PODFILE_MAPS_VERSION"
+    if [[ -n "$PODFILE_MAPS_VERSION" && "$PODFILE_MAPS_VERSION" < "8.4.0" ]]; then
+      echo "❌ ERROR: GoogleMaps pod version in Podfile is too old"
+      echo "google_maps_flutter_ios requires GoogleMaps 8.4.0 or higher"
+    else
+      echo "✅ GoogleMaps pod version is compatible with google_maps_flutter_ios"
+    fi
+  else
+    echo "❓ GoogleMaps pod not explicitly defined in Podfile"
   fi
 else
   echo "❓ google_maps_flutter not found in pubspec.yaml, but imported in code?"

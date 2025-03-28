@@ -41,7 +41,7 @@ target 'Runner' do
   pod 'FirebaseCrashlytics'
   
   # Add explicit Google Maps dependency to ensure proper version
-  pod 'GoogleMaps', '~> 7.3.0'
+  pod 'GoogleMaps', '~> 8.4.0'
   
   # Add any additional pods needed for your project
 end
