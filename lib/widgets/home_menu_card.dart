@@ -33,36 +33,41 @@ class _HomeMenuCardState extends State<HomeMenuCard>
   late Animation<double> _opacityAnimation;
 
   final List<List<Color>> _gradients = [
-    [
-      Color(0xFFFF4B6E),
-      Color(0xFFFF84A1),
-    ], // Find Blood Donors - Vibrant Pink to Soft Pink
-    [
-      Color(0xFF5D69BE),
-      Color(0xFF9080F1),
-    ], // Request Blood - Deep Indigo to Periwinkle
-    [
-      Color(0xFF2196F3),
-      Color(0xFF90CAF9),
-    ], // Blood Requests - Bright Blue to Light Blue
-    [
-      Color(0xFF26A69A),
-      Color(0xFF80CBC4),
-    ], // Nearby Blood Banks - Teal to Light Teal
-    [
-      Color(0xFFFF9800),
-      Color(0xFFFFCC80),
-    ], // Donation History - Orange to Light Orange
-    [
-      Color(0xFF8BC34A),
-      Color(0xFFAED581),
-    ], // Health Tips - Green to Light Green
-    [
-      Color(0xFF673AB7),
-      Color(0xFFB39DDB),
-    ], // Emergency Contacts - Deep Purple to Light Purple
-    [Color(0xFFE91E63), Color(0xFFF48FB1)], // Settings - Pink to Light Pink
-  ];
+  [
+    Color(0xFFFF0066),  // More intense, bright Pink
+    Color(0xFFFF3385),  // Vibrant Soft Pink
+  ], // Find Blood Donors - Vibrant Pink to Soft Pink
+  [
+    Color(0xFF303F9F),  // Deep, intense Indigo
+    Color(0xFF5E35B1),  // Strong, vibrant Periwinkle
+  ], // Request Blood - Deep Indigo to Periwinkle
+  [
+    Color(0xFF1565C0),  // Bold, bright Blue
+    Color(0xFF42A5F5),  // Intense Light Blue
+  ], // Blood Requests - Bright Blue to Light Blue
+  [
+    Color(0xFF00796B),  // Deep, rich Teal
+    Color(0xFF26A69A),  // Vivid Light Teal
+  ], // Nearby Blood Banks - Teal to Light Teal
+  [
+    Color(0xFFFF3D00),  // More intense Orange
+    Color(0xFFFF7043),  // Bright, strong Light Orange
+  ], // Donation History - Orange to Light Orange
+  [
+    Color(0xFF388E3C),  // Deep, vibrant Green
+    Color(0xFF66BB6A),  // Strong, intense Light Green
+  ], // Health Tips - Green to Light Green
+  [
+    Color(0xFF4527A0),  // Rich, deep Purple
+    Color(0xFF7E57C2),  // Bright, intense Light Purple
+  ], // Emergency Contacts - Deep Purple to Light Purple
+  [
+    Color(0xFFD5006D),  // Bright, bold Pink
+    Color(0xFFF50057),  // Intense Light Pink
+  ], // Settings - Pink to Light Pink
+];
+
+
 
   @override
   void initState() {
