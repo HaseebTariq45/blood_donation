@@ -1758,7 +1758,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
               items:
-                  PakistanCities.cities.map((String city) {
+                  CityManager().cities.map((String city) {
                     return DropdownMenuItem<String>(
                       value: city,
                       child: Text(city, style: TextStyle(fontSize: fontSize)),

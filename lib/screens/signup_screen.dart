@@ -28,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen>
   final _confirmPasswordController = TextEditingController();
 
   late String _bloodType = 'A+';
-  late String _city = 'Karachi';
+  late String _city = '';
   bool _isAvailableToDonate = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -72,6 +72,17 @@ class _SignupScreenState extends State<SignupScreen>
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Check if city is selected
+    if (_city.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your city'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -632,82 +643,105 @@ class _SignupScreenState extends State<SignupScreen>
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
-                              ),
-                              child: DropdownButtonFormField<String>(
-                                value: _city,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    _city = newValue!;
-                                  });
-                                },
-                                style: TextStyle(
-                                  color: context.textColor,
-                                  fontSize: formFontSize,
-                                  letterSpacing: 0.2,
+                                border: Border.all(
+                                  color:
+                                      context.isDarkMode
+                                          ? Colors.grey[800]!
+                                          : Colors.grey[200]!,
+                                  width: 1,
                                 ),
-                                decoration: InputDecoration(
-                                  hintText: 'Select City',
-                                  hintStyle: TextStyle(
-                                    color: context.secondaryTextColor,
-                                    fontSize: formFontSize,
-                                    letterSpacing: 0.2,
-                                  ),
-                                  prefixIcon: Container(
-                                    margin: const EdgeInsets.all(12),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          AppConstants.primaryColor.withOpacity(
-                                            0.2,
-                                          ),
-                                          AppConstants.primaryColor.withOpacity(
-                                            0.1,
-                                          ),
-                                        ],
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _city.isEmpty ? null : _city,
+                                  isExpanded: true,
+                                  hint: Center(
+                                    child: Text(
+                                      'Select City',
+                                      style: TextStyle(
+                                        color: context.secondaryTextColor,
+                                        fontSize: formFontSize,
                                       ),
-                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.primaryColor.withOpacity(0.1),
+                                      shape: BoxShape.circle,
                                     ),
                                     child: Icon(
-                                      Icons.location_city,
+                                      Icons.keyboard_arrow_down_rounded,
                                       color: AppConstants.primaryColor,
                                       size: 20,
                                     ),
                                   ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: BorderSide.none,
+                                  style: TextStyle(
+                                    color: context.textColor,
+                                    fontSize: formFontSize,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  filled: true,
-                                  fillColor: context.cardColor,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                  menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return [null, ...CityManager().cities].map<Widget>((item) {
+                                      if (item == null) {
+                                        return const SizedBox.shrink(); // This will never be used because of our value handling
+                                      }
+                                      return Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 16.0),
+                                          child: Text(
+                                            item.toString(),
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: formFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                                  items:
+                                      (CityManager().cities.toList())
+                                          .map<DropdownMenuItem<String>>((String city) {
+                                        return DropdownMenuItem<String>(
+                                          value: city,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.location_on,
+                                                size: 16,
+                                                color: AppConstants.primaryColor,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  city,
+                                                  style: TextStyle(
+                                                    color: context.textColor,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _city = newValue ?? '';
+                                    });
+                                  },
+                                  dropdownColor: context.cardColor,
+                                  borderRadius: BorderRadius.circular(15),
+                                  elevation: 8,
+                                  padding: const EdgeInsets.symmetric(
                                     vertical: 16,
+                                    horizontal: 8,
                                   ),
                                 ),
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color: context.secondaryTextColor,
-                                ),
-                                items:
-                                    PakistanCities.cities
-                                        .map<DropdownMenuItem<String>>((
-                                          String value,
-                                        ) {
-                                          return DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(value),
-                                          );
-                                        })
-                                        .toList(),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please select your city';
-                                  }
-                                  return null;
-                                },
                               ),
                             ),
                           ],

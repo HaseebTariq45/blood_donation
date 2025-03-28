@@ -1098,7 +1098,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen>
                 hintStyle: TextStyle(color: Theme.of(context).hintColor),
               ),
               items:
-                  PakistanCities.cities.map((String city) {
+                  CityManager().cities.map((String city) {
                     return DropdownMenuItem<String>(
                       value: city,
                       child: Text(city),
