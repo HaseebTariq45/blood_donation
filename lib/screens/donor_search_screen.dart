@@ -489,13 +489,13 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                                       MediaQuery.of(context).size.height * 0.4,
                                   // Add city search preview
                                   selectedItemBuilder: (BuildContext context) {
-                                    return _locations.map<Widget>((
-                                      String item,
+                                    return [null, ..._locations].map<Widget>((
+                                      item,
                                     ) {
                                       return Align(
                                         alignment: Alignment.centerLeft,
                                         child: Text(
-                                          item,
+                                          item == null ? 'Any City' : item.toString(),
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w500,
