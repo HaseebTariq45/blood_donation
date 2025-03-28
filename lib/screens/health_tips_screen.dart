@@ -142,7 +142,9 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: AppConstants.primaryColor.withOpacity(0.05),
+              color: context.isDarkMode
+                  ? AppConstants.primaryColor.withOpacity(0.15)
+                  : AppConstants.primaryColor.withOpacity(0.05),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -192,11 +194,13 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: context.isDarkMode 
+                                ? Colors.black.withOpacity(0.2)
+                                : Colors.black.withOpacity(0.05),
                             offset: const Offset(0, 2),
                             blurRadius: 5,
                           ),
