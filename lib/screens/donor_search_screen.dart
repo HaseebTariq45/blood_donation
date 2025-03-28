@@ -43,7 +43,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
   ];
 
   // Replace the hardcoded locations with cities from PakistanCities
-  List<String> _locations = PakistanCities.cities;
+  List<String> _locations = PakistanCities.cities.toList()..sort((a, b) => a.compareTo(b));
 
   @override
   void initState() {
@@ -528,7 +528,7 @@ class _DonorSearchScreenState extends State<DonorSearchScreen>
                                         ],
                                       ),
                                     ),
-                                    ...PakistanCities.cities.map((location) {
+                                    ...(PakistanCities.cities.toList()..sort((a, b) => a.compareTo(b))).map((location) {
                                       return DropdownMenuItem<String>(
                                         value: location,
                                         child: Row(
