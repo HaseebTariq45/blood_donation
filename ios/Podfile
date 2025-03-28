@@ -1,8 +1,12 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '12.0'
+# iOS 14.0 is required for Google Maps Flutter plugin
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+# Prevent Cocoapods from embedding a second Flutter framework and causing an error with the new build system.
+ENV['COCOAPODS_DISABLE_INPUT_OUTPUT_PATHS'] = 'true'
 
 project 'Runner', {
   'Debug' => :debug,
@@ -36,6 +40,9 @@ target 'Runner' do
   # Fix for Firebase Crashlytics
   pod 'FirebaseCrashlytics'
   
+  # Add explicit Google Maps dependency to ensure proper version
+  pod 'GoogleMaps', '~> 7.3.0'
+  
   # Add any additional pods needed for your project
 end
 
@@ -43,17 +50,28 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
-    # Add these lines to support future iOS versions
+    # Disable bitcode as it's deprecated and can cause issues
     target.build_configurations.each do |config|
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 14.0
+        puts "Warning: #{target.name} has IPHONEOS_DEPLOYMENT_TARGET = #{config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']}, but Google Maps requires 14.0+"
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      end
+      
       # Exclude arm64 architecture for simulator builds
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       
+      # Disable bitcode as it's deprecated in Xcode 14
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      
       # Set deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
       
       # Add build settings to suppress warnings
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      
+      # Increase build timeout for CI environments
+      config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
     end
   end
 end 

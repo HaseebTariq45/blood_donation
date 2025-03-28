@@ -4,6 +4,7 @@
 
 echo "========== BloodLine iOS Firebase Setup ==========="
 echo "Preparing your iOS project for Firebase..."
+echo "Note: This project requires iOS 14.0 or higher due to Google Maps plugin requirements"
 
 # Change to the ios directory
 cd ios
@@ -46,10 +47,12 @@ echo ""
 echo "Next steps:"
 echo "1. Open the workspace in Xcode: ios/Runner.xcworkspace"
 echo "2. Ensure bundle identifier matches the one in Firebase Console (com.haseeb.bloodline)"
-echo "3. Build and run on a real device or simulator"
+echo "3. Verify that deployment target is set to iOS 14.0 or higher"
+echo "4. Build and run on a real device or simulator"
 echo ""
 echo "For CI/CD systems:"
 echo "- Use the generated Podfile and workspace for building the app"
 echo "- Ensure your CI/CD runner has CocoaPods installed"
+echo "- Make sure deployment target is set to iOS 14.0 for all configurations"
 echo ""
 echo "Happy coding! 🚀" 

@@ -75,5 +75,19 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	
+	<!-- Google Maps -->
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+	<key>GOOGLE_MAPS_API_KEY</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
+	
+	<!-- Photo/Camera Permissions -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photos to upload profile pictures and images for blood donation requests</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to take photos for your profile and blood donation requests</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We may need microphone access if you record a voice message for blood donation requests</string>
 </dict>
 </plist>
