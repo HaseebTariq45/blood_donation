@@ -1722,67 +1722,106 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           SizedBox(height: screenSize.height * 0.01),
           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: borderRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
               border: Border.all(
-                color: Theme.of(context).dividerColor,
+                color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
                 width: 1,
               ),
             ),
-            child: DropdownButtonFormField<String>(
-              value: _city,
-              onChanged:
-                  _isEditing
-                      ? (newValue) {
-                        setState(() {
-                          _city = newValue!;
-                        });
-                      }
-                      : null,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: screenSize.width * 0.04,
-                  vertical: screenSize.height * 0.015,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _city.isEmpty ? null : _city,
+                isExpanded: true,
+                hint: Center(
+                  child: Text(
+                    'Select City',
+                    style: TextStyle(
+                      color: Theme.of(context).hintColor,
+                      fontSize: fontSize,
+                    ),
+                  ),
                 ),
-                hintText: 'Select city',
-                hintStyle: TextStyle(
-                  color: Theme.of(context).hintColor,
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: _isEditing ? AppConstants.primaryColor : Theme.of(context).disabledColor,
+                    size: 20,
+                  ),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
                 ),
-                prefixIcon: Icon(
-                  Icons.location_city,
-                  color: AppConstants.primaryColor,
-                  size: iconSize,
-                ),
-              ),
-              items:
-                  CityManager().cities.map((String city) {
-                    return DropdownMenuItem<String>(
-                      value: city,
-                      child: Text(city, style: TextStyle(fontSize: fontSize)),
+                menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+                selectedItemBuilder: (BuildContext context) {
+                  return CityManager().cities.map<Widget>((item) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        item,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: fontSize,
+                        ),
+                      ),
                     );
-                  }).toList(),
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontSize: fontSize,
+                  }).toList();
+                },
+                items: CityManager().cities.map((String city) {
+                  return DropdownMenuItem<String>(
+                    value: city,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: AppConstants.primaryColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            city,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                              fontSize: fontSize,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: _isEditing
+                  ? (newValue) {
+                    setState(() {
+                      _city = newValue!;
+                    });
+                  }
+                  : null,
+                dropdownColor: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(15),
+                elevation: 8,
+                padding: const EdgeInsets.symmetric(vertical: 8),
               ),
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color:
-                    _isEditing
-                        ? Theme.of(context).primaryColor
-                        : Theme.of(context).disabledColor,
-                size: iconSize * 1.2,
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select your city';
-                }
-                return null;
-              },
-              dropdownColor: Theme.of(context).cardColor,
             ),
           ),
         ],
@@ -1905,54 +1944,123 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           SizedBox(height: screenSize.height * 0.01),
           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: borderRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: context.isDarkMode ? Colors.black12 : Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
               border: Border.all(
-                color: Theme.of(context).dividerColor,
+                color: context.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
                 width: 1,
               ),
             ),
-            child: DropdownButtonFormField<String>(
-              value: _bloodType,
-              onChanged:
-                  _isEditing
-                      ? (newValue) {
-                        setState(() {
-                          _bloodType = newValue!;
-                        });
-                      }
-                      : null,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: screenSize.width * 0.04,
-                  vertical: screenSize.height * 0.015,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _bloodType,
+                isExpanded: true,
+                hint: Center(
+                  child: Text(
+                    'Select Blood Type',
+                    style: TextStyle(
+                      color: Theme.of(context).hintColor,
+                      fontSize: fontSize,
+                    ),
+                  ),
                 ),
-                prefixIcon: Icon(
-                  Icons.bloodtype_outlined,
-                  color: AppConstants.primaryColor,
-                  size: iconSize,
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: _isEditing ? AppConstants.primaryColor : Theme.of(context).disabledColor,
+                    size: 20,
+                  ),
                 ),
-              ),
-              style: TextStyle(
-                fontSize: fontSize,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              dropdownColor: Theme.of(context).cardColor,
-              items:
-                  _bloodTypes.map((String type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(type, style: TextStyle(fontSize: fontSize)),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                ),
+                selectedItemBuilder: (BuildContext context) {
+                  return _bloodTypes.map<Widget>((String type) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        type,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: fontSize,
+                        ),
+                      ),
                     );
-                  }).toList(),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select your blood type';
-                }
-                return null;
-              },
+                  }).toList();
+                },
+                items: _bloodTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppConstants.primaryColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppConstants.primaryColor.withOpacity(0.3),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              type,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          type,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: fontSize,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: _isEditing
+                  ? (newValue) {
+                    setState(() {
+                      _bloodType = newValue!;
+                    });
+                  }
+                  : null,
+                dropdownColor: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(15),
+                elevation: 8,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
             ),
           ),
         ],
