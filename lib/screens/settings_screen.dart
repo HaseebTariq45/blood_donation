@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
+import 'dart:io' as io;
 import 'dart:math';
 import '../constants/app_constants.dart';
 import '../providers/app_provider.dart';
@@ -15,6 +15,16 @@ import '../widgets/all_files_access_setting.dart';
 import 'data_usage_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_updater.dart';
+
+// Helper for safe platform detection
+bool get isAndroid {
+  try {
+    return io.Platform.isAndroid;
+  } catch (e) {
+    debugPrint('Platform detection error in settings_screen: $e');
+    return false;
+  }
+}
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -57,20 +67,38 @@ class _SettingsScreenState extends State<SettingsScreen>
     // Load settings from provider
     _loadSettings();
     
-    // Check for updates when the settings screen is opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AppProvider>(context, listen: false).checkForUpdates();
+    // Check for updates when the settings screen is opened - with delay for safety
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) {
+        try {
+          Provider.of<AppProvider>(context, listen: false).checkForUpdates();
+        } catch (e) {
+          debugPrint('Error checking for updates: $e');
+          // Prevent app from crashing if update check fails
+        }
+      }
     });
   }
 
   void _loadSettings() {
-    final appProvider = Provider.of<AppProvider>(context, listen: false);
-    setState(() {
-      _locationEnabled = appProvider.isLocationEnabled;
-      _notificationsEnabled = appProvider.notificationsEnabled;
-      _emailNotifications = appProvider.emailNotificationsEnabled;
-      _pushNotifications = appProvider.pushNotificationsEnabled;
-    });
+    try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      setState(() {
+        _locationEnabled = appProvider.isLocationEnabled;
+        _notificationsEnabled = appProvider.notificationsEnabled;
+        _emailNotifications = appProvider.emailNotificationsEnabled;
+        _pushNotifications = appProvider.pushNotificationsEnabled;
+      });
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+      // Set default values if loading fails
+      setState(() {
+        _locationEnabled = false;
+        _notificationsEnabled = false;
+        _emailNotifications = false;
+        _pushNotifications = false;
+      });
+    }
   }
 
   @override
@@ -366,7 +394,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                         const Divider(),
                         // All Files Access Setting
-                        if (Platform.isAndroid) 
+                        if (isAndroid) 
                           Column(
                             children: [
                               const AllFilesAccessSetting(),

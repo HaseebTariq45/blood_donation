@@ -232,9 +232,9 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                   color: Colors.amber.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Tooltip(
-                  message: 'You have unsaved changes',
-                  child: Icon(
+              child: Tooltip(
+                message: 'You have unsaved changes',
+                child: Icon(
                     Icons.info_outline,
                     color: Colors.amber[800],
                     size: 20,
@@ -292,14 +292,14 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
           : SingleChildScrollView(
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.isPostSignup)
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.isPostSignup)
                         FadeTransition(
                           opacity: CurvedAnimation(
                             parent: _successAnimationController,
@@ -316,7 +316,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 24),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                              decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -332,17 +332,17 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppConstants.primaryColor.withOpacity(0.1),
+                      color: AppConstants.primaryColor.withOpacity(0.1),
                                     blurRadius: 10,
                                     spreadRadius: 1,
                                     offset: const Offset(0, 3),
                                   ),
                                 ],
-                              ),
-                              child: Row(
+                    ),
+                    child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
-                                children: [
+                      children: [
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
@@ -350,20 +350,20 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
-                                      Icons.info_outline,
-                                      color: AppConstants.primaryColor,
+                          Icons.info_outline,
+                          color: AppConstants.primaryColor,
                                       size: 24,
-                                    ),
+                        ),
                                   ),
                                   const SizedBox(width: 16),
-                                  Expanded(
+                        Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Complete Your Profile',
-                                          style: TextStyle(
-                                            color: AppConstants.primaryColor,
+                            style: TextStyle(
+                              color: AppConstants.primaryColor,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
                                           ),
@@ -376,21 +376,21 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                                             color: Theme.of(context).brightness == Brightness.dark
                                                 ? Colors.white.withOpacity(0.8)
                                                 : Colors.black87.withOpacity(0.7),
-                                            fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w500,
                                             height: 1.4,
-                                          ),
+                            ),
                                           overflow: TextOverflow.ellipsis,
                                           maxLines: 3,
                                         ),
                                       ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
-                      const SizedBox(height: 24),
+                      ],
+                              ),
+                            ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
                       FadeTransition(
                         opacity: CurvedAnimation(
                           parent: _successAnimationController,
@@ -407,7 +407,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                           child: _buildHealthStatusIndicator(),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                const SizedBox(height: 24),
                       FadeTransition(
                         opacity: CurvedAnimation(
                           parent: _successAnimationController,
@@ -422,55 +422,55 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
                           )),
                           child: _buildSectionCard(
-                            title: 'Basic Information',
-                            icon: Icons.person_outline,
-                            child: Column(
-                              children: [
-                                _buildCustomField(
-                                  controller: _heightController,
-                                  label: 'Height (cm)',
-                                  icon: Icons.height,
-                                  hint: 'Enter your height',
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your height';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                _buildCustomField(
-                                  controller: _weightController,
-                                  label: 'Weight (kg)',
-                                  icon: Icons.monitor_weight_outlined,
-                                  hint: 'Enter your weight',
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your weight';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDropdownField(
-                                  label: 'Gender',
-                                  value: _gender,
-                                  items: ['Male', 'Female', 'Other'],
-                                  icon: Icons.person,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _gender = value!;
-                                      _hasUnsavedChanges = true;
-                                    });
-                                    _startAutoSaveTimer();
-                                  },
-                                ),
-                              ],
+                  title: 'Basic Information',
+                  icon: Icons.person_outline,
+                  child: Column(
+                    children: [
+                      _buildCustomField(
+                        controller: _heightController,
+                        label: 'Height (cm)',
+                        icon: Icons.height,
+                        hint: 'Enter your height',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your height';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCustomField(
+                        controller: _weightController,
+                        label: 'Weight (kg)',
+                        icon: Icons.monitor_weight_outlined,
+                        hint: 'Enter your weight',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your weight';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDropdownField(
+                        label: 'Gender',
+                        value: _gender,
+                        items: ['Male', 'Female', 'Other'],
+                        icon: Icons.person,
+                        onChanged: (value) {
+                          setState(() {
+                            _gender = value!;
+                            _hasUnsavedChanges = true;
+                          });
+                          _startAutoSaveTimer();
+                        },
+                      ),
+                    ],
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                  ),
+                ),
+                const SizedBox(height: 24),
                       FadeTransition(
                         opacity: CurvedAnimation(
                           parent: _successAnimationController,
@@ -485,28 +485,28 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             curve: const Interval(0.3, 0.9, curve: Curves.easeOut),
                           )),
                           child: _buildSectionCard(
-                            title: 'Donation History',
-                            icon: Icons.history,
-                            child: Column(
-                              children: [
-                                _buildCustomField(
-                                  controller: _lastDonationController,
-                                  label: 'Last Donation Date',
-                                  icon: Icons.calendar_today,
-                                  isDate: true,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please select a date';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
+                  title: 'Donation History',
+                  icon: Icons.history,
+                  child: Column(
+                    children: [
+                      _buildCustomField(
+                        controller: _lastDonationController,
+                        label: 'Last Donation Date',
+                        icon: Icons.calendar_today,
+                        isDate: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select a date';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                  ),
+                ),
+                const SizedBox(height: 24),
                       FadeTransition(
                         opacity: CurvedAnimation(
                           parent: _successAnimationController,
@@ -521,138 +521,138 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
                           )),
                           child: _buildSectionCard(
-                            title: 'Health Status',
-                            icon: Icons.health_and_safety,
-                            child: Column(
-                              children: [
-                                _buildSwitchField(
-                                  title: 'Recent Tattoo',
-                                  subtitle: 'Tattoo within the last 6 months',
-                                  value: _hasTattoo,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasTattoo = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Recent Piercing',
-                                  subtitle: 'Piercing within the last 6 months',
-                                  value: _hasPiercing,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasPiercing = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Recent Travel',
-                                  subtitle: 'Traveled outside the country in the last 6 months',
-                                  value: _hasTraveled,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasTraveled = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Recent Surgery',
-                                  subtitle: 'Surgery within the last 6 months',
-                                  value: _hasSurgery,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasSurgery = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Recent Blood Transfusion',
-                                  subtitle: 'Blood transfusion within the last 6 months',
-                                  value: _hasTransfusion,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasTransfusion = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Recent Pregnancy',
-                                  subtitle: 'Pregnant or planning to become pregnant',
-                                  value: _hasPregnancy,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasPregnancy = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Chronic Disease',
-                                  subtitle: 'Any chronic disease or condition',
-                                  value: _hasDisease,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasDisease = value;
-                                    });
-                                  },
-                                ),
-                                _buildSwitchField(
-                                  title: 'Current Medications',
-                                  subtitle: 'Taking any medications',
-                                  value: _hasMedication,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasMedication = value;
-                                    });
-                                  },
-                                ),
-                                if (_hasMedication) ...[
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _medicationsController,
-                                    label: 'List your medications',
-                                    prefixIcon: Icons.medication,
-                                    keyboardType: TextInputType.text,
-                                    maxLines: 3,
-                                    validator: (value) {
-                                      if (_hasMedication && (value == null || value.isEmpty)) {
-                                        return 'Please specify your medications';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                                _buildSwitchField(
-                                  title: 'Allergies',
-                                  subtitle: 'Allergies to any substances',
-                                  value: _hasAllergies,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasAllergies = value;
-                                    });
-                                  },
-                                ),
-                                if (_hasAllergies) ...[
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _allergiesController,
-                                    label: 'List your allergies',
-                                    prefixIcon: Icons.warning_amber,
-                                    keyboardType: TextInputType.text,
-                                    maxLines: 3,
-                                    validator: (value) {
-                                      if (_hasAllergies && (value == null || value.isEmpty)) {
-                                        return 'Please specify your allergies';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                              ],
+                  title: 'Health Status',
+                  icon: Icons.health_and_safety,
+                  child: Column(
+                    children: [
+                      _buildSwitchField(
+                        title: 'Recent Tattoo',
+                        subtitle: 'Tattoo within the last 6 months',
+                        value: _hasTattoo,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasTattoo = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Recent Piercing',
+                        subtitle: 'Piercing within the last 6 months',
+                        value: _hasPiercing,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasPiercing = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Recent Travel',
+                        subtitle: 'Traveled outside the country in the last 6 months',
+                        value: _hasTraveled,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasTraveled = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Recent Surgery',
+                        subtitle: 'Surgery within the last 6 months',
+                        value: _hasSurgery,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasSurgery = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Recent Blood Transfusion',
+                        subtitle: 'Blood transfusion within the last 6 months',
+                        value: _hasTransfusion,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasTransfusion = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Recent Pregnancy',
+                        subtitle: 'Pregnant or planning to become pregnant',
+                        value: _hasPregnancy,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasPregnancy = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Chronic Disease',
+                        subtitle: 'Any chronic disease or condition',
+                        value: _hasDisease,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasDisease = value;
+                          });
+                        },
+                      ),
+                      _buildSwitchField(
+                        title: 'Current Medications',
+                        subtitle: 'Taking any medications',
+                        value: _hasMedication,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasMedication = value;
+                          });
+                        },
+                      ),
+                      if (_hasMedication) ...[
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _medicationsController,
+                          label: 'List your medications',
+                          prefixIcon: Icons.medication,
+                          keyboardType: TextInputType.text,
+                          maxLines: 3,
+                          validator: (value) {
+                            if (_hasMedication && (value == null || value.isEmpty)) {
+                              return 'Please specify your medications';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                      _buildSwitchField(
+                        title: 'Allergies',
+                        subtitle: 'Allergies to any substances',
+                        value: _hasAllergies,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasAllergies = value;
+                          });
+                        },
+                      ),
+                      if (_hasAllergies) ...[
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _allergiesController,
+                          label: 'List your allergies',
+                          prefixIcon: Icons.warning_amber,
+                          keyboardType: TextInputType.text,
+                          maxLines: 3,
+                          validator: (value) {
+                            if (_hasAllergies && (value == null || value.isEmpty)) {
+                              return 'Please specify your allergies';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ],
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
+                  ),
+                ),
+                const SizedBox(height: 32),
                       if (_hasUnsavedChanges)
                         Container(
                           margin: const EdgeInsets.only(bottom: 16),
@@ -690,7 +690,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                           ),
                         ),
                       Container(
-                        width: double.infinity,
+                  width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           gradient: LinearGradient(
@@ -710,20 +710,20 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             ),
                           ],
                         ),
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _saveHealthInfo,
-                          style: ElevatedButton.styleFrom(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveHealthInfo,
+                    style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
+                      foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
                             padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                            ),
+                      ),
                             elevation: 0,
-                          ),
-                          child: _isLoading
+                    ),
+                    child: _isLoading
                               ? SizedBox(
                                   height: 24,
                                   width: 24,
@@ -743,25 +743,25 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Text(
-                                        widget.isPostSignup ? 'Complete Profile' : 'Save Health Information',
-                                        style: const TextStyle(
-                                          fontSize: 16, 
-                                          fontWeight: FontWeight.bold,
+                            widget.isPostSignup ? 'Complete Profile' : 'Save Health Information',
+                            style: const TextStyle(
+                              fontSize: 16, 
+                              fontWeight: FontWeight.bold,
                                           letterSpacing: 0.5,
-                                        ),
+                            ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                          ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 32),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -891,25 +891,25 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
         ],
       ),
       child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        readOnly: isDate,
-        onTap: isDate ? () => _selectDate(controller) : null,
-        validator: validator,
-        onChanged: (_) {
-          setState(() {
-            _hasUnsavedChanges = true;
-          });
-          _startAutoSaveTimer();
-        },
+      controller: controller,
+      keyboardType: keyboardType,
+      readOnly: isDate,
+      onTap: isDate ? () => _selectDate(controller) : null,
+      validator: validator,
+      onChanged: (_) {
+        setState(() {
+          _hasUnsavedChanges = true;
+        });
+        _startAutoSaveTimer();
+      },
         style: TextStyle(
           fontSize: 16,
           color: isDarkMode ? Colors.white : Colors.black87,
           fontWeight: FontWeight.w500,
         ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
           floatingLabelBehavior: FloatingLabelBehavior.auto,
           prefixIcon: Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -919,8 +919,8 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              icon,
-              color: AppConstants.primaryColor,
+          icon,
+          color: AppConstants.primaryColor,
               size: 20,
             ),
           ),
@@ -931,14 +931,14 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                   size: 20,
                 )
               : null,
-          border: OutlineInputBorder(
+        border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
+        ),
+        enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+          borderSide: BorderSide(
+            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
               width: 1.0,
             ),
           ),
@@ -1033,25 +1033,25 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
         ],
       ),
       child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        readOnly: readOnly,
-        maxLines: maxLines,
-        onTap: onTap,
-        validator: validator,
-        onChanged: (_) {
-          setState(() {
-            _hasUnsavedChanges = true;
-          });
-          _startAutoSaveTimer();
-        },
-        style: TextStyle(
+      controller: controller,
+      keyboardType: keyboardType,
+      readOnly: readOnly,
+      maxLines: maxLines,
+      onTap: onTap,
+      validator: validator,
+      onChanged: (_) {
+        setState(() {
+          _hasUnsavedChanges = true;
+        });
+        _startAutoSaveTimer();
+      },
+      style: TextStyle(
           fontSize: 16,
-          color: isDarkMode ? Colors.white : Colors.black87,
+        color: isDarkMode ? Colors.white : Colors.black87,
           fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
           floatingLabelBehavior: FloatingLabelBehavior.auto,
           prefixIcon: Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1061,19 +1061,19 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              prefixIcon,
-              color: AppConstants.primaryColor,
+          prefixIcon,
+          color: AppConstants.primaryColor,
               size: 20,
             ),
-          ),
-          border: OutlineInputBorder(
+        ),
+        border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
+        ),
+        enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+          borderSide: BorderSide(
+            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
               width: 1.0,
             ),
           ),
@@ -1089,14 +1089,14 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
             borderSide: const BorderSide(
               color: Colors.redAccent,
               width: 1.5,
-            ),
           ),
-          filled: true,
-          fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
-          labelStyle: TextStyle(
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+        ),
+        filled: true,
+        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+        labelStyle: TextStyle(
+          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
             fontWeight: FontWeight.w500,
-          ),
+        ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
@@ -1134,8 +1134,8 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: DropdownButtonFormField<String>(
-          value: value,
+      child: DropdownButtonFormField<String>(
+        value: value,
           icon: Container(
             padding: const EdgeInsets.all(8),
             child: Icon(
@@ -1144,9 +1144,9 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
               size: 28,
             ),
           ),
-          iconSize: 24,
-          decoration: InputDecoration(
-            labelText: label,
+        iconSize: 24,
+        decoration: InputDecoration(
+          labelText: label,
             floatingLabelBehavior: FloatingLabelBehavior.auto,
             prefixIcon: icon != null 
               ? Container(
@@ -1163,40 +1163,40 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                   ),
                 )
               : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            border: InputBorder.none,
-            labelStyle: TextStyle(
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          border: InputBorder.none,
+          labelStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
               fontWeight: FontWeight.w500,
-            ),
           ),
-          style: TextStyle(
-            color: isDarkMode ? Colors.white : Colors.black87,
-            fontSize: 16,
+        ),
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black87,
+          fontSize: 16,
             fontWeight: FontWeight.w500,
-          ),
-          dropdownColor: isDarkMode ? Colors.grey[850] : Colors.white,
+        ),
+        dropdownColor: isDarkMode ? Colors.grey[850] : Colors.white,
           borderRadius: BorderRadius.circular(16),
           menuMaxHeight: 300,
           isExpanded: true,
-          items: items.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black87,
+        items: items.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.w500,
-                ),
               ),
-            );
-          }).toList(),
-          onChanged: (newValue) {
-            setState(() {
-              _hasUnsavedChanges = true;
-            });
-            onChanged(newValue);
-          },
+            ),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          setState(() {
+            _hasUnsavedChanges = true;
+          });
+          onChanged(newValue);
+        },
         ),
       ),
     );
@@ -1229,7 +1229,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: value
+          color: value 
               ? AppConstants.primaryColor.withOpacity(isDarkMode ? 0.6 : 0.4)
               : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
           width: value ? 1.5 : 1.0,
@@ -1275,9 +1275,9 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
                             fontSize: 16,
                             color: value
                                 ? AppConstants.primaryColor.withOpacity(isDarkMode ? 0.9 : 1.0)
@@ -1288,8 +1288,8 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          subtitle,
-                          style: TextStyle(
+          subtitle,
+          style: TextStyle(
                             fontSize: 14,
                             color: isDarkMode
                                 ? Colors.grey[400]
@@ -1305,13 +1305,13 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                   SizedBox(
                     width: 60,
                     child: _buildCustomSwitch(
-                      value: value,
-                      onChanged: (newValue) {
+        value: value,
+        onChanged: (newValue) {
                         HapticFeedback.mediumImpact();
-                        onChanged(newValue);
-                        _updateHealthStatus();
-                      },
-                      activeColor: AppConstants.primaryColor,
+          onChanged(newValue);
+          _updateHealthStatus();
+        },
+        activeColor: AppConstants.primaryColor,
                       isDarkMode: isDarkMode,
                     ),
                   ),
@@ -1464,7 +1464,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
         children: [
           // Status Header
           ClipRRect(
-            borderRadius: const BorderRadius.only(
+              borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(18),
               topRight: Radius.circular(18),
             ),
@@ -1478,14 +1478,14 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                     _healthStatusColor.withOpacity(isDarkMode ? 0.35 : 0.25),
                     _healthStatusColor.withOpacity(isDarkMode ? 0.25 : 0.15),
                   ],
-                ),
               ),
-              child: Row(
-                children: [
-                  Container(
+            ),
+            child: Row(
+              children: [
+                Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
+                  decoration: BoxDecoration(
+                    color: isDarkMode
                           ? Colors.black.withOpacity(0.2)
                           : Colors.white.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(12),
@@ -1496,26 +1496,26 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                           offset: const Offset(0, 2),
                         ),
                       ],
-                    ),
-                    child: Icon(
-                      _getHealthStatusIcon(),
-                      color: _healthStatusColor,
+                  ),
+                  child: Icon(
+                    _getHealthStatusIcon(),
+                    color: _healthStatusColor,
                       size: 24,
-                    ),
                   ),
+                ),
                   const SizedBox(width: 14),
-                  Text(
-                    'Donation Eligibility',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? Colors.white
-                          : Colors.black87,
+                Text(
+                  'Donation Eligibility',
+                  style: TextStyle(
+                    color: isDarkMode
+                        ? Colors.white
+                        : Colors.black87,
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                       letterSpacing: 0.2,
-                    ),
                   ),
-                ],
+                ),
+              ],
               ),
             ),
           ),
@@ -1560,17 +1560,17 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                _healthStatus,
-                                style: TextStyle(
-                                  color: _healthStatusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                      _healthStatus,
+                      style: TextStyle(
+                        color: _healthStatusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                                 ),
                                 overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                      ),
+                    ),
+                  ],
+                ),
                       ),
                     ),
                   ],
@@ -1591,27 +1591,27 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Next donation possible after:',
-                            style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.7)
-                                  : Colors.black87.withOpacity(0.6),
-                              fontSize: 14,
+                  Text(
+                    'Next donation possible after:',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? Colors.white.withOpacity(0.7)
+                          : Colors.black87.withOpacity(0.6),
+                      fontSize: 14,
                               fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                    ),
+                  ),
                           const SizedBox(height: 6),
-                          Text(
-                            _nextDonationDate,
-                            style: TextStyle(
+                  Text(
+                    _nextDonationDate,
+                    style: TextStyle(
                               color: isDarkMode ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w600,
                               fontSize: 16,
                               letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
+                    ),
+                  ),
+                ],
                       ),
                     ],
                   ),
@@ -1707,16 +1707,16 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> w
       }
     } catch (e) {
       debugPrint('Error loading health info: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
           content: Text('Error loading health information: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+            backgroundColor: Colors.red,
+          ),
+        );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+        setState(() {
+          _isLoading = false;
+        });
       
       // Start animations after loading is complete
       _successAnimationController.forward();

@@ -1417,22 +1417,31 @@ class AppProvider extends ChangeNotifier {
 
   // Update management methods
   Future<void> checkForUpdates() async {
-    _isCheckingForUpdate = true;
-    notifyListeners();
-    
+    // Guard against platform-related errors
     try {
-      // Get update information from Firestore through the AppUpdater
-      final updateInfo = await AppUpdater.checkForUpdates();
-      
-      _updateAvailable = updateInfo['hasUpdate'] ?? false;
-      _latestVersion = updateInfo['latestVersion'] ?? '';
-      _updateDownloadUrl = updateInfo['downloadUrl'] ?? '';
-      _releaseNotes = updateInfo['releaseNotes'] ?? '';
-      
-      _isCheckingForUpdate = false;
+      _isCheckingForUpdate = true;
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error checking for updates: $e');
+      
+      try {
+        // Get update information from Firestore through the AppUpdater
+        final updateInfo = await AppUpdater.checkForUpdates();
+        
+        _updateAvailable = updateInfo['hasUpdate'] ?? false;
+        _latestVersion = updateInfo['latestVersion'] ?? '';
+        _updateDownloadUrl = updateInfo['downloadUrl'] ?? '';
+        _releaseNotes = updateInfo['releaseNotes'] ?? '';
+        
+        _isCheckingForUpdate = false;
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Error checking for updates: $e');
+        _isCheckingForUpdate = false;
+        _updateAvailable = false;
+        notifyListeners();
+      }
+    } catch (platformError) {
+      // Handle platform detection or other critical errors
+      debugPrint('Critical platform error in checkForUpdates: $platformError');
       _isCheckingForUpdate = false;
       _updateAvailable = false;
       notifyListeners();

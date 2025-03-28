@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -28,13 +28,39 @@ class AppUpdater {
   // Indicates if an update is in progress
   static bool isUpdateInProgress = false;
   
+  // Safe platform detection
+  static bool get isAndroid {
+    try {
+      return io.Platform.isAndroid;
+    } catch (e) {
+      debugPrint('Platform detection error: $e');
+      return false;
+    }
+  }
+  
+  static bool get isIOS {
+    try {
+      return io.Platform.isIOS;
+    } catch (e) {
+      debugPrint('Platform detection error: $e');
+      return false;
+    }
+  }
+  
   // Initialize by getting the current app version
   static Future<void> initialize() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      currentVersion = packageInfo.version;
+      currentVersion = packageInfo.version.isNotEmpty 
+          ? packageInfo.version 
+          : '1.0.0'; // Ensure we never set an empty version
     } catch (e) {
       // If there's an error, keep using the default version
+      debugPrint('Error getting package info: $e');
+      // Ensure currentVersion is set to a valid value
+      if (currentVersion.isEmpty) {
+        currentVersion = '1.0.0';
+      }
     }
   }
   
@@ -77,41 +103,69 @@ class AppUpdater {
   static Future<Map<String, dynamic>> checkForUpdates() async {
     try {
       // Make sure we have the current version
-      await initialize();
+      try {
+        await initialize();
+      } catch (initError) {
+        debugPrint('Error initializing AppUpdater: $initError');
+        // Continue with default version
+      }
       
       // Access Firestore to get update information
-      final firestoreInstance = FirebaseFirestore.instance;
-      final DocumentSnapshot updateDoc = await firestoreInstance
-          .collection(updateCollection)
-          .doc(updateDocument)
-          .get();
-      
-      if (updateDoc.exists) {
-        final data = updateDoc.data() as Map<String, dynamic>;
-        final latestVersion = data['latestVersion'] ?? '';
-        final releaseNotes = data['releaseNotes'] ?? 'New features and bug fixes';
-        final downloadUrl = data['downloadUrl'] ?? '';
+      try {
+        final firestoreInstance = FirebaseFirestore.instance;
+        final DocumentSnapshot updateDoc = await firestoreInstance
+            .collection(updateCollection)
+            .doc(updateDocument)
+            .get();
         
-        // Make sure we have a proper download URL for Dropbox
-        String finalDownloadUrl = _getProperDropboxUrl(downloadUrl);
-        debugPrint('Final download URL: $finalDownloadUrl');
-        
-        // Save the latest APK URL for later use
-        latestApkUrl = finalDownloadUrl;
-        
-        // Compare versions
-        final bool hasUpdate = _isNewerVersion(latestVersion, currentVersion);
-        
-        return {
-          'hasUpdate': hasUpdate,
-          'latestVersion': latestVersion,
-          'currentVersion': currentVersion,
-          'releaseNotes': releaseNotes,
-          'downloadUrl': finalDownloadUrl,
-        };
-      } else {
-        debugPrint('Update document not found in Firestore');
-        // If we can't fetch update info, return no update available
+        if (updateDoc.exists) {
+          final data = updateDoc.data() as Map<String, dynamic>? ?? {};
+          final latestVersion = data['latestVersion'] ?? '';
+          final releaseNotes = data['releaseNotes'] ?? 'New features and bug fixes';
+          final downloadUrl = data['downloadUrl'] ?? '';
+          
+          // Make sure we have a proper download URL for Dropbox
+          String finalDownloadUrl = '';
+          try {
+            finalDownloadUrl = _getProperDropboxUrl(downloadUrl);
+            debugPrint('Final download URL: $finalDownloadUrl');
+          } catch (urlError) {
+            debugPrint('Error processing download URL: $urlError');
+            finalDownloadUrl = downloadUrl; // Fallback to original URL
+          }
+          
+          // Save the latest APK URL for later use
+          latestApkUrl = finalDownloadUrl;
+          
+          // Compare versions
+          bool hasUpdate = false;
+          try {
+            hasUpdate = _isNewerVersion(latestVersion, currentVersion);
+          } catch (versionError) {
+            debugPrint('Error comparing versions: $versionError');
+            // Default to no update if version comparison fails
+          }
+          
+          return {
+            'hasUpdate': hasUpdate,
+            'latestVersion': latestVersion,
+            'currentVersion': currentVersion,
+            'releaseNotes': releaseNotes,
+            'downloadUrl': finalDownloadUrl,
+          };
+        } else {
+          debugPrint('Update document not found in Firestore');
+          // If we can't fetch update info, return no update available
+          return {
+            'hasUpdate': false,
+            'latestVersion': '',
+            'currentVersion': currentVersion,
+            'releaseNotes': '',
+            'downloadUrl': '',
+          };
+        }
+      } catch (firestoreError) {
+        debugPrint('Error accessing Firestore: $firestoreError');
         return {
           'hasUpdate': false,
           'latestVersion': '',
@@ -199,15 +253,15 @@ class AppUpdater {
       final fileName = 'bloodline_update.apk';
       String? savePath;
       
-      if (Platform.isAndroid) {
+      if (isAndroid) {
         // Get the Downloads directory path on Android
-        Directory? downloadsDir;
+        io.Directory? downloadsDir;
         try {
           // This is the path to the Downloads folder on most Android devices
-          downloadsDir = Directory('/storage/emulated/0/Download');
+          downloadsDir = io.Directory('/storage/emulated/0/Download');
           if (!await downloadsDir.exists()) {
             // Try alternative path
-            downloadsDir = Directory('/storage/emulated/0/Downloads');
+            downloadsDir = io.Directory('/storage/emulated/0/Downloads');
             if (!await downloadsDir.exists()) {
               // Fallback to app's external directory
               final appDir = await getExternalStorageDirectory();
@@ -326,7 +380,7 @@ class AppUpdater {
           }
           
           // Create the file and open a sink for writing
-          final file = File(savePath!);
+          final file = io.File(savePath!);
           final sink = file.openWrite();
           int receivedBytes = 0;
           
@@ -389,7 +443,7 @@ class AppUpdater {
               final errorMsg = 'Downloaded file is HTML, not an APK. Received a webpage instead of the APK file.';
               debugPrint(errorMsg);
               // Save the HTML content for debugging
-              await File('${file.parent.path}/error_response.html').writeAsString(await file.readAsString());
+              await io.File('${file.parent.path}/error_response.html').writeAsString(await file.readAsString());
               debugPrint('Saved HTML response to ${file.parent.path}/error_response.html for debugging');
               isUpdateInProgress = false;
               onError(errorMsg);
@@ -407,7 +461,7 @@ class AppUpdater {
             debugPrint('APK file downloaded successfully and validated');
             
             // Just notify the user where the file was saved without trying to install
-            if (Platform.isAndroid) {
+            if (isAndroid) {
               debugPrint('Download completed successfully');
               isUpdateInProgress = false;
               
@@ -448,13 +502,13 @@ class AppUpdater {
   static Future<void> installApk(String filePath) async {
     try {
       debugPrint('Installing APK from: $filePath');
-      final file = File(filePath);
+      final file = io.File(filePath);
       
       if (await file.exists()) {
         debugPrint('APK file exists, proceeding with installation');
         
         // For Android, we need to use multiple approaches
-        if (Platform.isAndroid) {
+        if (isAndroid) {
           // First try the most reliable approach - just share the file
           try {
             debugPrint('Trying to share the APK file for installation...');
@@ -605,7 +659,7 @@ class AppUpdater {
   // Open the device's Downloads folder
   static Future<bool> openDownloadsFolder() async {
     try {
-      if (Platform.isAndroid) {
+      if (isAndroid) {
         debugPrint('Attempting to open Downloads folder in file manager');
         
         // Try to directly open file manager first with specific path for different manufacturers
@@ -745,7 +799,7 @@ class AppUpdater {
   // Open Android settings for "All Files Access" permission
   static Future<bool> openAllFilesAccessSettings() async {
     try {
-      if (Platform.isAndroid) {
+      if (isAndroid) {
         // For Android 11+ (API 30+), open the "All Files Access" permission screen directly if possible
         debugPrint('Opening All Files Access settings');
         
