@@ -496,187 +496,265 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
 
         return Card(
           margin: EdgeInsets.only(bottom: mediaQuery.size.height * 0.015),
-          elevation: 2,
+          elevation: 3,
+          shadowColor: iconColor.withOpacity(0.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-            side:
-                contact.isPinned
-                    ? BorderSide(color: AppConstants.primaryColor, width: 1.5)
-                    : BorderSide.none,
+            borderRadius: BorderRadius.circular(16),
+            side: contact.isPinned
+                ? BorderSide(color: AppConstants.primaryColor, width: 1.5)
+                : BorderSide.none,
           ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-            onTap: () => _makePhoneCall(contact.phoneNumber),
-            child: Padding(
-              padding: EdgeInsets.all(mediaQuery.size.width * 0.035),
-              child: Row(
-                children: [
-                  // Contact avatar
-                  Container(
-                    width: avatarSize,
-                    height: avatarSize,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: iconColor.withOpacity(0.1),
-                    ),
-                    child: Center(
-                      child: Icon(typeIcon, color: iconColor, size: iconSize),
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-
-                  // Contact info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  contact.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: isSmallScreen ? 14 : 16,
-                                  ),
-                                  maxLines: 1,
-                                ),
-                              ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.isDarkMode
+                      ? context.cardColor
+                      : Colors.white,
+                  context.isDarkMode
+                      ? context.cardColor
+                      : iconColor.withOpacity(0.05),
+                ],
+                stops: const [0.85, 1.0],
+              ),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _makePhoneCall(contact.phoneNumber),
+                child: Padding(
+                  padding: EdgeInsets.all(mediaQuery.size.width * 0.035),
+                  child: Row(
+                    children: [
+                      // Contact avatar with subtle gradient
+                      Container(
+                        width: avatarSize,
+                        height: avatarSize,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              iconColor.withOpacity(0.15),
+                              iconColor.withOpacity(0.25),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: iconColor.withOpacity(0.2),
+                              spreadRadius: 1,
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
                             ),
-                            if (contact.isPinned)
-                              Padding(
-                                padding: EdgeInsets.only(left: spacing * 0.5),
-                                child: Icon(
-                                  Icons.push_pin,
-                                  size: isSmallScreen ? 14 : 16,
-                                  color: AppConstants.primaryColor,
-                                ),
-                              ),
                           ],
                         ),
-                        SizedBox(height: mediaQuery.size.height * 0.005),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            contact.phoneNumber,
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 12 : 14,
-                              color: Colors.blue[700],
-                            ),
-                          ),
-                        ),
-                        if (contact.relationship.isNotEmpty) ...[
-                          SizedBox(height: mediaQuery.size.height * 0.005),
-                          Text(
-                            contact.relationship,
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 11 : 13,
-                              color: Colors.grey[600],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  // Actions
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Call button
-                      SizedBox(
-                        height: isSmallScreen ? 35 : 40,
-                        width: isSmallScreen ? 35 : 40,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.call,
-                            color: Colors.green,
-                            size: isSmallScreen ? 20 : 24,
-                          ),
-                          onPressed: () => _makePhoneCall(contact.phoneNumber),
-                          tooltip: 'Call',
+                        child: Center(
+                          child: Icon(typeIcon, color: iconColor, size: iconSize),
                         ),
                       ),
+                      SizedBox(width: spacing),
 
-                      // Pin/unpin or delete button (only for user contacts)
-                      if (!isSystemContact)
-                        SizedBox(
-                          height: isSmallScreen ? 35 : 40,
-                          width: isSmallScreen ? 35 : 40,
-                          child: PopupMenuButton<String>(
-                            padding: EdgeInsets.zero,
-                            icon: Icon(
-                              Icons.more_vert,
-                              size: isSmallScreen ? 20 : 24,
-                            ),
-                            onSelected: (value) async {
-                              final appProvider = Provider.of<AppProvider>(
-                                context,
-                                listen: false,
-                              );
-
-                              if (value == 'pin') {
-                                await appProvider.toggleContactPinStatus(
-                                  contact.id,
-                                  !contact.isPinned,
-                                );
-                              } else if (value == 'delete') {
-                                _confirmDeleteContact(contact);
-                              }
-                            },
-                            itemBuilder:
-                                (context) => [
-                                  PopupMenuItem(
-                                    value: 'pin',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          contact.isPinned
-                                              ? Icons.push_pin_outlined
-                                              : Icons.push_pin,
-                                          size: 18,
-                                          color:
-                                              contact.isPinned
-                                                  ? Colors.grey
-                                                  : AppConstants.primaryColor,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          contact.isPinned
-                                              ? 'Unpin Contact'
-                                              : 'Pin Contact',
-                                        ),
-                                      ],
+                      // Contact info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      contact.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: isSmallScreen ? 14 : 16,
+                                        color: context.textColor,
+                                      ),
+                                      maxLines: 1,
                                     ),
                                   ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.delete,
-                                          size: 18,
-                                          color: Colors.red,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text('Delete Contact'),
-                                      ],
+                                ),
+                                if (contact.isPinned)
+                                  Container(
+                                    margin: EdgeInsets.only(left: spacing * 0.5),
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(
+                                      Icons.push_pin,
+                                      size: isSmallScreen ? 12 : 14,
+                                      color: AppConstants.primaryColor,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: mediaQuery.size.height * 0.005),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.call,
+                                    size: isSmallScreen ? 10 : 12,
+                                    color: Colors.blue[700],
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    contact.phoneNumber,
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 12 : 14,
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
-                          ),
+                              ),
+                            ),
+                            if (contact.relationship.isNotEmpty) ...[
+                              SizedBox(height: mediaQuery.size.height * 0.005),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: isSmallScreen ? 10 : 12,
+                                    color: context.secondaryTextColor,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      contact.relationship,
+                                      style: TextStyle(
+                                        fontSize: isSmallScreen ? 11 : 13,
+                                        color: context.secondaryTextColor,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
+                      ),
+
+                      // Actions
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Call button
+                          Container(
+                            height: isSmallScreen ? 35 : 40,
+                            width: isSmallScreen ? 35 : 40,
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.call,
+                                color: Colors.green,
+                                size: isSmallScreen ? 20 : 24,
+                              ),
+                              onPressed: () => _makePhoneCall(contact.phoneNumber),
+                              tooltip: 'Call',
+                            ),
+                          ),
+
+                          SizedBox(height: 4),
+                          
+                          // Pin/unpin or delete button (only for user contacts)
+                          if (!isSystemContact)
+                            Container(
+                              height: isSmallScreen ? 35 : 40,
+                              width: isSmallScreen ? 35 : 40,
+                              decoration: BoxDecoration(
+                                color: context.isDarkMode 
+                                    ? Colors.grey.withOpacity(0.2)
+                                    : Colors.grey.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: PopupMenuButton<String>(
+                                padding: EdgeInsets.zero,
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  size: isSmallScreen ? 20 : 24,
+                                  color: context.secondaryTextColor,
+                                ),
+                                onSelected: (value) async {
+                                  final appProvider = Provider.of<AppProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+
+                                  if (value == 'pin') {
+                                    await appProvider.toggleContactPinStatus(
+                                      contact.id,
+                                      !contact.isPinned,
+                                    );
+                                  } else if (value == 'delete') {
+                                    _confirmDeleteContact(contact);
+                                  }
+                                },
+                                itemBuilder:
+                                    (context) => [
+                                      PopupMenuItem(
+                                        value: 'pin',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              contact.isPinned
+                                                  ? Icons.push_pin_outlined
+                                                  : Icons.push_pin,
+                                              size: 18,
+                                              color:
+                                                  contact.isPinned
+                                                      ? Colors.grey
+                                                      : AppConstants.primaryColor,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              contact.isPinned
+                                                  ? 'Unpin Contact'
+                                                  : 'Pin Contact',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete,
+                                              size: 18,
+                                              color: Colors.red,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text('Delete Contact'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -698,35 +776,64 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
     if (_contacts.isEmpty) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final iconSize = constraints.maxWidth * 0.2;
-          final double fontSize1 = constraints.maxWidth * 0.045;
-          final double fontSize2 = constraints.maxWidth * 0.035;
+          final double iconSize = constraints.maxWidth * 0.2;
 
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.contacts, size: iconSize, color: Colors.grey[400]),
-                SizedBox(height: constraints.maxHeight * 0.02),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'No emergency contacts',
-                    style: TextStyle(
-                      fontSize: fontSize1,
-                      color: Colors.grey[600],
+                Container(
+                  width: iconSize * 1.5,
+                  height: iconSize * 1.5,
+                  decoration: BoxDecoration(
+                    color: context.isDarkMode 
+                        ? AppConstants.primaryColor.withOpacity(0.1)
+                        : AppConstants.primaryColor.withOpacity(0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.contacts_outlined, 
+                      size: iconSize, 
+                      color: AppConstants.primaryColor.withOpacity(0.5),
                     ),
                   ),
                 ),
-                SizedBox(height: constraints.maxHeight * 0.01),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
+                SizedBox(height: constraints.maxHeight * 0.04),
+                Text(
+                  'No Emergency Contacts',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: context.textColor,
+                  ),
+                ),
+                SizedBox(height: constraints.maxHeight * 0.02),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   child: Text(
-                    'Add your important contacts here',
+                    'Add important contacts that you might need in emergency situations',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: fontSize2,
-                      color: Colors.grey[500],
+                      fontSize: 16,
+                      color: context.secondaryTextColor,
+                      height: 1.5,
                     ),
+                  ),
+                ),
+                SizedBox(height: constraints.maxHeight * 0.05),
+                ElevatedButton.icon(
+                  onPressed: _showAddContactDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Your First Contact'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
                   ),
                 ),
               ],
@@ -752,21 +859,39 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
       children: [
         // System contacts section
         if (systemContacts.isNotEmpty) ...[
-          Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: mediaQuery.size.height * 0.01,
+          Container(
+            margin: EdgeInsets.symmetric(
+              vertical: mediaQuery.size.height * 0.015,
             ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Emergency Services',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: mediaQuery.size.width < 360 ? 14 : 16,
-                  color: Colors.grey[700],
-                ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.red.withOpacity(0.2),
+                  Colors.red.withOpacity(0.05),
+                ],
               ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.local_hospital_outlined,
+                  size: 20,
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Emergency Services',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: mediaQuery.size.width < 360 ? 14 : 16,
+                    color: context.textColor,
+                  ),
+                ),
+              ],
             ),
           ),
           ...systemContacts.map(
@@ -775,26 +900,48 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
               horizontalPadding: horizontalPadding,
             ),
           ),
-          Divider(height: mediaQuery.size.height * 0.04),
+          Divider(
+            height: mediaQuery.size.height * 0.04,
+            thickness: 1,
+            color: Colors.grey.withOpacity(0.2),
+          ),
         ],
 
         // User contacts section
         if (userContacts.isNotEmpty) ...[
-          Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: mediaQuery.size.height * 0.01,
+          Container(
+            margin: EdgeInsets.symmetric(
+              vertical: mediaQuery.size.height * 0.015,
             ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'My Contacts',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: mediaQuery.size.width < 360 ? 14 : 16,
-                  color: Colors.grey[700],
-                ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  AppConstants.primaryColor.withOpacity(0.2),
+                  AppConstants.primaryColor.withOpacity(0.05),
+                ],
               ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: AppConstants.primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'My Contacts',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: mediaQuery.size.width < 360 ? 14 : 16,
+                    color: context.textColor,
+                  ),
+                ),
+              ],
             ),
           ),
           ...userContacts.map(
@@ -908,74 +1055,117 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
 
     return Card(
       elevation: 3,
+      shadowColor: color.withOpacity(0.3),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        onTap: () => _makePhoneCall(phoneNumber),
-        child: Padding(
-          padding: EdgeInsets.all(constraints.maxWidth * 0.02),
-          child: LayoutBuilder(
-            builder: (context, cardConstraints) {
-              // Calculate responsive sizes based on available card space
-              final double iconSize = cardConstraints.maxWidth * 0.3;
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              context.isDarkMode 
+                  ? context.cardColor
+                  : Colors.white,
+              context.isDarkMode 
+                  ? Colors.grey.withOpacity(0.05)
+                  : color.withOpacity(0.05),
+            ],
+            stops: const [0.8, 1.0],
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _makePhoneCall(phoneNumber),
+            child: Padding(
+              padding: EdgeInsets.all(constraints.maxWidth * 0.02),
+              child: LayoutBuilder(
+                builder: (context, cardConstraints) {
+                  // Calculate responsive sizes based on available card space
+                  final double iconSize = cardConstraints.maxWidth * 0.3;
 
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon container with flexible sizing
-                  Container(
-                    height: cardConstraints.maxHeight * 0.45,
-                    width: iconSize,
-                    padding: EdgeInsets.all(iconSize * 0.15),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      child: Icon(icon, color: color),
-                    ),
-                  ),
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Icon container with flexible sizing
+                      Container(
+                        height: cardConstraints.maxHeight * 0.45,
+                        width: iconSize,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              color.withOpacity(0.15),
+                              color.withOpacity(0.25),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withOpacity(0.2),
+                              spreadRadius: 1,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(icon, color: color, size: iconSize * 0.6),
+                        ),
+                      ),
 
-                  // Flexible spacing
-                  SizedBox(height: cardConstraints.maxHeight * 0.05),
+                      // Flexible spacing
+                      SizedBox(height: cardConstraints.maxHeight * 0.05),
 
-                  // Title with fitted text
-                  Expanded(
-                    flex: 2,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
+                      // Title with fitted text
+                      Text(
                         title,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: isSmallScreen ? 14 : 16,
+                          color: context.textColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                    ),
-                  ),
 
-                  // Phone number with fitted text
-                  Expanded(
-                    flex: 2,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        phoneNumber,
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: isSmallScreen ? 13 : 15,
-                          fontWeight: FontWeight.w500,
+                      // Phone number with call icon
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.call,
+                              size: isSmallScreen ? 12 : 14,
+                              color: color,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              phoneNumber,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: isSmallScreen ? 13 : 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              );
-            },
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
@@ -992,16 +1182,24 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
     // Use a safe area to avoid system intrusions
     return SafeArea(
       child: Scaffold(
+        backgroundColor: context.backgroundColor,
         appBar: AppBar(
-          title: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: const Text('Emergency Contacts'),
+          title: const Text('Emergency Contacts'),
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 0.5,
           ),
+          centerTitle: true,
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppConstants.primaryColor, Colors.redAccent],
+                colors: [
+                  AppConstants.primaryColor, 
+                  Colors.redAccent.shade700
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -1010,30 +1208,34 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
           bottom: TabBar(
             controller: _tabController,
             indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
             indicatorWeight: 3.0,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.7),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+            dividerColor: Colors.transparent,
+            // Add tab indicator decoration
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(50),
+              color: Colors.white.withOpacity(0.2),
+            ),
+            splashBorderRadius: BorderRadius.circular(50),
             tabs: [
               Tab(
                 icon: Icon(Icons.contacts, size: tabIconSize),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Contacts',
-                    style: TextStyle(
-                      fontSize: tabLabelFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  'Contacts',
+                  style: TextStyle(
+                    fontSize: tabLabelFontSize,
                   ),
                 ),
               ),
               Tab(
                 icon: Icon(Icons.call, size: tabIconSize),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Quick Dial',
-                    style: TextStyle(fontSize: tabLabelFontSize),
+                child: Text(
+                  'Quick Dial',
+                  style: TextStyle(
+                    fontSize: tabLabelFontSize,
                   ),
                 ),
               ),
@@ -1044,20 +1246,35 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen>
           controller: _tabController,
           children: [_buildContactsTab(), _buildQuickDialTab()],
         ),
-        floatingActionButton: SizedBox(
+        floatingActionButton: Container(
           height: mediaQuery.size.height * 0.06,
-          child: FittedBox(
-            child: FloatingActionButton.extended(
-              onPressed: _showAddContactDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Contact'),
-              backgroundColor: AppConstants.primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.primaryColor.withOpacity(0.4),
+                blurRadius: 10,
+                spreadRadius: -2,
+                offset: const Offset(0, 4),
               ),
-              elevation: 5,
-              hoverElevation: 10,
+            ],
+          ),
+          child: FloatingActionButton.extended(
+            onPressed: _showAddContactDialog,
+            icon: const Icon(Icons.add, size: 20),
+            label: const Text(
+              'Add Contact',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
             ),
+            backgroundColor: AppConstants.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            elevation: 0,
           ),
         ),
       ),
