@@ -509,6 +509,12 @@ class AboutUsScreen extends StatelessWidget {
                                     title: 'Instagram',
                                     icon: Icons.photo_camera,
                                     color: const Color(0xFFE1306C),
+                                    gradientColors: const [
+                                      Color(0xFFFED776), // Instagram yellow/gold
+                                      Color(0xFFF58529), // Instagram orange
+                                      Color(0xFFDD2A7B), // Instagram pink/purple
+                                      Color(0xFF8134AF), // Instagram purple
+                                    ],
                                     onTap:
                                         () => _launchSocialMedia(
                                           context,
@@ -523,6 +529,10 @@ class AboutUsScreen extends StatelessWidget {
                                     title: 'Twitter',
                                     icon: Icons.alternate_email,
                                     color: const Color(0xFF1DA1F2),
+                                    gradientColors: const [
+                                      Color(0xFF1DA1F2), // Twitter blue
+                                      Color(0xFF0D8FD8), // Darker Twitter blue
+                                    ],
                                     onTap:
                                         () => _launchSocialMedia(
                                           context,
@@ -537,6 +547,16 @@ class AboutUsScreen extends StatelessWidget {
                                     title: 'GitHub',
                                     icon: Icons.code,
                                     color: const Color(0xFF333333),
+                                    gradientColors: context.isDarkMode
+                                      ? const [
+                                          Color(0xFFFFFFFF), // White
+                                          Color(0xFFE0E0E0), // Light gray
+                                        ]
+                                      : const [
+                                          Color(0xFF333333), // Dark gray
+                                          Color(0xFF24292E), // GitHub dark color
+                                        ],
+                                    textColor: context.isDarkMode ? const Color(0xFF333333) : Colors.white,
                                     onTap:
                                         () => _launchSocialMedia(
                                           context,
@@ -551,6 +571,10 @@ class AboutUsScreen extends StatelessWidget {
                                     title: 'Snapchat',
                                     icon: Icons.whatshot,
                                     color: const Color(0xFFFFFC00),
+                                    gradientColors: const [
+                                      Color(0xFFFFFC00), // Snapchat yellow
+                                      Color(0xFFFFF000), // Brighter yellow
+                                    ],
                                     textColor: Colors.black,
                                     onTap:
                                         () => _launchSocialMedia(
@@ -566,6 +590,16 @@ class AboutUsScreen extends StatelessWidget {
                                     title: 'Threads',
                                     icon: Icons.stream,
                                     color: const Color(0xFF000000),
+                                    gradientColors: context.isDarkMode
+                                      ? const [
+                                          Color(0xFFFFFFFF), // White
+                                          Color(0xFFDDDDDD), // Light gray
+                                        ]
+                                      : const [
+                                          Color(0xFF000000), // Black
+                                          Color(0xFF101010), // Very dark gray
+                                        ],
+                                    textColor: context.isDarkMode ? Colors.black : Colors.white,
                                     onTap:
                                         () => _launchSocialMedia(
                                           context,
@@ -594,18 +628,30 @@ class AboutUsScreen extends StatelessWidget {
                                 child: Container(
                                   padding: EdgeInsets.all(screenWidth * 0.04),
                                   decoration: BoxDecoration(
-                                    color:
-                                        context.isDarkMode
-                                            ? const Color(0xFF1E1E1E)
-                                            : Colors.grey[50],
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color:
-                                          context.isDarkMode
-                                              ? const Color(0xFF2C2C2C)
-                                              : Colors.grey[300]!,
-                                      width: 1,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: context.isDarkMode
+                                          ? [
+                                              const Color(0xFF333333),
+                                              const Color(0xFF1E1E1E),
+                                            ]
+                                          : [
+                                              Colors.white,
+                                              Colors.grey[100]!,
+                                            ],
                                     ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: context.isDarkMode 
+                                            ? Colors.black.withOpacity(0.3)
+                                            : Colors.grey.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        spreadRadius: 1,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
                                   ),
                                   child: Row(
                                     children: [
@@ -614,8 +660,22 @@ class AboutUsScreen extends StatelessWidget {
                                           screenWidth * 0.025,
                                         ),
                                         decoration: const BoxDecoration(
-                                          color: Color(0xFF333333),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Color(0xFF333333),
+                                              Color(0xFF24292E),
+                                            ],
+                                          ),
                                           shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x40000000),
+                                              blurRadius: 4,
+                                              spreadRadius: 0,
+                                            ),
+                                          ],
                                         ),
                                         child: Icon(
                                           Icons.code,
@@ -808,6 +868,7 @@ class AboutUsScreen extends StatelessWidget {
     required String title,
     required IconData icon,
     required Color color,
+    required List<Color> gradientColors,
     Color? textColor,
     required VoidCallback onTap,
     required BoxConstraints constraints,
@@ -822,14 +883,25 @@ class AboutUsScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(constraints.maxWidth * 0.02),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: iconSize),
+            Icon(icon, color: textColor ?? Colors.white, size: iconSize),
             SizedBox(height: constraints.maxHeight * 0.01),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -838,7 +910,7 @@ class AboutUsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: fontSize,
                   fontWeight: FontWeight.w500,
-                  color: textColor ?? color,
+                  color: textColor ?? Colors.white,
                 ),
               ),
             ),
